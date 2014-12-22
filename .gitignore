@@ -1,0 +1,4 @@
+/tests/fixtures/*
+!/tests/fixtures/.gitkeep
+/vendor/*
+/composer.lock
