@@ -1,24 +1,22 @@
 <?php
 
-namespace Kuria\Cache\Provider;
-
-use Kuria\Cache\CacheTest;
+namespace Kuria\Cache\Driver;
 
 /**
  * @requires extension apc
  */
-class ApcCacheTest extends CacheTest
+class ApcDriverTest extends DriverTest
 {
-    public function provideTestInstanceCreators()
+    public function provideDriverFactories()
     {
         return array(
             array(function () {
-                $cache = new ApcCache();
+                $driver = new ApcDriver();
 
                 // make sure the cache is empty
-                $cache->clear();
+                $driver->purge();
                 
-                return $cache;
+                return $driver;
             }),
         );
     }

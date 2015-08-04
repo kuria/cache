@@ -1,18 +1,16 @@
 <?php
 
-namespace Kuria\Cache\Provider;
-
-use Kuria\Cache\CacheTest;
+namespace Kuria\Cache\Driver;
 
 /**
  * @requires extension memcache
  */
-class MemcacheCacheTest extends CacheTest
+class MemcacheDriverTest extends DriverTest
 {
     /** @var \Memcache */
     private $memcache;
 
-    public function provideTestInstanceCreators()
+    public function provideDriverFactories()
     {
         $that = $this;
 
@@ -22,12 +20,12 @@ class MemcacheCacheTest extends CacheTest
 
                 if (false === $memcache) {
                     $that->markTestSkipped(sprintf(
-                        'The memcache server %s:%d is not available / running',
-                        MEMCACHE_TEST_HOST,
-                        MEMCACHE_TEST_PORT
+                        'The memcache server %s:%d is not responding',
+                        $_ENV['MEMCACHE_TEST_HOST'],
+                        $_ENV['MEMCACHE_TEST_PORT']
                     ));
                 } else {
-                    return new MemcacheCache($memcache);
+                    return new MemcacheDriver($memcache);
                 }
             }),
         );
@@ -52,10 +50,10 @@ class MemcacheCacheTest extends CacheTest
      *
      * @return \Memcache|bool
      */
-    protected function createMemcache()
+    private function createMemcache()
     {
-        $host = MEMCACHE_TEST_HOST;
-        $port = MEMCACHE_TEST_PORT;
+        $host = $_ENV['MEMCACHE_TEST_HOST'];
+        $port = $_ENV['MEMCACHE_TEST_PORT'];
 
         $memcache = new \Memcache();
         $memcache->addServer($host, $port);

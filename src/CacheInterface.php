@@ -2,47 +2,15 @@
 
 namespace Kuria\Cache;
 
-use Kuria\Cache\Extension\CacheExtensionInterface;
-
 /**
- * Cache interface
+ * Cache facade interface
  *
  * @author ShiraNai7 <shira.cz>
  */
 interface CacheInterface
 {
-    /** Event type - get */
-    const EVENT_FETCH = 'kuria.cache.fetch';
-    /** Event type - set */
-    const EVENT_STORE = 'kuria.cache.store';
-
     /**
-     * Get local cache for the given category
-     *
-     * @param string $category
-     * @return LocalCacheInterface
-     */
-    public function getLocal($category);
-
-    /**
-     * Get entry identifier prefix
-     *
-     * @return string
-     */
-    public function getPrefix();
-
-    /**
-     * Set entry identifier prefix
-     *
-     * It must end (but not begin with) with "/" (a forward slash).
-     * The prefix may be an empty string (to disable it).
-     *
-     * Valid prefix examples:
-     *
-     *      foo/
-     *      foo_dev/
-     *      foo/
-     *      foo/bar/
+     * Set key prefix
      *
      * @param string $prefix
      * @throws \InvalidArgumentException if the prefix is not valid
@@ -51,97 +19,168 @@ interface CacheInterface
     public function setPrefix($prefix);
 
     /**
-     * See if an entry exists
+     * Get instance for a specific namespace
      *
-     * @param string $category category name
-     * @param string $entry    entry name
-     * @return bool
+     * @param string $prefix
+     * @return CacheInterface
      */
-    public function has($category, $entry);
+    public function getNamespace($prefix);
 
     /**
-     * Get an entry
+     * See if a key exists
      *
-     * @param string $category category name
-     * @param string $entry    entry name
-     * @param array  $options  array of options (used by callbacks)
+     * @param string $key the key
+     * @return bool
+     */
+    public function has($key);
+
+    /**
+     * Get a value for the given key
+     *
+     * @param string $key the key
+     * @param array  $options array of options (used by events)
      * @return mixed false on failure
      */
-    public function get($category, $entry, array $options = array());
+    public function get($key, array $options = array());
 
     /**
-     * Create an entry
-     * Does not overwrite existing entry.
+     * Get values for multiple keys
      *
-     * @param string $category category name
-     * @param string $entry    entry name
-     * @param mixed  $data     value to store
-     * @param int    $ttl      time to live in seconds (0 = forever)
-     * @param array  $options  array of options (used by callbacks)
+     * Returns an array with all of the keys. The keys which could not
+     * be found will be FALSE.
+     *
+     * The keys will be fetched all at once or one by one, depending on
+     * the underlying driver's implementation.
+     *
+     * @param string[] $keys the key
+     * @param array    $options array of options (used by events)
+     * @return array associative array with all of the keys
+     */
+    public function getMultiple(array $keys, array $options = array());
+
+    /**
+     * Get a value for the given key
+     *
+     * If the key is found, its value will be returned right away.
+     *
+     * If the key is not found, the callback will be called with the following
+     * arguments:
+     *
+     *      1. &$ttl - reference to the TTL setting
+     *         - it will be passed to add() after the callback finishes
+     *         - defaults to 0
+     *      2. &$options - reference to the options array
+     *         - it will be passed to add() after the callback finishes
+     *         - defaults to an empty array
+     *
+     * If the callback returns anything else than FALSE, that value will
+     * be stored in the cache using add() and then returned.
+     *
+     * Using add() implies that if multiple threads happen to generate a value
+     * at the same time, only one of the values will be stored.
+     *
+     * If the callback returns FALSE, it will not be stored and FALSE will
+     * be returned.
+     *
+     * @param string   $key      the key to load or store
+     * @param callable $callback the callback to invoke if the key is not found
+     * @param array    $options  array of options (used by fetch events)
+     * @return mixed false on failure
+     */
+    public function cached($key, $callback, array $options = array());
+
+    /**
+     * Create a new value
+     * 
+     * Does not overwrite if the key already exists.
+     *
+     * @param string $key the key
+     * @param mixed  $value   value to store
+     * @param int    $ttl     time to live in seconds (0 = forever)
+     * @param array  $options array of options (used by events)
      * @return bool
      */
-    public function add($category, $entry, $data, $ttl = 0, array $options = array());
+    public function add($key, $value, $ttl = 0, array $options = array());
 
     /**
-     * Set an entry
-     * Overwrites if the entry already exists.
+     * Set a value
+     * 
+     * Overwrites if the key already exists.
      *
-     * @param string $category category name
-     * @param string $entry    entry name
-     * @param mixed  $data     value to store
-     * @param int    $ttl      time to live in seconds (0 = forever)
-     * @param array  $options  array of options (used by callbacks)
+     * @param string $key the key
+     * @param mixed  $value   value to store
+     * @param int    $ttl     time to live in seconds (0 = forever)
+     * @param array  $options array of options (used by events)
      * @return bool
      */
-    public function set($category, $entry, $data, $ttl = 0, array $options = array());
+    public function set($key, $value, $ttl = 0, array $options = array());
 
     /**
-     * Increment an integer entry
-     * The entry must exist and be of integer type.
+     * Increment an integer value
+     * 
+     *  - the key must exist and the value should be an integer.
+     *  - the result of incrementing non-integers is undefined and depends on the
+     *    underlying driver implementation
      *
-     * @param string $category category name
-     * @param string $entry    entry name
+     * @param string $key the key
      * @param int    $step     how much to increment by, must be >= 1
      * @param bool   &$success variable to put success state into
      * @throws \InvalidArgumentException if the step is invalid
-     * @return int|bool the new value, current value (on failure) or false if the entry is not valid
+     * @return int|bool the new value, current value (on failure) or false on failure
      */
-    public function increment($category, $entry, $step = 1, &$success = null);
+    public function increment($key, $step = 1, &$success = null);
 
     /**
-     * Decrement an integer entry
-     * The entry must exist and be of integer type.
+     * Decrement an integer value
+     * 
+     *  - the key must exist and the value should be an integer.
+     *  - the result of decrementing non-integers is undefined and depends on the
+     *    underlying driver implementation
      *
-     * @param string $category category name
-     * @param string $entry    entry name
+     * @param string $key the key
      * @param int    $step     how much to decrement by, must be >= 1
      * @param bool   &$success variable to put success state into
      * @throws \InvalidArgumentException if the step is invalid
-     * @return int|bool the new value, current value (on failure) or false if the entry is not valid
+     * @return int|bool the new value, current value (on failure) or false on failure
      */
-    public function decrement($category, $entry, $step = 1, &$success = null);
+    public function decrement($key, $step = 1, &$success = null);
 
     /**
-     * Remove an entry
+     * Remove a key
      *
-     * @param string $category category name
-     * @param string $entry    entry name
+     * @param string $key  the key
      * @return bool
      */
-    public function remove($category, $entry);
+    public function remove($key);
 
     /**
-     * Clear all entries or only those in the given category
+     * Remove all keys
      *
-     * @param string|null $category
-     * @return bool
-     */
-    public function clear($category = null);
-
-    /**
-     * See if the implementation supports clearing only the given category
+     * This method will obey the current prefix configuration if the underlying
+     * driver supports filtering. If not, the entire cache will be cleared
+     * regardless of the prefix.
      *
      * @return bool
      */
-    public function supportsClearingCategory();
+    public function clear();
+
+    /**
+     * Remove keys that begin with the given prefix
+     *
+     * This method will return FALSE if the driver doesn't support this
+     * operation or the operation fails.
+     *
+     * {@see Driver\FilterableInterface}
+     *
+     * @param string $prefix
+     * @return bool
+     */
+    public function filter($prefix);
+
+    /**
+     * See if the underlying driver supports filtering
+     *
+     * @return bool
+     */
+    public function canFilter();
 }

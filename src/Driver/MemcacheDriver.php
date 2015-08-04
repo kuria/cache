@@ -1,15 +1,13 @@
 <?php
 
-namespace Kuria\Cache\Provider;
-
-use Kuria\Cache\Cache;
+namespace Kuria\Cache\Driver;
 
 /**
- * Memcache implementation
+ * Memcache driver
  *
  * @author ShiraNai7 <shira.cz>
  */
-class MemcacheCache extends Cache
+class MemcacheDriver implements DriverInterface, MultipleFetchInterface
 {
     /** @var \Memcache */
     protected $memcache;
@@ -22,7 +20,7 @@ class MemcacheCache extends Cache
         $this->memcache = $memcache;
     }
 
-    protected function exists($key)
+    public function exists($key)
     {
         // there is no "exists"-like method in memcache
         // so we just attempt to store "false" for the given key
@@ -31,48 +29,52 @@ class MemcacheCache extends Cache
         return false === $this->memcache->add($key, false, 0, 1);
     }
 
-    protected function fetch($key)
+    public function fetch($key)
     {
         return $this->memcache->get($key);
     }
 
-    protected function store($key, $data, $overwrite, $ttl)
+    public function fetchMultiple(array $keys)
     {
+        $values = $this->memcache->get($keys);
+
+        if (false === $values) {
+            $values = array(); // @codeCoverageIgnore
+        } // @codeCoverageIgnore
+
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $values)) {
+                $values[$key] = false;
+            }
+        }
+
+        return $values;
+    }
+
+    public function store($key, $value, $overwrite, $ttl = 0)
+    {
+        // always store as an UNIX timestamp
+        // (see description of the expire parameter in the PHP manunal)
         $expire = $ttl > 0 ? time() + $ttl : 0;
 
         if ($overwrite) {
-            if ($this->exists($key)) {
-                return $this->memcache->replace($key, $data, 0, $expire);
-            } else {
-                return $this->memcache->set($key, $data, 0, $expire);
-            }
+            return $this->memcache->set($key, $value, 0, $expire);
         } else {
-            return $this->memcache->add($key, $data, 0, $expire);
+            return $this->memcache->add($key, $value, 0, $expire);
         }
     }
 
-    protected function expunge($key)
+    public function expunge($key)
     {
         return $this->memcache->delete($key);
     }
 
-    protected function purge($prefix)
+    public function purge()
     {
-        if ('' === $prefix) {
-            // purge everything
-            return $this->memcache->flush();
-        } else {
-            // there is no way to get all existing keys
-            return false;
-        }
+        return $this->memcache->flush();
     }
 
-    public function supportsClearingCategory()
-    {
-        return false;
-    }
-
-    protected function modifyInteger($key, $offset, &$success = null)
+    public function modifyInteger($key, $offset, &$success = null)
     {
         if ($offset > 0) {
             try {

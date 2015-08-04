@@ -6,7 +6,7 @@
         </testsuite>
     </testsuites>
     <php>
-        <const name="Kuria\Cache\Provider\MEMCACHE_TEST_HOST" value="127.0.0.1" />
-        <const name="Kuria\Cache\Provider\MEMCACHE_TEST_PORT" value="11211" />
+        <env name="MEMCACHE_TEST_HOST" value="127.0.0.1"/>
+        <env name="MEMCACHE_TEST_PORT" value="11211"/>
     </php>
 </phpunit>

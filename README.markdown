@@ -1,122 +1,116 @@
 Cache
 =====
 
-Caching library with several implementations (Filesystem, APC, XCache, Memache, Memory).
+Caching library with driver abstraction and namespacing support.
 
 
-## Features
+## Table of Contents
 
-- shared public API
-- several implementations
+- [Features](#features)
+- [Requirements](#requirements)
+- [Drivers](#drivers)
+- [Usage example](#usage)
+- [Cache events](#events)
+- [Bound file extension](#bound-file-extension)
+
+## <a name="features"></a> Features
+
+- driver abstraction
+- namespacing support
+- built-in driver implementations:
     - Filesystem
-    - APC
+    - Memory
+    - APC / APCu
     - XCache
     - Memcache
-    - Memory
-- extensions
-    - manipulating stored / loaded data through events
+- extension system
+    - implemented using the [kuria/event](https://github.com/kuria/event) library
+    - stored and loaded data can be manipulated by extensions
+- built-in extensions:
+    - BoundFileExtension (invalidates cache entries if any one of the bound files is modified)
+        - useful during development
 
-
-## Requirements
+## <a name="requirements"></a> Requirements
 
 - PHP 5.3 or newer
 
 
-## Cache implementations
+## <a name="drivers"></a> Drivers
+
+- `FilesystemDriver`
+    - stores data in the filesystem (in the given cache directory)
+    - uses advisory file locking and/or temporary files to prevent race conditions
+- `MemoryDriver`
+    - stores data in the script's memory
+- `ApcDiver`
+    - uses [APC](http://php.net/manual/en/book.apc.php) or [APCu](https://pecl.php.net/package/APCu)
+- `XcacheDriver`
+    - uses [XCache](http://xcache.lighttpd.net/)
+- `MemcacheDriver`
+    - uses [Memcache](https://pecl.php.net/package/memcache)
 
 
-### FilesystemCache
-
-Stores data in the filesystem (in the given cache directory). Uses advisory file locking and/or temporary files to prevent corruption/race conditions.
-
-
-#### Configuration
-
-There are several configuration directives to be aware of. The defaults should be sensible enough, so feel free to skip this.
-
-- Storage mode
-    - `FilesystemCache->setStorageMode()`
-        1. `FilesystemCache::STORAGE_PHP` (default, stores data as `.php` files)
-        2. `FilesystemCache::STORAGE_NORMAL` (stores data in `.dat` files)
-            - if using this mode, be SURE that the cache directory is NOT publicly accessible!
-- Temporary files
-    - `FilesystemCache->setTemporaryDir()`
-        1. `null` - use system's (default)
-        2. path to custom temporary directory (might be a good idea in shared environments)
-    - `FilesystemCache->setUseTemporaryFiles()`
-        1. `true` - use temporary files (default if not on Windows)
-        2. `false` - do not use temporary files (default on Windows)
-- Removing files
-    - `FilesystemCache->setUseUnlink()`
-        1. `true` - use unlink for entry removal (default if not on Windows)
-        2. `false` - do not use unlink for entry removal (default if on Windows)
-
-Note: If on Windows, be aware of that `clear()` may fail and leave some files behind if performed on live cache.
-
-
-### ApcCache
-
-Uses [APC](http://php.net/manual/en/book.apc.php).
-
-
-### XCacheCache
-
-Uses [XCache](http://xcache.lighttpd.net/).
-
-
-### MemcacheCache
-
-Uses [Memcache](http://php.net/manual/en/book.memcache.php).
-
-
-Note: Memcache does not support `clear($category)`, only `clear()`. This is because it is not possible
-to reliably get list of keys that exist in the cache.
-
-
-### MemoryCache
-
-Stores all the data in an array in the script's memory, so the cache always starts empty and is cleared after the script exits. (And it is private to the current script, not shared.)
-
-
-## Usage example
+## <a name="usage"></a> Usage example
 
 
 ### Creating an instance
 
-Let's use the `MemoryCache` implementation in the examples (it requires no extensions or setup).
+    use Kuria\Cache\Cache;
+    use Kuria\Cache\Driver\MemoryDriver;
 
-Other implementations might have some constructor arguments.
+    $driver = new MemoryDriver(); // just an example, you can use any other driver
+    $cache = new Cache($driver);
 
-    use Kuria\Cache\Provider\MemoryCache;
 
-    $cache = new MemoryCache();
+### Caching a value
+
+The most simple way to cache a value is to use the `cached()` method. The passed callback is called
+only if the value is not found in the cache.
+
+    $value = $cache->cached('foo', function (&$ttl) {
+        $ttl = 60; // cache for 1 minute
+        $result = some_expensive_function();
+
+        return $result;
+    });
+
+This is equivalent to the following:
+
+    $value = $cache->get('foo');
+
+    if (false === $value) {
+        $value = some_expensive_function();
+        $cache->add('foo', $value, 60); // cache for 1 minute
+    }
 
 
 ### The API
 
-See `CacheInterface` for list of all methods that are shared across cache implementations.
-
-- `has()` - see if an entry exists
-- `get()` - load an entry
-- `add()` - create an entry (does not overwrite)
-- `set()` - create an entry (does overwrite)
+- `has()` - see if a key exists
+- `get()` - get a value for the given key
+- `getMultiple()` - get values for multiple keys
+- `cached()` - get a value for the given key or populate it using a callback if the key was not found
+- `add()` - create a new value (does not overwrite)
+- `set()` - set a value (does overwrite)
 - `increment()` - increment an integer value
 - `decrement()` - decrement an integer value
-- `remove()` - remove an entry
-- `clear()` - clear the entire cache or the given category
+- `remove()` - remove a key
+- `clear()` - remove all keys
+- `filter()` - remove keys that begin with the given prefix
+- `setPrefix()` - set key prefix (useful if the driver's storage is shared)
+- `getNamespace()` - get namespaced part of the cache
 
-Most of the public API methods require at least 2 arguments:
 
-1. `$category` - name of the cache category (you can consider this a "folder name")
-2. `$name` - name of the entry (you can consider this a "file name")
+#### Key format
 
-Note: Both `$category` and `$name` should consist of alphanumeric characters and underscores only.
+- only alphanumeric characters, underscores and a dots are allowed
+- the key must begin and end with an alphanumeric character and must not contain consecutive dots
 
-    $cache->set('mycategory', 'foo', 'bar');
 
-    var_dump($cache->get('mycategory', 'foo'));
-    // should print: string(3) "bar"
-    // if everything went ok
+#### Prefix format
+
+- only alphanumeric characters, underscores and a dots are allowed
+- the prefix must begin with an alphanumeric character and must not contain consecutive dots
 
 
 #### Allowed data types
@@ -124,135 +118,58 @@ Note: Both `$category` and `$name` should consist of alphanumeric characters and
 All data types except for the `resource` type can be stored in the cache. Objects are stored serialized.
 
 
-### Local cache
+### <a name="events"></a> Cache events
 
-You have to pass both `$category` and `$name` arguments to most methods. You probably don't want to
-repeat the category name over and over again in your code (unless it is a really short one).
+Possible events emitted by the `Cache` class:
 
-The solution to this is using a "local cache" instance. Local cache is essentialy
-a wrapper around the original cache with the `$category` argument being set automatically.
-It provides almost identical API as `CacheInterface`, except the `$category` argument is missing.
+#### fetch
 
-See `LocalCacheInterface` for list of all available methods.
-
-To create an instance of local cache, simply call `getLocal($category)` on the cache instance:
-
-    $local = $cache->getLocal('mycategory');
-
-Now there is no need to specify the category for every operation:
-
-    $local->set('result', 123);
-
-    var_dump($local->get('result'));
-    // should print: int(123)
-    // if everything went ok
+- emitted when a value is being retrieved
+- arguments:
+    1. `array $event`
+        - `key`: the key being retrieved
+        - `options`: reference to the options array
+        - `value`: reference to the value returned by the driver (can be `FALSE`)
 
 
-### Handling failure correctly
+#### store
 
-All of the public API functions may return `false` in case of failure. It is important
-to handle these failures correctly.
-
-From the point of view of the running PHP script, the cache is an external system that
-can be accessed and altered by many other threads / processes at the same time.
-
-- it is not safe to assume that `get()` cannot fail (return `false`) because `has()` has succeeded
-- it is not safe to assume that `get()` cannot fail (return `false`) because `set()` has succeeded
-
-Other threads may alter the data even between 2 method calls.
-
-For example, this is **wrong**:
-
-    // lets assume "foo" is an array
-
-    if ($cache->has('mycategory', 'foo')) {
-        $foo = $cache->get('mycategory', 'foo');
-        echo $foo['index']; // oops.. $foo might be false
-    }
-
-This is **better**:
-
-    if ($cache->has('mycategory', 'foo')) {
-        $foo = $cache->get('mycategory', 'foo');
-        if (false !== $foo) {
-            echo $foo['index'];
-        }
-    }
-
-This is **even better**:
-
-    $foo = $cache->get('mycategory', 'foo');
-    if (false !== $foo) {
-        echo $foo['index'];
-    }
+- emitted when a value is being stored
+- arguments:
+    1. `array $event`
+        - `key`: the key being stored
+        - `value`: reference to the value being stored
+        - `ttl`: reference to the TTL
+        - `options`: reference to the options array
 
 
-#### No cache
-
-You can use the `NoCache` implementation to verify that your code is handling failures correctly.
-
-This implementation does not cache anything - instead it reports failure (returns `false`) for most API methods
-that work with cached entries.
-
-
-## Cache events
-
-Stored / loaded data can be additionally manipulated and validated by extensions through events.
-This is implemented using the [kuria/event](https://github.com/kuria/event) library.
-
-The `Cache` extends `ExternalObservable`. This means:
-
-- you can attach observers directly to the cache instance
-- you can replace the underlying observable instance by using `Cache->setNestedObservable()`
-
-
-### Event list
-
-The cache emits the following events:
-
-- `CacheFetchEvent` (`CacheFetchEvent::NAME`)
-    - emitted when an entry is being loaded using `get()`
-- `CacheStoreEvent` (`CacheStoreEvent::NAME`)
-    - emitted when an entry is being stored using `set()` or `add()`
-
-Both event classes expose information about the operation through public properties. Some of these
-are references that can be used to manipulate the data.
-
-
-### Bound file extension
+### <a name="bound-file-extension"></a> Bound file extension
 
 This extension invalidates cache entries based on modification time of a given list of files.
-Useful during development. The check can be disabled in production.
 
-This extension is triggered through usage of the `$options` parameter of `get()`, `set()` and `add()` methods.
-
-- `get()` method requires the option `"has_bound_files" => true` to perform the validation
-- `set()` and `add()` methods require the option `"bound_files" => array()` to map and store a list of bound files
+To set a list of bound files, set the "bound_files" option when storing a value using `set()`
+or `add()`.
 
 
 #### Registration
 
-    use Kuria\Cache\Extension\BoundFileExtension;
-
-    $boundFileExtension = new BoundFileExtension();
-    $boundFileExtension->setVerifyBoundFiles(true); // FALSE may be a good idea in production
-
-    $cache->addSubscriber($boundFileExtension);
+    use Kuria\Cache\Extension\BoundFile\BoundFileExtension;
+    
+    $extension = new BoundFileExtension();
+    $cache->subscribe($extension);
 
 
 #### Usage
 
-    // getting an entry that contains bound files
-    // FALSE is returned if the bound file validation fails
-    $cache->get('foo', 'bar', 0, array(
-        'has_bound_files' => true,
-    ));
-
-    // storing an entry with bound files using set() or add()
-    $cache->set('foo', 'bar', 0, array(
+    // storing a value with bound files using set() or add()
+    $cache->set('foo', 0, array(
         'bound_files' => array(
             'path/to/file1',
             'path/to/file2',
             // ...
         ),
     );
+
+    // to get a value that contains bound files, just call get() as you would normally
+    // if any of the bound files were modified, FALSE will be returned
+    $value = $cache->get('foo');

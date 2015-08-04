@@ -1,43 +1,41 @@
 <?php
 
-namespace Kuria\Cache\Provider;
-
-use Kuria\Cache\Cache;
+namespace Kuria\Cache\Driver;
 
 /**
- * Memory cache implementation
+ * Memory cache driver
  *
- * Stores data in script's memory.
+ * Stores values in script's memory.
  *
  * @author ShiraNai7 <shira.cz>
  */
-class MemoryCache extends Cache
+class MemoryDriver implements DriverInterface, FilterableInterface
 {
     /** @var array */
     protected $registry = array();
 
-    protected function exists($key)
+    public function exists($key)
     {
         return array_key_exists($key, $this->registry);
     }
 
-    protected function fetch($key)
+    public function fetch($key)
     {
         $entry = $this->load($key);
         if (false !== $entry) {
-            return $entry['data'];
+            return $entry['value'];
         }
 
         return false;
     }
 
-    protected function store($key, $data, $overwrite, $ttl)
+    public function store($key, $value, $overwrite, $ttl = 0)
     {
         if ($overwrite || !$this->exists($key)) {
             $this->registry[$key] = array(
                 'ttl' => $ttl,
                 'created_at' => time(),
-                'data' => $data,
+                'value' => $value,
             );
 
             return true;
@@ -46,7 +44,7 @@ class MemoryCache extends Cache
         return false;
     }
 
-    protected function expunge($key)
+    public function expunge($key)
     {
         if ($this->exists($key)) {
             unset($this->registry[$key]);
@@ -57,35 +55,38 @@ class MemoryCache extends Cache
         }
     }
 
-    protected function purge($prefix)
+    public function purge()
     {
-        if ('' === $prefix) {
-            // entire cache
-            $this->registry = array();
-        } else {
-            // the given prefix
-            $search = sprintf('~^%s~', preg_quote($prefix, '~'));
+        $this->registry = array();
 
-            foreach (array_keys($this->registry) as $key) {
-                if (preg_match($search, $key)) {
-                    unset($this->registry[$key]);
-                }
+        return true;
+    }
+
+    public function filter($prefix)
+    {
+        $prefixLen = strlen($prefix);
+
+        foreach (array_keys($this->registry) as $key) {
+            if (0 === strncmp($key, $prefix, $prefixLen)) {
+                unset($this->registry[$key]);
             }
         }
 
         return true;
     }
 
-    protected function modifyInteger($key, $offset, &$success = null)
+    public function modifyInteger($key, $offset, &$success = null)
     {
         $entry = $this->load($key);
 
-        if (false !== $entry && is_int($entry['data'])) {
-            $entry['data'] += $offset;
+        if (false !== $entry && is_int($entry['value'])) {
+            $entry['value'] += $offset;
             $this->registry[$key] = $entry;
             $success = true;
 
-            return $entry['data'];
+            return $entry['value'];
+        } else {
+            $success = false;
         }
 
         return false;
@@ -120,10 +121,10 @@ class MemoryCache extends Cache
      * @param array $entry
      * @return bool
      */
-    protected function isFresh($entry)
+    protected function isFresh(array $entry)
     {
         if (0 === $entry['ttl'] || $entry['created_at'] + $entry['ttl'] > time()) {
-            // the entry is fresh
+            // fresh
             return true;
         } else {
             // stale

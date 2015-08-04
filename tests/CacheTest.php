@@ -2,197 +2,751 @@
 
 namespace Kuria\Cache;
 
-abstract class CacheTest extends \PHPUnit_Framework_TestCase
+use Kuria\Cache\Driver\DriverInterface;
+use Kuria\Cache\Driver\TestFilterableDriver;
+use Kuria\Cache\Driver\TestMultipleFetchDriver;
+use Kuria\Event\EventSubscriberAbstract;
+use Kuria\Event\EventSubscriberInterface;
+
+class CacheTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * Provide list of test instance creators (callbacks)
-     *
-     * @return callback[]
+     * @return DriverInterface
      */
-    abstract public function provideTestInstanceCreators();
-
-    /**
-     * @dataProvider provideTestInstanceCreators
-     */
-    public function testPrefix($cacheProvider)
+    private function getDriverMock()
     {
-        $cache = $cacheProvider();
-
-        // default prefix should be empty
-        $this->assertSame('', $cache->getPrefix());
-
-        // set & get
-        $this->assertSame('foo/', $cache->setPrefix('foo/')->getPrefix());
+        return $this->getMock(__NAMESPACE__ . '\Driver\DriverInterface');
     }
 
     /**
-     * @dataProvider provideTestInstanceCreators
-     * @expectedException InvalidArgumentException
+     * @return EventSubscriberInterface
      */
-    public function testPrefixNotEndingWithForwardSlashThrowsException($cacheProvider)
+    private function getSubscriberMock()
     {
-        $cache = $cacheProvider();
-
-        $cache->setPrefix('foo');
+        return $this->getMockForAbstractClass(__NAMESPACE__ . '\TestEventSubscriber');
     }
 
     /**
-     * @dataProvider provideTestInstanceCreators
-     * @expectedException InvalidArgumentException
+     * @return TestFilterableDriver
      */
-    public function testPrefixStartingWithForwardSlashThrowsException($cacheProvider)
+    private function getFilterableDriverMock()
     {
-        $cache = $cacheProvider();
+        return $this->getMockForAbstractClass(__NAMESPACE__ . '\Driver\TestFilterableDriver');
+    }
+    
+     /**
+     * @return TestMultipleFetchDriver
+     */
+    private function getMultipleFetchDriverMock()
+    {
+        return $this->getMockForAbstractClass(__NAMESPACE__ . '\Driver\TestMultipleFetchDriver');
+    }   
 
-        $cache->setPrefix('/foo/');
+    public function testCommonApi()
+    {
+        $testValue = 'test-value';
+        $existingTestValue = 'existing-test-value';
+
+        $driverMock = $this->getDriverMock();
+
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('exists')
+            ->withConsecutive(
+                array($this->identicalTo('foo.bar')),
+                array($this->identicalTo('foo.baz'))
+            )
+            ->willReturnOnConsecutiveCalls(
+                true,
+                false
+            )
+        ;
+
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('fetch')
+            ->withConsecutive(
+                array($this->identicalTo('foo.bar')),
+                array($this->identicalTo('foo.baz'))
+            )
+            ->willReturnOnConsecutiveCalls(
+                $existingTestValue,
+                false
+            )
+        ;
+
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('store')
+            ->withConsecutive(
+                array(
+                    $this->identicalTo('foo.bar'),
+                    $this->identicalTo($testValue),
+                    $this->isFalse(),
+                    $this->identicalTo(0)
+                ),
+                array(
+                    $this->identicalTo('foo.baz'),
+                    $this->identicalTo($testValue),
+                    $this->isTrue(),
+                    $this->identicalTo(60)
+                )
+            )
+            ->willReturnOnConsecutiveCalls(
+                false,
+                true
+            )
+        ;
+
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('expunge')
+            ->withConsecutive(
+                array($this->identicalTo('foo.bar')),
+                array($this->identicalTo('foo.baz'))
+            )
+            ->willReturnOnConsecutiveCalls(
+                true,
+                false
+            )
+        ;
+
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('modifyInteger')
+            ->withConsecutive(
+                array(
+                    $this->identicalTo('foo.bar'),
+                    $this->identicalTo(1),
+                    $this->anything()
+                ),
+                array(
+                    $this->identicalTo('foo.baz'),
+                    $this->identicalTo(-1),
+                    $this->anything()
+                )
+            )
+            ->willReturnCallback(function ($key, $offset, &$success) {
+                if ('foo.bar' === $key) {
+                    $success = true;
+
+                    return 2;
+                } else {
+                    $success = false;
+
+                    return false;
+                }
+            })
+        ;
+
+        $cache = new Cache($driverMock, 'foo.');
+
+        $this->assertInstanceOf(__NAMESPACE__ . '\CacheInterface', $cache->getNamespace('lorem.'));
+        $this->assertTrue($cache->has('bar'));
+        $this->assertFalse($cache->has('baz'));
+        $this->assertSame($existingTestValue, $cache->get('bar'));
+        $this->assertFalse($cache->get('baz'));
+        $this->assertFalse($cache->add('bar', $testValue));
+        $this->assertTrue($cache->set('baz', $testValue, 60));
+        $this->assertTrue($cache->remove('bar'));
+        $this->assertFalse($cache->remove('baz'));
+        $this->assertSame(2, $cache->increment('bar', 1, $success));
+        $this->assertTrue($success);
+        $this->assertFalse($cache->decrement('baz', 1, $success));
+        $this->assertFalse($success);
     }
 
-    /**
-     * @dataProvider provideTestInstanceCreators
-     */
-    public function testGetLocal($cacheProvider)
+    public function testGetMultipleWithoutDriverSupport()
     {
-        $cache = $cacheProvider();
+        $driverMock = $this->getDriverMock();
 
-        $this->assertInstanceOf('Kuria\\Cache\\LocalCacheInterface', $cache->getLocal('foo'));
+        $driverMock
+            ->expects($this->exactly(4))
+            ->method('fetch')
+            ->withConsecutive(
+                array($this->identicalTo('foo')),
+                array($this->identicalTo('foo')),
+                array($this->identicalTo('bar')),
+                array($this->identicalTo('baz'))
+            )
+            ->willReturnOnConsecutiveCalls(
+                false,
+                1,
+                2,
+                false
+            )
+        ;
+
+        $cache = new Cache($driverMock);
+
+        $this->assertSame(array(), $cache->getMultiple(array()));
+        $this->assertSame(array('foo' => false), $cache->getMultiple(array('foo')));
+
+        $cache->add('foo', 1);
+        $cache->add('bar', 2);
+
+        $values = $cache->getMultiple(array('foo', 'bar', 'baz'));
+
+        $this->assertInternalType('array', $values);
+        $this->assertArrayHasKey('foo', $values);
+        $this->assertArrayHasKey('bar', $values);
+        $this->assertArrayHasKey('baz', $values);
+
+        $this->assertSame(1, $values['foo']);
+        $this->assertSame(2, $values['bar']);
+        $this->assertFalse($values['baz']);
+    }
+    
+    public function testGetMultipleWithDriverSupport()
+    {
+        $driverMock = $this->getMultipleFetchDriverMock();
+
+        $driverMock
+            ->expects($this->exactly(3))
+            ->method('fetchMultiple')
+            ->withConsecutive(
+                array($this->identicalTo(array())),
+                array($this->identicalTo(array('foo'))),
+                array($this->identicalTo(array('foo', 'bar', 'baz')))
+            )
+            ->willReturnOnConsecutiveCalls(
+                array(),
+                array('foo' => false),
+                array('foo' => 1, 'bar' => 2, 'baz' => false)
+            )
+        ;
+
+        $driverMock
+            ->expects($this->never())
+            ->method('fetch')
+        ;
+        
+        $cache = new Cache($driverMock);
+        
+        $this->assertSame(array(), $cache->getMultiple(array()));
+        $this->assertSame(array('foo' => false), $cache->getMultiple(array('foo')));
+
+        $cache->add('foo', 1);
+        $cache->add('bar', 2);
+
+        $values = $cache->getMultiple(array('foo', 'bar', 'baz'));
+
+        $this->assertInternalType('array', $values);
+        $this->assertArrayHasKey('foo', $values);
+        $this->assertArrayHasKey('bar', $values);
+        $this->assertArrayHasKey('baz', $values);
+
+        $this->assertSame(1, $values['foo']);
+        $this->assertSame(2, $values['bar']);
+        $this->assertFalse($values['baz']);
     }
 
-    /**
-     * @dataProvider provideTestInstanceCreators
-     */
-    public function testApi($cacheProvider)
+    public function testCached()
     {
-        $cache = $cacheProvider();
+        $that = $this;
+        
+        $driverMock = $this->getDriverMock();
+        $subscriberMock = $this->getSubscriberMock();
 
-        $this->assertFalse($cache->has('test', 'foo'), 'has() returns false for non-existent entry');
-        $this->assertTrue($cache->set('test', 'foo', 123), 'set() returns true on success');
-        $this->assertSame(123, $cache->get('test', 'foo'), 'get() returns the stored data');
-        $this->assertFalse($cache->add('test', 'foo', 321), 'add() returns false for already existing entry');
-        $this->assertSame(123, $cache->get('test', 'foo'), 'add() does not overwrite existing entry');
-        $this->assertTrue($cache->add('test', 'bar', 'hello'), 'add() returns true on success');
-        $this->assertSame('hello', $cache->get('test', 'bar'), 'add() returns the stored data');
-        $this->assertTrue($cache->add('test', 'bar2', 'hello2'));
+        $subscriberMock
+            ->expects($this->exactly(2))
+            ->method('onFetchA')
+            ->willReturnCallback(function (array $event) use ($that) {
+                $that->assertSame('foo', $event['key']);
+                $that->assertSame(array('test-fetch-option' => 'potato'), $event['options']);
+            })
+        ;
 
-        $this->assertSame(124, $cache->increment('test', 'foo', 1, $incrementSuccess), 'increment() returns the new value');
-        $this->assertTrue($incrementSuccess, 'increment() sets the success variable correctly');
-        $this->assertSame(124, $cache->get('test', 'foo'), 'increment()ed values can be read with get()');
+        $subscriberMock
+            ->expects($this->once())
+            ->method('onStoreA')
+            ->willReturnCallback(function (array $event) use ($that) {
+                $that->assertSame(123, $event['ttl']);
+                $that->assertSame('new-value', $event['value']);
+                $that->assertSame(array('test-store-option' => 'hello'), $event['options']);
+            })
+        ;
 
-        $this->assertSame(123, $cache->decrement('test', 'foo', 1, $decrementSuccess), 'decrement() returns the new value');
-        $this->assertTrue($decrementSuccess, 'decrement() sets the success variable correctly');
-        $this->assertSame(123, $cache->get('test', 'foo'), 'decrement()ed values can be read with get()');
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                false,
+                'existing-value'
+            )
+        ;
 
-        $this->assertTrue($cache->remove('test', 'foo'), 'remove() returns true on success');
-        $this->assertFalse($cache->remove('test', 'baz'), 'remove() returns false on failure');
+        $driverMock
+            ->expects($this->once())
+            ->method('store')
+            ->with(
+                $this->identicalTo('foo'),
+                $this->identicalTo('new-value'),
+                $this->isFalse(),
+                $this->identicalTo(123)
+            )
+        ;
 
-        $this->assertFalse($cache->get('test', 'nonexistent'), 'get() returns false on failure');
-    }
+        $cache = new Cache($driverMock);
+        $cache->subscribe($subscriberMock);
 
-    /**
-     * @dataProvider provideTestInstanceCreators
-     */
-    public function testTypeStorage($cacheProvider)
-    {
-        $cache = $cacheProvider();
+        $result = $cache->cached(
+            'foo',
+            function (&$ttl, &$options) use ($that) {
+                $that->assertSame(0, $ttl);
+                $that->assertInternalType('array', $options);
+                $that->assertEmpty($options);
 
-        // null
-        $cache->set('test', 'null', null);
+                $ttl = 123;
+                $options['test-store-option'] = 'hello';
 
-        $this->assertSame(null, $cache->get('test', 'null'));
-
-        // boolean
-        $boolean1 = true;
-        $boolean2 = false;
-
-        $cache->set('test', 'bool1', $boolean1);
-        $cache->set('test', 'bool2', $boolean2);
-        $this->assertSame($boolean1, $cache->get('test', 'bool1'));
-        $this->assertSame($boolean2, $cache->get('test', 'bool2'));
-
-        // integer
-        $integer1 = 123;
-        $integer2 = -123;
-
-        $cache->set('test', 'int1', $integer1);
-        $cache->set('test', 'int2', $integer2);
-        $this->assertSame($integer1, $cache->get('test', 'int1'));
-        $this->assertSame($integer2, $cache->get('test', 'int2'));
-
-        // float
-        $float1 = 1.23;
-        $float2 = -1.23;
-
-        $cache->set('test', 'float1', $float1);
-        $cache->set('test', 'float2', $float2);
-        $this->assertSame($float1, $cache->get('test', 'float1'));
-        $this->assertSame($float2, $cache->get('test', 'float2'));
-
-        // string
-        $string = "foo ěščřžýáíé\nbar";
-
-        $cache->set('test', 'string', $string);
-        $this->assertSame($string, $cache->get('test', 'string'));
-
-        // array
-        $array = array(
-            'data' => 'foo',
-            'foo' => 'bar',
+                return 'new-value';
+            },
+            array('test-fetch-option' => 'potato')
         );
 
-        $cache->set('test', 'array', $array);
-        $this->assertSame($array, $cache->get('test', 'array'));
+        $this->assertSame('new-value', $result);
+        
+        $result = $cache->cached(
+            'foo', 
+            function () use ($that) {
+                $that->fail('The callback must not be called for existing values');
+            },
+            array('test-fetch-option' => 'potato')
+        );
 
-        // object
-        $object = new \stdClass();
-        $object->foo = 'bar';
-
-        $this->assertTrue($cache->set('test', 'object', $object));
-        $this->assertEquals($object, $cache->get('test', 'object'));
+        $this->assertSame('existing-value', $result);
     }
 
-    /**
-     * @dataProvider provideTestInstanceCreators
-     */
-    public function testClear($cacheProvider)
+    public function testGetDiscardsInvalidValues()
     {
-        $cache = $cacheProvider();
+        $that = $this;
 
-        $cache->set('foo', 'example', 1);
-        $cache->set('bar', 'example', 1);
+        $driverMock = $this->getDriverMock();
+        $subscriberMock = $this->getSubscriberMock();
 
-        if ($cache->supportsClearingCategory()) {
-            $cache->clear('foo');
+        $subscriberMock
+            ->expects($this->exactly(2))
+            ->method('onFetchA')
+            ->willReturnCallback(function (array $event) use ($that) {
+                // event listeners should get "invalid" values too
+                // (for unwrapping or other processing)
+                $that->assertNotFalse($event['value']);
+            })
+        ;
 
-            $this->assertFalse($cache->has('foo', 'example'), 'clear($category) removes keys from given category');
-            $this->assertTrue($cache->has('bar', 'example'), 'clear($category) does not remove keys from other categories');
-        } else {
-            $this->assertFalse($cache->clear('foo'), 'clear(category) should fail if the cache does not support it');
-            $this->assertTrue($cache->has('foo', 'example'));
-        }
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('fetch')
+            ->withConsecutive(
+                array($this->identicalTo('foo')),
+                array($this->identicalTo('bar'))
+            )
+            ->willReturnOnConsecutiveCalls(
+                $this->getMock(__NAMESPACE__ . '\WrappedCachedValueInterface'),
+                new \__PHP_Incomplete_Class()
+            )
+        ;
 
-        $cache->clear();
+        $cache = new Cache($driverMock);
+        $cache->subscribe($subscriberMock);
 
-        $this->assertFalse($cache->has('bar', 'example'), 'clear() removes all keys');
+        $this->assertFalse($cache->get('foo'));
+        $this->assertFalse($cache->get('bar'));
+    }
+
+    public function testNonFilterable()
+    {
+        $driverMock = $this->getDriverMock();
+
+        $driverMock
+            ->expects($this->exactly(2))
+            ->method('purge')
+            ->willReturnOnConsecutiveCalls(true, false)
+        ;
+
+        $cache = new Cache($driverMock);
+
+        $this->assertFalse($cache->canFilter());
+        $this->assertFalse($cache->filter('foo'));
+        $this->assertTrue($cache->clear());
+        $this->assertFalse($cache->clear());
+    }
+
+    public function testFilterable()
+    {
+        $driverMock = $this->getFilterableDriverMock();
+
+        $driverMock
+            ->expects($this->exactly(3))
+            ->method('filter')
+            ->withConsecutive(
+                array($this->identicalTo('foo.bar')),
+                array($this->identicalTo('foo.baz')),
+                array($this->identicalTo('foo.'))
+            )
+            ->willReturnOnConsecutiveCalls(
+                true,
+                false,
+                true
+            )
+        ;
+
+        $driverMock
+            ->expects($this->never())
+            ->method('purge')
+        ;
+
+        $cache = new Cache($driverMock, 'foo.');
+
+        $this->assertTrue($cache->canFilter());
+        $this->assertTrue($cache->filter('bar'));
+        $this->assertFalse($cache->filter('baz'));
+        $this->assertTrue($cache->clear());
     }
 
     /**
-     * @dataProvider provideTestInstanceCreators
+     * @dataProvider provideInvalidPrefixes
      * @expectedException InvalidArgumentException
      */
-    public function testIncrementStepLessThanOneThrowsException($cacheProvider)
+    public function testExceptionOnInvalidPrefix($prefix)
     {
-        $cache = $cacheProvider();
+        new Cache($this->getDriverMock(), $prefix);
+    }
 
-        $cache->increment('foo', 'bar', 0);
+    public function provideInvalidPrefixes()
+    {
+        // Only alphanumeric characters, underscores and a dots are allowed.
+        // The prefix must begin with an alphanumeric character and must not
+        // contain consecutive dots.
+
+        return array(
+            array('foo+bar'), // invalid character
+            array('.foo'), // invalid first character
+            array('foo..bar'), // consecutive dots
+            array('foo.bar..'), // consecutive dots at end
+        );
     }
 
     /**
-     * @dataProvider provideTestInstanceCreators
+     * @dataProvider provideInvalidKeys
      * @expectedException InvalidArgumentException
      */
-    public function testDecrementStepLessThanOneThrowsException($cacheProvider)
+    public function testExceptionOnInvalidKey($key)
     {
-        $cache = $cacheProvider();
+        $cache = new Cache($this->getDriverMock());
 
-        $cache->decrement('foo', 'bar', 0);
+        $cache->get($key);
     }
+
+    public function provideInvalidKeys()
+    {
+        // Only alphanumeric characters, underscores and a dots are allowed.
+        // The key must begin and end with an alphanumeric character and must
+        // not contain consecutive dots.
+
+        return array(
+            array('foo+bar'), // invalid character
+            array('.foo'), // invalid first character
+            array('foo.'), // invalid last character
+            array('foo..bar'), // consecutive dots
+        );
+    }
+
+    /**
+     * @dataProvider provideInvalidSteps
+     * @expectedException InvalidArgumentException
+     */
+    public function testExceptionOnInvalidIncrementStep($step)
+    {
+        $cache = new Cache($this->getDriverMock());
+
+        $cache->increment('foo', $step);
+    }
+
+    /**
+     * @dataProvider provideInvalidSteps
+     * @expectedException InvalidArgumentException
+     */
+    public function testExceptionOnInvalidDecrementStep($step)
+    {
+        $cache = new Cache($this->getDriverMock());
+
+        $cache->decrement('foo', $step);
+    }
+
+    public function provideInvalidSteps()
+    {
+        return array(
+            array(0),
+            array(0.45),
+            array(-1),
+            array(-0.1),
+            array(-100),
+        );
+    }
+
+    /**
+     * @dataProvider provideStoreMethodNames
+     */
+    public function testStoreEvent($storeMethod)
+    {
+        $that = $this;
+
+        $driverMock = $this->getDriverMock();
+        $subscriberMock = $this->getMockForAbstractClass(__NAMESPACE__ . '\TestEventSubscriber');
+        
+        $subscriberMock
+            ->expects($this->once())
+            ->method('onStoreA')
+            ->willReturnCallback(function ($event) use ($that) {
+                $that->assertInternalType('array', $event);
+
+                $that->assertArrayHasKey('key', $event);
+                $that->assertSame('foo', $event['key']);
+
+                $that->assertArrayHasKey('value', $event);
+                $that->assertSame('test-value', $event['value']);
+
+                $that->assertArrayHasKey('ttl', $event);
+                $that->assertSame(60, $event['ttl']);
+
+                $that->assertArrayHasKey('options', $event);
+                $that->assertSame(array('some-option' => 'some-value'), $event['options']);
+
+                // the value, ttl and options keys should be references
+                $event['value'] = 'changed-test-value';
+                $event['ttl'] = 120;
+                $event['options']['extra-option'] = 'hello';
+            })
+        ;
+            
+        $subscriberMock
+            ->expects($this->once())
+            ->method('onStoreB')
+            ->willReturnCallback(function ($event) use ($that) {
+                // ensure that by-reference attribute changes are propagated to other event listeners
+                $that->assertSame('foo', $event['key']);
+                $that->assertSame('changed-test-value', $event['value']);
+                $that->assertSame(120, $event['ttl']);
+                $that->assertSame(array('some-option' => 'some-value', 'extra-option' => 'hello'), $event['options']);
+            })
+        ;
+
+        $driverMock
+            ->expects($this->once())
+            ->method('store')
+            ->willReturnCallback(function ($key, $value, $overwrite, $ttl) use ($that) {
+                // ensure that by-reference attribute changes are propagated to the driver
+                $that->assertSame('foo', $key);
+                $that->assertSame('changed-test-value', $value);
+                $that->assertSame(120, $ttl);
+
+                return true;
+            })
+        ;
+        
+        $cache = new Cache($driverMock);
+        $cache->subscribe($subscriberMock);
+
+        $this->assertTrue($cache->$storeMethod('foo', 'test-value', 60, array('some-option' => 'some-value')));
+    }
+
+    public function provideStoreMethodNames()
+    {
+        return array(
+            array('add'),
+            array('set'),
+        );
+    }
+
+    public function testFetchEvent()
+    {
+        $that = $this;
+
+        $driverMock = $this->getDriverMock();
+        $subscriberMock = $this->getSubscriberMock();
+        /* @var $subscriberMock EventSubscriberInterface */
+
+        $driverMock
+            ->expects($this->once())
+            ->method('fetch')
+            ->willReturn('test-value')
+        ;
+
+        $subscriberMock
+            ->expects($this->once())
+            ->method('onFetchA')
+            ->willReturnCallback(function ($event) use ($that) {
+                $that->assertInternalType('array', $event);
+
+                $that->assertArrayHasKey('key', $event);
+                $that->assertSame('foo', $event['key']);
+
+                $that->assertArrayHasKey('options', $event);
+                $that->assertSame(array('some-option' => 'some-value'), $event['options']);
+
+                $that->assertArrayHasKey('value', $event);
+                $that->assertSame('test-value', $event['value']);
+
+                // the value and options keys should be references
+                $event['value'] = 'changed-test-value';
+                $event['options']['extra-option'] = 'hello';
+            })
+        ;
+
+        $subscriberMock
+            ->expects($this->once())
+            ->method('onFetchB')
+            ->willReturnCallback(function ($event) use ($that) {
+                // ensure that by-reference attribute changes are propagated to other event listeners
+                $that->assertSame('foo', $event['key']);
+                $that->assertSame('changed-test-value', $event['value']);
+                $that->assertSame(array('some-option' => 'some-value', 'extra-option' => 'hello'), $event['options']);
+            })
+        ;
+
+        $cache = new Cache($driverMock);
+        $cache->subscribe($subscriberMock);
+
+        $this->assertSame('changed-test-value', $cache->get('foo', array('some-option' => 'some-value')));
+    }
+
+    public function testFetchEventDuringGetMultiple()
+    {
+        $that = $this;
+
+        $driverMock = $this->getDriverMock();
+        $subscriberMock = $this->getMockForAbstractClass(__NAMESPACE__ . '\TestEventSubscriber');
+
+        $invocationCounterA = 0;
+        $invocationCounterB = 0;
+
+        $invocationMap = array(
+            array('key' => 'foo', 'value' => 'original-foo-value'),
+            array('key' => 'bar', 'value' => 'original-bar-value'),
+            array('key' => 'baz', 'value' => false),
+        );
+
+        $driverMock
+            ->expects($this->exactly(3))
+            ->method('fetch')
+            ->withConsecutive(
+                array($this->identicalTo($invocationMap[0]['key'])),
+                array($this->identicalTo($invocationMap[1]['key'])),
+                array($this->identicalTo($invocationMap[2]['key']))
+            )
+            ->willReturnOnConsecutiveCalls(
+                $invocationMap[0]['value'],
+                $invocationMap[1]['value'],
+                $invocationMap[2]['value']
+            )
+        ;
+
+        $subscriberMock
+            ->expects($this->exactly(3))
+            ->method('onFetchA')
+            ->willReturnCallback(function ($event) use ($that, $invocationMap, &$invocationCounterA) {
+                $current = $invocationMap[$invocationCounterA];
+
+                $that->assertInternalType('array', $event);
+
+                $that->assertArrayHasKey('key', $event);
+                $that->assertSame($current['key'], $event['key']);
+
+                $that->assertArrayHasKey('options', $event);
+                $that->assertSame(array('some-option' => 'some-value'), $event['options']);
+
+                $that->assertArrayHasKey('value', $event);
+                $that->assertSame($current['value'], $event['value']);
+
+                // the value and options keys should be references
+                $event['value'] = "changed-{$current['key']}-value";
+                $event['options']["extra-{$current['key']}-option"] = $current['key'];
+
+                ++$invocationCounterA;
+            })
+        ;
+
+        $subscriberMock
+            ->expects($this->exactly(3))
+            ->method('onFetchB')
+            ->willReturnCallback(function ($event) use ($that, $invocationMap, &$invocationCounterB) {
+                $current = $invocationMap[$invocationCounterB];
+
+                // ensure that by-reference attribute changes are propagated to other event listeners
+                $that->assertSame($current['key'], $event['key']);
+                $that->assertSame("changed-{$current['key']}-value", $event['value']);
+                $that->assertSame(array('some-option' => 'some-value', "extra-{$current['key']}-option" => $current['key']), $event['options']);
+
+                ++$invocationCounterB;
+            })
+        ;
+
+        $cache = new Cache($driverMock);
+        $cache->subscribe($subscriberMock);
+
+        $this->assertSame(
+            array(
+                'foo' => 'changed-foo-value',
+                'bar' => 'changed-bar-value',
+                'baz' => 'changed-baz-value'
+            ),
+            $cache->getMultiple(
+                array('foo', 'bar', 'baz'),
+                array('some-option' => 'some-value')
+            )
+        );
+    }
+
+    public function testFetchEventFiresForNonexistentEntries()
+    {
+        $driverMock = $this->getDriverMock();
+        $subscriberMock = $this->getSubscriberMock();
+        /* @var $subscriberMock EventSubscriberInterface */
+
+        $subscriberMock
+            ->expects($this->exactly(2))
+            ->method('onFetchA')
+            ->with(
+                $this->callback(function ($event) {
+                    return false === $event['value'];
+                })
+            )
+        ;
+
+        $driverMock
+            ->expects($this->any())
+            ->method('fetch')
+            ->willReturn(false)
+        ;
+
+        $cache = new Cache($driverMock);
+        $cache->subscribe($subscriberMock);
+
+        $this->assertFalse($cache->get('foo'));
+        $this->assertFalse($cache->get('bar'));
+    }
+}
+
+abstract class TestEventSubscriber extends EventSubscriberAbstract
+{
+    public function getEvents()
+    {
+        return array(
+            'store' => array(
+                array('onStoreA', 10),
+                array('onStoreB', 0),
+            ),
+            'fetch' => array(
+                array('onFetchA', 10),
+                array('onFetchB', 0),
+            ),
+        );
+    }
+
+    abstract public function onStoreA($event);
+    abstract public function onStoreB($event);
+    abstract public function onFetchA($event);
+    abstract public function onFetchB($event);
 }

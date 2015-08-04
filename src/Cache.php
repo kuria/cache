@@ -2,194 +2,245 @@
 
 namespace Kuria\Cache;
 
-use Kuria\Event\ExternalObservable;
-use Kuria\Event\Observable;
+use Kuria\Cache\Driver\DriverInterface;
+use Kuria\Cache\Driver\FilterableInterface;
+use Kuria\Cache\Driver\MultipleFetchInterface;
+use Kuria\Event\EventEmitter;
 
 /**
- * Base cache class
+ * Cache facade
  *
- * Notes on $prefix, $category and $name:
- *
- *  - all of those should contain alphanumeric characters only
- *    with "_" and "/" being the only allowed exceptions
- *
- *  - this is not enforced but should be respected to maintain
- *    compatibility with all cache implementations that might
- *    be relying on this fact
+ * @emits fetch(array $event)
+ * @emits store(array $event)
  *
  * @author ShiraNai7 <shira.cz>
  */
-abstract class Cache extends ExternalObservable implements CacheInterface
+class Cache extends EventEmitter implements CacheInterface
 {
     /** @var string */
     protected $prefix = '';
-    /** @var CallbackStack|null */
-    protected $callbacks;
+    /** @var DriverInterface */
+    protected $driver;
 
-    protected function handleNullObservable()
+    /**
+     *
+     * @param DriverInterface $driver
+     * @param string|null     $prefix
+     */
+    public function __construct(DriverInterface $driver, $prefix = null)
     {
-        $this->observable = new Observable();
-    }
-
-    public function getLocal($category)
-    {
-        return new LocalCache($this, $category);
-    }
-
-    public function getPrefix()
-    {
-        return $this->prefix;
+        $this->driver = $driver;
+        
+        if (null !== $prefix) {
+            $this->setPrefix($prefix);
+        }
     }
 
     public function setPrefix($prefix)
     {
-        if ('' !== $prefix) {
-            if ('/' !== substr($prefix, -1)) {
-                throw new \InvalidArgumentException('Prefix must end with "/"');
-            }
-            if ('/' === $prefix[0]) {
-                throw new \InvalidArgumentException('Prefix must not start with "/"');
-            }
-        }
-
+        $this->ensureValidPrefix($prefix);
         $this->prefix = $prefix;
 
         return $this;
     }
 
-    public function has($category, $entry)
+    public function getNamespace($prefix)
     {
-        return $this->exists("{$this->prefix}{$category}/{$entry}");
+        return new NamespacedCache($this, $prefix);
     }
 
-    public function get($category, $entry, array $options = array())
+    public function has($key)
     {
-        $data = $this->fetch("{$this->prefix}{$category}/{$entry}");
+        return $this->driver->exists($this->processKey($key));
+    }
 
-        if (null !== $this->observable) {
-            $this->observable->notifyObservers(
-                new CacheFetchEvent($category, $entry, $data, $options),
-                $this
-            );
+    public function get($key, array $options = array())
+    {
+        $key = $this->processKey($key);
+        $value = $this->driver->fetch($key);
+
+        if (isset($this->listeners['fetch'])) {
+            $this->emit('fetch', array(
+                'key' => $key,
+                'options' => &$options,
+                'value' => &$value,
+            ));
         }
 
-        return $data;
-    }
-
-    public function add($category, $entry, $data, $ttl = 0, array $options = array())
-    {
-        if (null !== $this->observable) {
-            $this->observable->notifyObservers(
-                new CacheStoreEvent($category, $entry, $data, $ttl, $options),
-                $this
-            );
+        if ($value instanceof WrappedCachedValueInterface || $value instanceof \__PHP_Incomplete_Class) {
+            return false;
         }
 
-        return $this->store("{$this->prefix}{$category}/{$entry}", $data, false, $ttl);
+        return $value;
     }
 
-    public function set($category, $entry, $data, $ttl = 0, array $options = array())
+    public function getMultiple(array $keys, array $options = array())
     {
-        if (null !== $this->observable) {
-            $this->observable->notifyObservers(
-                new CacheStoreEvent($category, $entry, $data, $ttl, $options),
-                $this
-            );
+        // process the keys first
+        $processedKeys = array();
+        foreach ($keys as $key) {
+            $processedKeys[] = $this->processKey($key);
         }
 
-        return $this->store("{$this->prefix}{$category}/{$entry}", $data, true, $ttl);
-    }
-
-    public function increment($category, $entry, $step = 1, &$success = null)
-    {
-        $step = (int) $step;
-        if ($step < 1) {
-            throw new \InvalidArgumentException('The step must be >= 1');
-        }
-
-        return $this->modifyInteger("{$this->prefix}{$category}/{$entry}", $step, $success);
-    }
-
-    public function decrement($category, $entry, $step = 1, &$success = null)
-    {
-        $step = (int) $step;
-        if ($step < 1) {
-            throw new \InvalidArgumentException('The step must be >= 1');
-        }
-
-        return $this->modifyInteger("{$this->prefix}{$category}/{$entry}", -$step, $success);
-    }
-
-    public function remove($category, $entry)
-    {
-        return $this->expunge("{$this->prefix}{$category}/{$entry}");
-    }
-
-    public function clear($category = null)
-    {
-        if (null === $category) {
-            return $this->purge($this->prefix);
+        // fetch the values
+        if ($this->driver instanceof MultipleFetchInterface) {
+            // using a multi-fetch driver
+            $values = $this->driver->fetchMultiple($processedKeys);
         } else {
-            return $this->purge("{$this->prefix}{$category}/");
+            // one by one
+            $values = array();
+            foreach ($processedKeys as $key) {
+                $values[$key] = $this->driver->fetch($key);
+            }
+        }
+
+        // emit an event for each key
+        if (isset($this->listeners['fetch'])) {
+            foreach ($values as $key => &$value) {
+                $currentOptions = $options; // each emit should have its own copy
+
+                $this->emit('fetch', array(
+                    'key' => $key,
+                    'options' => &$currentOptions,
+                    'value' => &$value,
+                ));
+            }
+        }
+
+        return $values;
+    }
+
+    public function cached($key, $callback, array $options = array())
+    {
+        $value = $this->get($key, $options);
+
+        if (false === $value) {
+            $addTtl = 0;
+            $addOptions = array();
+            $value = call_user_func_array($callback, array(&$addTtl, &$addOptions));
+
+            if (false !== $value) {
+                $this->add($key, $value, $addTtl, $addOptions);
+            }
+        }
+
+        return $value;
+    }
+
+    public function add($key, $value, $ttl = 0, array $options = array())
+    {
+        $key = $this->processKey($key);
+
+        if (isset($this->listeners['store'])) {
+            $this->emit('store', array(
+                'key' => $key,
+                'value' => &$value,
+                'ttl' => &$ttl,
+                'options' => &$options,
+            ));
+        }
+
+        return $this->driver->store($key, $value, false, $ttl);
+    }
+
+    public function set($key, $value, $ttl = 0, array $options = array())
+    {
+        $key = $this->processKey($key);
+
+        if (isset($this->listeners['store'])) {
+            $this->emit('store', array(
+                'key' => $key,
+                'value' => &$value,
+                'ttl' => &$ttl,
+                'options' => &$options,
+            ));
+        }
+
+        return $this->driver->store($key, $value, true, $ttl);
+    }
+
+    public function increment($key, $step = 1, &$success = null)
+    {
+        $step = (int) $step;
+
+        if ($step < 1) {
+            throw new \InvalidArgumentException('The step must be >= 1');
+        }
+
+        return $this->driver->modifyInteger($this->processKey($key), $step, $success);
+    }
+
+    public function decrement($key, $step = 1, &$success = null)
+    {
+        $step = (int) $step;
+
+        if ($step < 1) {
+            throw new \InvalidArgumentException('The step must be >= 1');
+        }
+
+        return $this->driver->modifyInteger($this->processKey($key), -$step, $success);
+    }
+
+    public function remove($key)
+    {
+        return $this->driver->expunge($this->processKey($key));
+    }
+
+    public function clear()
+    {
+        if ('' !== $this->prefix && $this->canFilter()) {
+            return $this->driver->filter($this->prefix);
+        } else {
+            return $this->driver->purge();
         }
     }
 
-    public function supportsClearingCategory()
+    public function filter($prefix)
     {
-        return true;
+        if ($this->canFilter()) {
+            return $this->driver->filter($this->prefix . $prefix);
+        } else {
+            return false;
+        }
+    }
+
+    public function canFilter()
+    {
+        return $this->driver instanceof FilterableInterface;
+    }
+    
+    /**
+     * Validate a prefix
+     * 
+     * @param string $prefix
+     * @throws \InvalidArgumentException if the prefix is not valid
+     */
+    protected function ensureValidPrefix($prefix)
+    {
+        if (!preg_match('/^\w(?>\w+|\.(?!\.))*?$/', $prefix)) {
+            throw new \InvalidArgumentException(sprintf(
+                'The given prefix "%s" is invalid. Only alphanumeric characters, underscores and a dots are allowed. The prefix must begin with an alphanumeric character and must not contain consecutive dots.',
+                $prefix
+            ));
+        }
     }
 
     /**
-     * See if data exists in the cache
+     * Process a key before it is passed to the driver's methods
      *
      * @param string $key
-     * @return bool
+     * @throws \InvalidArgumentException if the key is not valid
+     * @return string
      */
-    abstract protected function exists($key);
+    protected function processKey($key)
+    {
+        if (!preg_match('/^\w(?>\w+|\.(?!\.|$))*?$/', $key)) {
+            throw new \InvalidArgumentException(sprintf(
+                'The given key "%s" is invalid. Only alphanumeric characters, underscores and a dots are allowed. The key must begin and end with an alphanumeric character and must not contain consecutive dots.',
+                $key
+            ));
+        }
 
-    /**
-     * Fetch data from the cache
-     *
-     * @param string $key
-     * @return mixed false on failure
-     */
-    abstract protected function fetch($key);
-
-    /**
-     * Store data in the cache
-     *
-     * @param string $key
-     * @param mixed  $data
-     * @param bool   $overwrite
-     * @param int    $ttl
-     * @return bool
-     */
-    abstract protected function store($key, $data, $overwrite, $ttl);
-
-    /**
-     * Delete data from the cache
-     *
-     * @param string $key
-     * @return bool
-     */
-    abstract protected function expunge($key);
-
-    /**
-     * Delete all data from the cache whose key matches the given prefix
-     * The prefix may be empty. In that cache the whole cache is purged.
-     *
-     * @param string $prefix will end with "/", unless it is empty
-     * @return bool
-     */
-    abstract protected function purge($prefix);
-
-    /**
-     * Modifify integer value in the cache
-     *
-     * @param string $key
-     * @param int    $offset   non-zero offset, either positive or negative
-     * @param bool   &$success variable to put success state into
-     * @return int the new value, or current value (on failure) or false if the entry is not valid
-     */
-    abstract protected function modifyInteger($key, $offset, &$success = null);
+        return $this->prefix . $key;
+    }
 }

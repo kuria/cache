@@ -1,24 +1,22 @@
 <?php
 
-namespace Kuria\Cache\Provider;
-
-use Kuria\Cache\CacheTest;
+namespace Kuria\Cache\Driver;
 
 /**
  * @requires extension xcache
  */
-class XcacheCacheTest extends CacheTest
+class XcacheDriverTest extends DriverTest
 {
-    public function provideTestInstanceCreators()
+    public function provideDriverFactories()
     {
         return array(
             array(function () {
-                $cache = new XcacheCache();
+                $driver = new XcacheDriver();
 
                 // make sure the cache is empty
-                $cache->clear();
+                $driver->purge();
 
-                return $cache;
+                return $driver;
             }),
         );
     }
