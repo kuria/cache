@@ -41,6 +41,12 @@ class FilesystemEntry
             ),
         ),
     );
+    /** @var int */
+    protected static $headerLength;
+    /** @var string */
+    protected static $headerReadFormat;
+    /** @var string */
+    protected static $headerWriteFormat;
 
     /** @var string */
     protected $path;
@@ -75,6 +81,9 @@ class FilesystemEntry
                 $write,
                 $create
             ));
+        }
+        if (null === self::$headerLength) {
+            self::detectPackSettings();
         }
 
         $this->path = $path;
@@ -148,8 +157,7 @@ class FilesystemEntry
     public function write($data, $ttl = 0)
     {
         if (false !== $this->initHandle(false, true)) {
-            $headerFormat = $this->isPhpFile ? 'a24iii' : 'iii';
-            $headerLength = ($this->isPhpFile ? 24 : 0) + 3 * PHP_INT_SIZE;
+            $headerLength = ($this->isPhpFile ? 24 : 0) + self::$headerLength;
 
             $dataBlock = serialize($data);
             $dataLength = strlen($dataBlock);
@@ -159,12 +167,15 @@ class FilesystemEntry
             if (@ftruncate($this->handle, $totalLength)) {
                 $writtenBytes = 0;
 
+                // php header
+                if ($this->isPhpFile) {
+                    $writtenBytes += fwrite($this->handle, '<?php __halt_compiler();');
+                }
+
                 // header
                 $writtenBytes += fwrite(
                     $this->handle,
-                    $this->isPhpFile
-                        ? pack($headerFormat, '<?php __halt_compiler();', $dataLength, time(), $ttl)
-                        : pack($headerFormat, $dataLength, time(), $ttl)
+                    pack(self::$headerWriteFormat, $dataLength, time(), $ttl)
                 );
 
                 // data block
@@ -254,18 +265,16 @@ class FilesystemEntry
         clearstatcache(true, $this->path);
         $fileSize = filesize($this->path);
 
-        $headerFormat = $this->isPhpFile
-            ? 'a24php_header/idata_length/icreated_at/ittl'
-            : 'idata_length/icreated_at/ittl'
-        ;
-        $headerLength = ($this->isPhpFile ? 24 : 0) + PHP_INT_SIZE * 3;
+        $totalHeaderLength = ($this->isPhpFile ? 24 : 0) + self::$headerLength;
 
-        if ($fileSize >= $headerLength) {
-            $header = unpack($headerFormat, fread($this->handle, $headerLength));
+        if ($fileSize >= $totalHeaderLength) {
+            if ($this->isPhpFile) {
+                fseek($this->handle, 24);
+            }
 
-            if (false !== $header && $fileSize === $headerLength + $header['data_length']) {
-                $header['header_length'] = $headerLength;
+            $header = unpack(self::$headerReadFormat, fread($this->handle, self::$headerLength));
 
+            if (false !== $header && $fileSize === $totalHeaderLength + $header['data_length']) {
                 return $header;
             }
         }
@@ -320,5 +329,23 @@ class FilesystemEntry
         }
 
         return false !== $this->handle;
+    }
+
+    /**
+     * Determine pack() format and integer size for the current platform
+     */
+    protected static function detectPackSettings()
+    {
+        if (PHP_VERSION_ID >= 50603 && 8 === PHP_INT_SIZE) {
+            // 64bit
+            self::$headerLength = 3 * 8;
+            self::$headerWriteFormat = 'JJJ';
+            self::$headerReadFormat = 'Jdata_length/Jcreated_at/Jttl';
+        } else {
+            // 32bit
+            self::$headerLength = 3 * 4;
+            self::$headerWriteFormat = 'NNN';
+            self::$headerReadFormat = 'Ndata_length/Ncreated_at/Nttl';
+        }
     }
 }
