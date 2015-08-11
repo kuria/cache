@@ -2,8 +2,6 @@
 
 namespace Kuria\Cache\Extension\BoundFile;
 
-use Kuria\Cache\WrappedCachedValueInterface;
-
 /**
  * File bound cached value
  *
@@ -11,7 +9,7 @@ use Kuria\Cache\WrappedCachedValueInterface;
  *
  * @author ShiraNai7 <shira.cz>
  */
-class FileBoundValue implements WrappedCachedValueInterface
+class FileBoundValue
 {
     /** @var int[] realpath => filemtime */
     protected $boundFileMap;

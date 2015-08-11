@@ -158,6 +158,8 @@ or `add()`.
     $extension = new BoundFileExtension();
     $cache->subscribe($extension);
 
+**Warning:** If you remove the extension after it has been used, you will need to clear the cache.
+
 
 #### Usage
 

@@ -318,43 +318,6 @@ class CacheTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('existing-value', $result);
     }
 
-    public function testGetDiscardsInvalidValues()
-    {
-        $that = $this;
-
-        $driverMock = $this->getDriverMock();
-        $subscriberMock = $this->getSubscriberMock();
-
-        $subscriberMock
-            ->expects($this->exactly(2))
-            ->method('onFetchA')
-            ->willReturnCallback(function (array $event) use ($that) {
-                // event listeners should get "invalid" values too
-                // (for unwrapping or other processing)
-                $that->assertNotFalse($event['value']);
-            })
-        ;
-
-        $driverMock
-            ->expects($this->exactly(2))
-            ->method('fetch')
-            ->withConsecutive(
-                array($this->identicalTo('foo')),
-                array($this->identicalTo('bar'))
-            )
-            ->willReturnOnConsecutiveCalls(
-                $this->getMock(__NAMESPACE__ . '\WrappedCachedValueInterface'),
-                new \__PHP_Incomplete_Class()
-            )
-        ;
-
-        $cache = new Cache($driverMock);
-        $cache->subscribe($subscriberMock);
-
-        $this->assertFalse($cache->get('foo'));
-        $this->assertFalse($cache->get('bar'));
-    }
-
     public function testNonFilterable()
     {
         $driverMock = $this->getDriverMock();

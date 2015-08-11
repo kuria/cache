@@ -67,10 +67,6 @@ class Cache extends EventEmitter implements CacheInterface
             ));
         }
 
-        if ($value instanceof WrappedCachedValueInterface || $value instanceof \__PHP_Incomplete_Class) {
-            return false;
-        }
-
         return $value;
     }
 
