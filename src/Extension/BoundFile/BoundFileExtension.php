@@ -39,11 +39,10 @@ class BoundFileExtension extends CacheExtensionAbstract
     public function onFetch(array $event)
     {
         if ($event['value'] instanceof FileBoundValue) {
-            if ($event['value']->validate()) {
-                $event['value'] = $event['value']->getWrappedValue();
-            } else {
-                $event['value'] = false;
-            }
+            $event['value'] = $event['value']->validate()
+                ? $event['value']->getWrappedValue()
+                : false
+            ;
         }
     }
 }
