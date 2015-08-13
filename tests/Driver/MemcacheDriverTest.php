@@ -25,7 +25,12 @@ class MemcacheDriverTest extends DriverTest
                         $_ENV['MEMCACHE_TEST_PORT']
                     ));
                 } else {
-                    return new MemcacheDriver($memcache);
+                    $driver = new MemcacheDriver($memcache);
+
+                    // make sure the cache is empty
+                    $driver->purge();
+
+                    return $driver;
                 }
             }),
         );
@@ -71,5 +76,31 @@ class MemcacheDriverTest extends DriverTest
             // the memcache server is not running
             return false;
         }
+    }
+
+    /**
+     * @dataProvider provideDriverFactories
+     */
+    public function testExistsHack($driverFactory)
+    {
+        $driver = $driverFactory();
+        /* @var $driver DriverInterface */
+
+        $driver->store('foo', 123, true);
+        $driver->store('bar', 'hello', true);
+        $driver->store('baz', array(1, 2, 3), true);
+
+        $this->assertTrue($driver->exists('foo'));
+        $this->assertTrue($driver->exists('bar'));
+        $this->assertTrue($driver->exists('baz'));
+        $this->assertFalse($driver->exists('lorem'));
+
+        $this->assertTrue($driver->store('lorem', 'test', false));
+        $this->assertTrue($driver->exists('lorem'));
+
+        $this->assertSame(123, $driver->fetch('foo'));
+        $this->assertSame('hello', $driver->fetch('bar'));
+        $this->assertSame(array(1, 2, 3), $driver->fetch('baz'));
+        $this->assertSame('test', $driver->fetch('lorem'));
     }
 }

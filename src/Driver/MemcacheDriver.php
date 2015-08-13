@@ -22,11 +22,29 @@ class MemcacheDriver implements DriverInterface, MultipleFetchInterface
 
     public function exists($key)
     {
-        // there is no "exists"-like method in memcache
-        // so we just attempt to store "false" for the given key
-        // which will fail for existing keys and act as
-        // "no value" if it is actually read
-        return false === $this->memcache->add($key, false, 0, 1);
+        // reset last error
+        if (PHP_MAJOR_VERSION >= 7) {
+            error_clear_last();
+        } else {
+            set_error_handler('min', 0); // never called
+            @trigger_error(null);
+            restore_error_handler();
+        }
+
+        // there is no "exists()" method in memcache - ugly hack follows
+        $result = @$this->memcache->increment($key, 0);
+
+        // if the result is not FALSE, then the entry exists (and is an integer)
+        // if the result is FALSE and no error has been raised, the entry does not exist
+        // if the result is FALSE and an error has been raised, the entry exists (and is not an integer)
+        return
+            false !== $result
+            || (
+                ($error = error_get_last())
+                && $error['file'] === __FILE__
+                && $error['line'] === __LINE__ - 10
+            )
+        ;
     }
 
     public function fetch($key)

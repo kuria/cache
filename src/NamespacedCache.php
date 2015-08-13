@@ -53,19 +53,24 @@ class NamespacedCache implements CacheInterface
 
     public function getMultiple(array $keys, array $options = array())
     {
-        // prefix keys first
+        // prepare keys
+        $keyMap = array();
         $prefixedKeys = array();
         foreach ($keys as $key) {
-            $prefixedKeys[] = $this->prefix . $key;
+            $prefixedKey = $this->prefix . $key;
+
+            $prefixedKeys[] = $prefixedKey;
+            $keyMap[$prefixedKey] = $key;
         }
 
         // fetch the values
         $values = $this->wrappedCache->getMultiple($prefixedKeys, $options);
         
-        // output an array with unprefixed keys
+        // remap the value array to use the original keys
         $output = array();
-        for ($i = 0; isset($keys[$i]); ++$i) {
-            $output[$keys[$i]] = $values[$prefixedKeys[$i]];
+        
+        foreach ($keyMap as $prefixedKey => $key) {
+            $output[$key] = $values[$prefixedKey];
         }
 
         return $output;

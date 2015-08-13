@@ -26,7 +26,7 @@ class TemporaryFileTest extends \PHPUnit_Framework_TestCase
 
         $tmpFileExists = file_exists($tmpFilePath);
         if ($tmpFileExists) {
-            // to not to leave junk behind
+            // do not leave junk behind
             unlink($tmpFilePath);
         }
 
@@ -39,11 +39,23 @@ class TemporaryFileTest extends \PHPUnit_Framework_TestCase
         $newPath = __DIR__ . '/../test_directory/moved_tmp_file/foo.tmp';
         $newPath2 = __DIR__ . '/../test_directory/moved_tmp_file/bar.tmp';
         
-        $this->assertTrue($tmpFile->move($newPath));
-        $this->assertTrue(is_file($newPath));
-        $this->assertFalse($tmpFile->move($newPath2));
-        $this->assertFalse($tmpFile->discard());
+        $e = null;
+        try {
+            $this->assertTrue($tmpFile->move($newPath));
+            $this->assertTrue(is_file($newPath));
+            $this->assertFalse($tmpFile->move($newPath2));
+            $this->assertFalse($tmpFile->discard());
+        } catch (\Exception $e) {
+        }
 
+        // do not leave junk behind
+        @unlink($newPath);
+        @unlink($newPath2);
+        @rmdir(__DIR__ . '/../test_directory/moved_tmp_file');
+        
+        if (null !== $e) {
+            throw $e;
+        }
     }
 
     public function testCleanupOnShutdown()
@@ -55,7 +67,7 @@ class TemporaryFileTest extends \PHPUnit_Framework_TestCase
 
         $tmpFileExists = file_exists($tmpFilePath);
         if ($tmpFileExists) {
-            // to not to leave junk behind
+            // do not leave junk behind
             unlink($tmpFilePath);
         }
 

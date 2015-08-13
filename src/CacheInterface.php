@@ -37,7 +37,7 @@ interface CacheInterface
     /**
      * Get a value for the given key
      *
-     * @param string $key the key
+     * @param string $key     the key
      * @param array  $options array of options (used by events)
      * @return mixed false on failure
      */
@@ -52,7 +52,7 @@ interface CacheInterface
      * The keys will be fetched all at once or one by one, depending on
      * the underlying driver's implementation.
      *
-     * @param string[] $keys the key
+     * @param string[] $keys    the key
      * @param array    $options array of options (used by events)
      * @return array associative array with all of the keys
      */
@@ -91,10 +91,10 @@ interface CacheInterface
 
     /**
      * Create a new value
-     * 
+     *
      * Does not overwrite if the key already exists.
      *
-     * @param string $key the key
+     * @param string $key     the key
      * @param mixed  $value   value to store
      * @param int    $ttl     time to live in seconds (0 = forever)
      * @param array  $options array of options (used by events)
@@ -104,10 +104,10 @@ interface CacheInterface
 
     /**
      * Set a value
-     * 
+     *
      * Overwrites if the key already exists.
      *
-     * @param string $key the key
+     * @param string $key     the key
      * @param mixed  $value   value to store
      * @param int    $ttl     time to live in seconds (0 = forever)
      * @param array  $options array of options (used by events)
@@ -117,12 +117,12 @@ interface CacheInterface
 
     /**
      * Increment an integer value
-     * 
+     *
      *  - the key must exist and the value should be an integer.
      *  - the result of incrementing non-integers is undefined and depends on the
      *    underlying driver implementation
      *
-     * @param string $key the key
+     * @param string $key      the key
      * @param int    $step     how much to increment by, must be >= 1
      * @param bool   &$success variable to put success state into
      * @throws \InvalidArgumentException if the step is invalid
@@ -132,12 +132,12 @@ interface CacheInterface
 
     /**
      * Decrement an integer value
-     * 
+     *
      *  - the key must exist and the value should be an integer.
      *  - the result of decrementing non-integers is undefined and depends on the
      *    underlying driver implementation
      *
-     * @param string $key the key
+     * @param string $key      the key
      * @param int    $step     how much to decrement by, must be >= 1
      * @param bool   &$success variable to put success state into
      * @throws \InvalidArgumentException if the step is invalid
@@ -148,7 +148,7 @@ interface CacheInterface
     /**
      * Remove a key
      *
-     * @param string $key  the key
+     * @param string $key the key
      * @return bool
      */
     public function remove($key);

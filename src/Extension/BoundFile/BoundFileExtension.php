@@ -13,22 +13,17 @@ use Kuria\Cache\Extension\CacheExtensionAbstract;
  */
 class BoundFileExtension extends CacheExtensionAbstract
 {
+    protected $priorities = array(
+        'wrap' => -1000,
+        'unwrap' => 1000,
+    );
+
     protected function getEvents()
     {
         return array(
-            'fetch' => array('onFetch', $this->priority),
-            'store' => array('onStore', $this->priority),
+            'store' => array('onStore', $this->priorities['wrap']),
+            'fetch' => array('onFetch', $this->priorities['unwrap']),
         );
-    }
-
-    public function onFetch(array $event)
-    {
-        if ($event['value'] instanceof FileBoundValue) {
-            $event['value'] = $event['value']->validate()
-                ? $event['value']->getWrappedValue()
-                : false
-            ;
-        }
     }
 
     public function onStore(array $event)
@@ -38,6 +33,17 @@ class BoundFileExtension extends CacheExtensionAbstract
                 $event['options']['bound_files'],
                 $event['value']
             );
+        }
+    }
+
+    public function onFetch(array $event)
+    {
+        if ($event['value'] instanceof FileBoundValue) {
+            if ($event['value']->validate()) {
+                $event['value'] = $event['value']->getWrappedValue();
+            } else {
+                $event['value'] = false;
+            }
         }
     }
 }

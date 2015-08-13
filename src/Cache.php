@@ -12,7 +12,7 @@ use Kuria\Event\EventEmitter;
  *
  * @emits fetch(array $event)
  * @emits store(array $event)
- *
+ * 
  * @author ShiraNai7 <shira.cz>
  */
 class Cache extends EventEmitter implements CacheInterface
@@ -23,7 +23,6 @@ class Cache extends EventEmitter implements CacheInterface
     protected $driver;
 
     /**
-     *
      * @param DriverInterface $driver
      * @param string|null     $prefix
      */
@@ -60,11 +59,19 @@ class Cache extends EventEmitter implements CacheInterface
         $value = $this->driver->fetch($key);
 
         if (isset($this->listeners['fetch'])) {
+            $found = false !== $value;
+
             $this->emit('fetch', array(
                 'key' => $key,
                 'options' => &$options,
                 'value' => &$value,
+                'found' => $found,
             ));
+
+            if ($found && false === $value) {
+                // invalidated by extension
+                $this->driver->expunge($key);
+            }
         }
 
         return $value;
@@ -72,34 +79,64 @@ class Cache extends EventEmitter implements CacheInterface
 
     public function getMultiple(array $keys, array $options = array())
     {
-        // process the keys first
+        // prepare keys
+        $keyMap = array();
         $processedKeys = array();
+        $numDifferentKeys = 0;
         foreach ($keys as $key) {
-            $processedKeys[] = $this->processKey($key);
+            $processedKey = $this->processKey($key);
+
+            $processedKeys[] = $processedKey;
+            $keyMap[$processedKey] = $key;
+
+            if ($processedKey !== $key) {
+                ++$numDifferentKeys;
+            }
         }
 
         // fetch the values
         if ($this->driver instanceof MultipleFetchInterface) {
             // using a multi-fetch driver
             $values = $this->driver->fetchMultiple($processedKeys);
+
+            // remap the value array to use the original keys
+            if ($numDifferentKeys > 0) {
+                $remappedValues = array();
+
+                foreach ($keyMap as $processedKey => $key) {
+                    $remappedValues[$key] = $values[$processedKey];
+                }
+
+                $values = $remappedValues;
+                $remappedValues = null;
+            }
         } else {
             // one by one
             $values = array();
-            foreach ($processedKeys as $key) {
-                $values[$key] = $this->driver->fetch($key);
+
+            // fetch and map in a single loop
+            foreach ($keyMap as $processedKey => $key) {
+                $values[$key] = $this->driver->fetch($processedKey);
             }
         }
 
         // emit an event for each key
         if (isset($this->listeners['fetch'])) {
             foreach ($values as $key => &$value) {
+                $found = false !== $value;
                 $currentOptions = $options; // each emit should have its own copy
 
                 $this->emit('fetch', array(
                     'key' => $key,
                     'options' => &$currentOptions,
                     'value' => &$value,
+                    'found' => $found,
                 ));
+
+                if ($found && false === $value) {
+                    // invalidated by extension
+                    $this->driver->expunge($key);
+                }
             }
         }
 
@@ -207,7 +244,7 @@ class Cache extends EventEmitter implements CacheInterface
     
     /**
      * Validate a prefix
-     * 
+     *
      * @param string $prefix
      * @throws \InvalidArgumentException if the prefix is not valid
      */

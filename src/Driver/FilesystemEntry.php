@@ -245,7 +245,6 @@ class FilesystemEntry
         }
 
         return false;
-        
     }
 
     /**

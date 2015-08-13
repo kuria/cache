@@ -129,7 +129,9 @@ Possible events emitted by the `Cache` class:
     1. `array $event`
         - `key`: the key being retrieved
         - `options`: reference to the options array
-        - `value`: reference to the value returned by the driver (can be `FALSE`)
+        - `found`: a boolean value indicating whether the driver returned a value
+        - `value`: reference to the value returned by the driver (can be `FALSE` if not found)
+            - if set to `FALSE` and the value was found, the key will be removed from the cache
 
 
 #### store

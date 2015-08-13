@@ -35,8 +35,8 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     }
     
      /**
-     * @return TestMultipleFetchDriver
-     */
+      * @return TestMultipleFetchDriver
+      */
     private function getMultipleFetchDriverMock()
     {
         return $this->getMockForAbstractClass(__NAMESPACE__ . '\Driver\TestMultipleFetchDriver');
@@ -164,10 +164,10 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->expects($this->exactly(4))
             ->method('fetch')
             ->withConsecutive(
-                array($this->identicalTo('foo')),
-                array($this->identicalTo('foo')),
-                array($this->identicalTo('bar')),
-                array($this->identicalTo('baz'))
+                array($this->identicalTo('test.foo')),
+                array($this->identicalTo('test.foo')),
+                array($this->identicalTo('test.bar')),
+                array($this->identicalTo('test.baz'))
             )
             ->willReturnOnConsecutiveCalls(
                 false,
@@ -177,7 +177,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             )
         ;
 
-        $cache = new Cache($driverMock);
+        $cache = new Cache($driverMock, 'test.');
 
         $this->assertSame(array(), $cache->getMultiple(array()));
         $this->assertSame(array('foo' => false), $cache->getMultiple(array('foo')));
@@ -206,13 +206,13 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->method('fetchMultiple')
             ->withConsecutive(
                 array($this->identicalTo(array())),
-                array($this->identicalTo(array('foo'))),
-                array($this->identicalTo(array('foo', 'bar', 'baz')))
+                array($this->identicalTo(array('test.foo'))),
+                array($this->identicalTo(array('test.foo', 'test.bar', 'test.baz')))
             )
             ->willReturnOnConsecutiveCalls(
                 array(),
-                array('foo' => false),
-                array('foo' => 1, 'bar' => 2, 'baz' => false)
+                array('test.foo' => false),
+                array('test.foo' => 1, 'test.bar' => 2, 'test.baz' => false)
             )
         ;
 
@@ -221,7 +221,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->method('fetch')
         ;
         
-        $cache = new Cache($driverMock);
+        $cache = new Cache($driverMock, 'test.');
         
         $this->assertSame(array(), $cache->getMultiple(array()));
         $this->assertSame(array('foo' => false), $cache->getMultiple(array('foo')));
@@ -529,7 +529,6 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
         $driverMock = $this->getDriverMock();
         $subscriberMock = $this->getSubscriberMock();
-        /* @var $subscriberMock EventSubscriberInterface */
 
         $driverMock
             ->expects($this->once())
@@ -548,6 +547,9 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
                 $that->assertArrayHasKey('options', $event);
                 $that->assertSame(array('some-option' => 'some-value'), $event['options']);
+
+                $that->assertArrayHasKey('found', $event);
+                $that->assertTrue($event['found']);
 
                 $that->assertArrayHasKey('value', $event);
                 $that->assertSame('test-value', $event['value']);
@@ -620,6 +622,9 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $that->assertArrayHasKey('options', $event);
                 $that->assertSame(array('some-option' => 'some-value'), $event['options']);
 
+                $that->assertArrayHasKey('found', $event);
+                $that->assertSame(false !== $current['value'], $event['found']);
+
                 $that->assertArrayHasKey('value', $event);
                 $that->assertSame($current['value'], $event['value']);
 
@@ -666,7 +671,6 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     {
         $driverMock = $this->getDriverMock();
         $subscriberMock = $this->getSubscriberMock();
-        /* @var $subscriberMock EventSubscriberInterface */
 
         $subscriberMock
             ->expects($this->exactly(2))
@@ -689,6 +693,57 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFalse($cache->get('foo'));
         $this->assertFalse($cache->get('bar'));
+    }
+
+    public function testFetchEventCanDiscardValues()
+    {
+        $driverMock = $this->getDriverMock();
+        $subscriberMock = $this->getSubscriberMock();
+
+        $driverMock
+            ->expects($this->exactly(4))
+            ->method('expunge')
+            ->withConsecutive(
+                array($this->identicalTo('foo')),
+                array($this->identicalTo('bar')),
+                array($this->identicalTo('lorem')),
+                array($this->identicalTo('ipsum'))
+            )
+            ->willReturn(true)
+        ;
+
+        $driverMock
+            ->expects($this->any())
+            ->method('fetch')
+            ->willReturnCallback(function ($key) {
+                switch ($key) {
+                    case 'foo':
+                    case 'bar':
+                    case 'lorem':
+                    case 'ipsum':
+                        return "{$key}-value";
+                    default:
+                        return false;
+                }
+            })
+        ;
+
+        $subscriberMock
+            ->expects($this->exactly(6))
+            ->method('onFetchA')
+            ->willReturnCallback(function ($event) {
+                $event['value'] = false; // discard
+            })
+        ;
+
+        $cache = new Cache($driverMock);
+        $cache->subscribe($subscriberMock);
+
+        $this->assertFalse($cache->get('foo'));
+        $this->assertFalse($cache->get('bar'));
+        $this->assertFalse($cache->get('nonexistent'));
+
+        $this->assertSame(array('lorem' => false, 'ipsum' => false, 'nonexistent2' => false), $cache->getMultiple(array('lorem', 'ipsum', 'nonexistent2')));
     }
 }
 
