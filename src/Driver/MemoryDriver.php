@@ -3,7 +3,7 @@
 namespace Kuria\Cache\Driver;
 
 /**
- * Memory cache driver
+ * Memory driver
  *
  * Stores values in script's memory.
  *

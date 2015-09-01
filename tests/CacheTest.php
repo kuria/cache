@@ -5,7 +5,7 @@ namespace Kuria\Cache;
 use Kuria\Cache\Driver\DriverInterface;
 use Kuria\Cache\Driver\TestFilterableDriver;
 use Kuria\Cache\Driver\TestMultipleFetchDriver;
-use Kuria\Event\EventSubscriberAbstract;
+use Kuria\Event\EventSubscriber;
 use Kuria\Event\EventSubscriberInterface;
 
 class CacheTest extends \PHPUnit_Framework_TestCase
@@ -747,7 +747,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     }
 }
 
-abstract class TestEventSubscriber extends EventSubscriberAbstract
+abstract class TestEventSubscriber extends EventSubscriber
 {
     public function getEvents()
     {

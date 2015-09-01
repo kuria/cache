@@ -55,8 +55,8 @@ interface DriverInterface
      * Modify existing integer value
      *
      * @param string $key
-     * @param int    $offset   non-zero offset, either positive or negative
-     * @param bool   &$success variable to put success state into
+     * @param int    $offset  non-zero offset, either positive or negative
+     * @param bool   $success variable to put success state into
      * @return int|bool the new value, current value or false (depending on success)
      */
     public function modifyInteger($key, $offset, &$success = null);

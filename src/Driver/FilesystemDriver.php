@@ -5,7 +5,7 @@ namespace Kuria\Cache\Driver;
 use Kuria\Cache\Util\TemporaryFile;
 
 /**
- * Filesystem cache driver
+ * Filesystem driver
  *
  * @author ShiraNai7 <shira.cz>
  */

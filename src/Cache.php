@@ -10,8 +10,8 @@ use Kuria\Event\EventEmitter;
 /**
  * Cache facade
  *
- * @emits fetch(array $event)
- * @emits store(array $event)
+ * @emits fetch(array $event) after the value been read from the driver
+ * @emits store(array $event) before a value is stored using the driver
  * 
  * @author ShiraNai7 <shira.cz>
  */
@@ -58,7 +58,7 @@ class Cache extends EventEmitter implements CacheInterface
         $key = $this->processKey($key);
         $value = $this->driver->fetch($key);
 
-        if (isset($this->listeners['fetch'])) {
+        if ($this->hasAnyListeners('fetch')) {
             $found = false !== $value;
 
             $this->emit('fetch', array(
@@ -121,10 +121,10 @@ class Cache extends EventEmitter implements CacheInterface
         }
 
         // emit an event for each key
-        if (isset($this->listeners['fetch'])) {
+        if ($this->hasAnyListeners('fetch')) {
             foreach ($values as $key => &$value) {
                 $found = false !== $value;
-                $currentOptions = $options; // each emit should have its own copy
+                $currentOptions = $options; // each emit should use its own copy
 
                 $this->emit('fetch', array(
                     'key' => $key,
@@ -164,7 +164,7 @@ class Cache extends EventEmitter implements CacheInterface
     {
         $key = $this->processKey($key);
 
-        if (isset($this->listeners['store'])) {
+        if ($this->hasAnyListeners('store')) {
             $this->emit('store', array(
                 'key' => $key,
                 'value' => &$value,
@@ -180,7 +180,7 @@ class Cache extends EventEmitter implements CacheInterface
     {
         $key = $this->processKey($key);
 
-        if (isset($this->listeners['store'])) {
+        if ($this->hasAnyListeners('store')) {
             $this->emit('store', array(
                 'key' => $key,
                 'value' => &$value,

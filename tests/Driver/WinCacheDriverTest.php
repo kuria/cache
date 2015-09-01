@@ -3,15 +3,15 @@
 namespace Kuria\Cache\Driver;
 
 /**
- * @requires extension apc
+ * @requires extension wincache
  */
-class ApcDriverTest extends DriverTest
+class WinCacheDriverTest extends DriverTest
 {
     public function provideDriverFactories()
     {
         return array(
             array(function () {
-                $driver = new ApcDriver();
+                $driver = new WinCacheDriver();
 
                 // make sure the cache is empty
                 $driver->purge();
@@ -25,8 +25,8 @@ class ApcDriverTest extends DriverTest
     {
         parent::setUp();
 
-        if ('cli' === PHP_SAPI && !ini_get('apc.enable_cli')) {
-            $this->markTestSkipped('APC is not enabled for the CLI environment (see php.ini - apc.enable_cli)');
+        if ('cli' === PHP_SAPI && !ini_get('wincache.enablecli')) {
+            $this->markTestSkipped('WinCache is not enabled for the CLI environment (see php.ini - wincache.enablecli)');
         }
     }
 }

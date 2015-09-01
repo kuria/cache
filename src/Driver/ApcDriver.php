@@ -3,7 +3,7 @@
 namespace Kuria\Cache\Driver;
 
 /**
- * APC / APCu cache driver
+ * APC / APCu driver
  *
  * @author ShiraNai7 <shira.cz>
  */
@@ -53,25 +53,18 @@ class ApcDriver implements DriverInterface, FilterableInterface, MultipleFetchIn
 
     public function filter($prefix)
     {
-        $success = true;
         $pattern = '/^' . preg_quote($prefix, '/') . '/';
         $apcIterator = new \APCIterator('user', $pattern, APC_ITER_KEY, 100, APC_LIST_ACTIVE);
 
         foreach ($apcIterator as $value) {
-            if (!apc_delete($value['key'])) {
-                $success = false; // @codeCoverageIgnore
-            } // @codeCoverageIgnore
+            apc_delete($value['key']);
         }
 
-        return $success;
+        return true;
     }
 
     public function modifyInteger($key, $offset, &$success = null)
     {
-        if ($offset > 0) {
-            return apc_inc($key, $offset, $success);
-        } else {
-            return apc_dec($key, abs($offset), $success);
-        }
+        return apc_inc($key, $offset, $success);
     }
 }

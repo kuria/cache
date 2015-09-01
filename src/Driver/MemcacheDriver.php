@@ -94,20 +94,7 @@ class MemcacheDriver implements DriverInterface, MultipleFetchInterface
 
     public function modifyInteger($key, $offset, &$success = null)
     {
-        if ($offset > 0) {
-            try {
-                $result = $this->memcache->increment($key, $offset);
-            } catch (\Exception $e) {
-                $result = false;
-            }
-        } else {
-            try {
-                $result = $this->memcache->decrement($key, abs($offset));
-            } catch (\Exception $e) {
-                $result = false;
-            }
-        }
-
+        $result = @$this->memcache->increment($key, $offset);
         $success = (false !== $result);
 
         return $result;

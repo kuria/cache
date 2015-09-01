@@ -122,9 +122,9 @@ interface CacheInterface
      *  - the result of incrementing non-integers is undefined and depends on the
      *    underlying driver implementation
      *
-     * @param string $key      the key
-     * @param int    $step     how much to increment by, must be >= 1
-     * @param bool   &$success variable to put success state into
+     * @param string $key     the key
+     * @param int    $step    how much to increment by, must be >= 1
+     * @param bool   $success variable to put success state into
      * @throws \InvalidArgumentException if the step is invalid
      * @return int|bool the new value, current value (on failure) or false on failure
      */
@@ -137,9 +137,9 @@ interface CacheInterface
      *  - the result of decrementing non-integers is undefined and depends on the
      *    underlying driver implementation
      *
-     * @param string $key      the key
-     * @param int    $step     how much to decrement by, must be >= 1
-     * @param bool   &$success variable to put success state into
+     * @param string $key     the key
+     * @param int    $step    how much to decrement by, must be >= 1
+     * @param bool   $success variable to put success state into
      * @throws \InvalidArgumentException if the step is invalid
      * @return int|bool the new value, current value (on failure) or false on failure
      */

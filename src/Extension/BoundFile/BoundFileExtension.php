@@ -2,7 +2,7 @@
 
 namespace Kuria\Cache\Extension\BoundFile;
 
-use Kuria\Cache\Extension\CacheExtensionAbstract;
+use Kuria\Cache\Extension\CacheExtension;
 
 /**
  * Bound file extension
@@ -11,7 +11,7 @@ use Kuria\Cache\Extension\CacheExtensionAbstract;
  *
  * @author ShiraNai7 <shira.cz>
  */
-class BoundFileExtension extends CacheExtensionAbstract
+class BoundFileExtension extends CacheExtension
 {
     protected $priorities = array(
         'wrap' => -1000,

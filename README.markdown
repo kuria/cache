@@ -22,6 +22,7 @@ Caching library with driver abstraction and namespacing support.
     - Memory
     - APC / APCu
     - XCache
+    - WinCache
     - Memcache
 - extension system
     - implemented using the [kuria/event](https://github.com/kuria/event) library
@@ -37,17 +38,12 @@ Caching library with driver abstraction and namespacing support.
 
 ## <a name="drivers"></a> Drivers
 
-- `FilesystemDriver`
-    - stores data in the filesystem (in the given cache directory)
-    - uses advisory file locking and/or temporary files to prevent race conditions
-- `MemoryDriver`
-    - stores data in the script's memory
-- `ApcDiver`
-    - uses [APC](http://php.net/manual/en/book.apc.php) or [APCu](https://pecl.php.net/package/APCu)
-- `XcacheDriver`
-    - uses [XCache](http://xcache.lighttpd.net/)
-- `MemcacheDriver`
-    - uses [Memcache](https://pecl.php.net/package/memcache)
+- `FilesystemDriver` - stores data in the filesystem
+- `MemoryDriver` - stores data in the script's memory
+- `ApcDriver` - [APC](http://php.net/manual/en/book.apc.php) or [APCu](https://pecl.php.net/package/APCu)
+- `XcacheDriver` - [XCache](http://xcache.lighttpd.net/)
+- `WinCacheDriver` - [WinCache](https://pecl.php.net/package/wincache)
+- `MemcacheDriver` - [Memcache](https://pecl.php.net/package/memcache)
 
 
 ## <a name="usage"></a> Usage example

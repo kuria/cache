@@ -3,7 +3,7 @@
 namespace Kuria\Cache\Driver;
 
 /**
- * Xcache driver
+ * XCache driver
  *
  * @author ShiraNai7 <shira.cz>
  */

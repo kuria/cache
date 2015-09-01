@@ -2,14 +2,16 @@
 
 namespace Kuria\Cache\Extension;
 
-use Kuria\Event\EventSubscriberAbstract;
+use Kuria\Event\EventSubscriber;
 
 /**
  * Optional base class for cache extensions
  *
+ * Makes priorities configurable (for interoperability).
+ *
  * @author ShiraNai7 <shira.cz>
  */
-abstract class CacheExtensionAbstract extends EventSubscriberAbstract
+abstract class CacheExtension extends EventSubscriber
 {
     /** @var int[] key => priority map (set by subclass) */
     protected $priorities;

@@ -162,7 +162,7 @@ class BoundFileExtensionTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @param string $key
-     * @param mixed  &$value
+     * @param mixed  $value
      * @param array  $options
      * @return array
      */

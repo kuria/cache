@@ -1,13 +1,13 @@
 {
     "name": "kuria/cache",
     "description": "Caching library with driver abstraction and namespacing support.",
-    "keywords": ["cache", "caching", "apc", "apcu", "xcache", "memcache", "filesystem", "file", "apc", "apcu", "xcache", "memcache"],
+    "keywords": ["cache", "caching", "file", "filesystem", "memory", "apc", "apcu", "xcache", "memcache", "wincache"],
     "license": "MIT",
     "require": {
         "php": ">=5.3.0"
     },
     "require": {
-        "kuria/event": "~0.2.0"
+        "kuria/event": "~0.2.1"
     },
     "autoload": {
         "psr-4": {

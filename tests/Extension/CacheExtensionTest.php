@@ -2,7 +2,7 @@
 
 namespace Kuria\Cache\Extension;
 
-class CacheExtensionAbstractTest extends \PHPUnit_Framework_TestCase
+class CacheExtensionTest extends \PHPUnit_Framework_TestCase
 {
     private function getTestCacheExtenstion()
     {
@@ -37,7 +37,7 @@ class CacheExtensionAbstractTest extends \PHPUnit_Framework_TestCase
     }
 }
 
-class TestCacheExtension extends CacheExtensionAbstract
+class TestCacheExtension extends CacheExtension
 {
     protected $priorities = array(
         'foo' => 100,
