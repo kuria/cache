@@ -58,7 +58,7 @@ class Cache extends EventEmitter implements CacheInterface
         $key = $this->processKey($key);
         $value = $this->driver->fetch($key);
 
-        if ($this->hasAnyListeners('fetch')) {
+        if ($this->hasListeners('fetch')) {
             $found = false !== $value;
 
             $this->emit('fetch', array(
@@ -121,7 +121,7 @@ class Cache extends EventEmitter implements CacheInterface
         }
 
         // emit an event for each key
-        if ($this->hasAnyListeners('fetch')) {
+        if ($this->hasListeners('fetch')) {
             foreach ($values as $key => &$value) {
                 $found = false !== $value;
                 $currentOptions = $options; // each emit should use its own copy
@@ -164,7 +164,7 @@ class Cache extends EventEmitter implements CacheInterface
     {
         $key = $this->processKey($key);
 
-        if ($this->hasAnyListeners('store')) {
+        if ($this->hasListeners('store')) {
             $this->emit('store', array(
                 'key' => $key,
                 'value' => &$value,
@@ -180,7 +180,7 @@ class Cache extends EventEmitter implements CacheInterface
     {
         $key = $this->processKey($key);
 
-        if ($this->hasAnyListeners('store')) {
+        if ($this->hasListeners('store')) {
             $this->emit('store', array(
                 'key' => $key,
                 'value' => &$value,
