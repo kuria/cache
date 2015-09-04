@@ -13,6 +13,7 @@ Caching library with driver abstraction and namespacing support.
 - [Cache events](#events)
 - [Bound file extension](#bound-file-extension)
 
+
 ## <a name="features"></a> Features
 
 - driver abstraction
@@ -30,6 +31,7 @@ Caching library with driver abstraction and namespacing support.
 - built-in extensions:
     - BoundFileExtension (invalidates cache entries if any one of the bound files is modified)
         - useful during development
+
 
 ## <a name="requirements"></a> Requirements
 
