@@ -16,7 +16,7 @@ class TemporaryFile extends \SplFileInfo
     /** @var array */
     protected static $registry = array();
     /** @var bool */
-    protected static $discardAllRegistered = false;
+    protected static $removalOnShutdown = false;
 
     /** @var string */
     protected $realPath;
@@ -37,11 +37,8 @@ class TemporaryFile extends \SplFileInfo
             }
         }
 
-        // register discardAll as shutdown function on first use
-        if (!self::$discardAllRegistered) {
-            register_shutdown_function(array(__class__, 'discardAll'));
-            self::$discardAllRegistered = true;
-        }
+        // make sure the discardAll method is called on shutdown
+        static::ensureRemovalOnShutdown();
 
         // call parent constructor
         parent::__construct($fileName);
@@ -49,7 +46,18 @@ class TemporaryFile extends \SplFileInfo
         $this->realPath = $this->getRealPath();
 
         // add path to registry
-        self::$registry[$this->realPath] = true;
+        static::$registry[$this->realPath] = true;
+    }
+
+    /**
+     * Make sure the discardAll method is called on shutdown
+     */
+    protected static function ensureRemovalOnShutdown()
+    {
+        if (!static::$removalOnShutdown) {
+            register_shutdown_function(array(__CLASS__, 'discardAll'));
+            static::$removalOnShutdown = true;
+        }
     }
 
     /**
@@ -114,7 +122,7 @@ class TemporaryFile extends \SplFileInfo
      */
     public function unregister()
     {
-        unset(self::$registry[$this->realPath]);
+        unset(static::$registry[$this->realPath]);
     }
 
     /**
@@ -124,12 +132,12 @@ class TemporaryFile extends \SplFileInfo
      */
     public static function discardAll()
     {
-        foreach (array_keys(self::$registry) as $realPath) {
+        foreach (array_keys(static::$registry) as $realPath) {
             if (is_file($realPath)) {
                 @unlink($realPath);
             }
         }
 
-        self::$registry = array();
+        static::$registry = array();
     }
 }

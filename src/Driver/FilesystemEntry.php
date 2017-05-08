@@ -74,7 +74,7 @@ class FilesystemEntry
      */
     public function __construct($path, $isPhpFile, $read, $write, $create, $lock = true)
     {
-        if (!isset(self::$modeMap[$read][$write][$create])) {
+        if (!isset(static::$modeMap[$read][$write][$create])) {
             throw new \InvalidArgumentException(sprintf(
                 'Unsupported access flag combination: read=%d, write=%d, create=%d',
                 $read,
@@ -82,8 +82,8 @@ class FilesystemEntry
                 $create
             ));
         }
-        if (null === self::$headerLength) {
-            self::detectPackSettings();
+        if (null === static::$headerLength) {
+            static::detectPackSettings();
         }
 
         $this->path = $path;
@@ -157,7 +157,7 @@ class FilesystemEntry
     public function write($data, $ttl = 0)
     {
         if (false !== $this->initHandle(false, true)) {
-            $headerLength = ($this->isPhpFile ? 24 : 0) + self::$headerLength;
+            $headerLength = ($this->isPhpFile ? 24 : 0) + static::$headerLength;
 
             $dataBlock = serialize($data);
             $dataLength = strlen($dataBlock);
@@ -175,7 +175,7 @@ class FilesystemEntry
                 // header
                 $writtenBytes += fwrite(
                     $this->handle,
-                    pack(self::$headerWriteFormat, $dataLength, time(), $ttl)
+                    pack(static::$headerWriteFormat, $dataLength, time(), $ttl)
                 );
 
                 // data block
@@ -264,14 +264,14 @@ class FilesystemEntry
         clearstatcache(true, $this->path);
         $fileSize = filesize($this->path);
 
-        $totalHeaderLength = ($this->isPhpFile ? 24 : 0) + self::$headerLength;
+        $totalHeaderLength = ($this->isPhpFile ? 24 : 0) + static::$headerLength;
 
         if ($fileSize >= $totalHeaderLength) {
             if ($this->isPhpFile) {
                 fseek($this->handle, 24);
             }
 
-            $header = unpack(self::$headerReadFormat, fread($this->handle, self::$headerLength));
+            $header = unpack(static::$headerReadFormat, fread($this->handle, static::$headerLength));
 
             if (false !== $header && $fileSize === $totalHeaderLength + $header['data_length']) {
                 return $header;
@@ -300,7 +300,7 @@ class FilesystemEntry
         // initialize the handle
         if (null === $this->handle) {
             // open
-            $mode = self::$modeMap[$this->read][$this->write][$this->create];
+            $mode = static::$modeMap[$this->read][$this->write][$this->create];
 
             if (false === $mode) {
                 throw new \LogicException('The entry has been opened in a handle-less mode, cannot initialize the handle');
@@ -337,14 +337,14 @@ class FilesystemEntry
     {
         if (PHP_VERSION_ID >= 50603 && 8 === PHP_INT_SIZE) {
             // 64bit
-            self::$headerLength = 3 * 8;
-            self::$headerWriteFormat = 'JJJ';
-            self::$headerReadFormat = 'Jdata_length/Jcreated_at/Jttl';
+            static::$headerLength = 3 * 8;
+            static::$headerWriteFormat = 'JJJ';
+            static::$headerReadFormat = 'Jdata_length/Jcreated_at/Jttl';
         } else {
             // 32bit
-            self::$headerLength = 3 * 4;
-            self::$headerWriteFormat = 'NNN';
-            self::$headerReadFormat = 'Ndata_length/Ncreated_at/Nttl';
+            static::$headerLength = 3 * 4;
+            static::$headerWriteFormat = 'NNN';
+            static::$headerReadFormat = 'Ndata_length/Ncreated_at/Nttl';
         }
     }
 }

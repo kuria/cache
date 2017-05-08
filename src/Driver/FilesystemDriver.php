@@ -80,7 +80,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
      */
     public function setStorageMode($storageMode)
     {
-        if (self::STORAGE_NORMAL !== $storageMode && self::STORAGE_PHP !== $storageMode) {
+        if (static::STORAGE_NORMAL !== $storageMode && static::STORAGE_PHP !== $storageMode) {
             throw new \InvalidArgumentException('Invalid storage mode');
         }
 
@@ -160,7 +160,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
 
                 $entry = new FilesystemEntry(
                     $temporaryFile->getPathname(),
-                    self::STORAGE_PHP === $this->storageMode,
+                    static::STORAGE_PHP === $this->storageMode,
                     false,
                     true,
                     false,
@@ -305,7 +305,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
             "{$this->cacheDir}/"
             . str_replace('.', '/', $key)
             . ($addFileExtension
-                ? (self::STORAGE_PHP === $this->storageMode
+                ? (static::STORAGE_PHP === $this->storageMode
                     ? '.php'
                     : '.dat')
                 : ''
@@ -324,7 +324,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
     {
         return new FilesystemEntry(
             $this->getPath($key),
-            self::STORAGE_PHP === $this->storageMode,
+            static::STORAGE_PHP === $this->storageMode,
             $read,
             $write,
             $create
