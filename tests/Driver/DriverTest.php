@@ -13,6 +13,7 @@ abstract class DriverTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideDriverFactories
+     * @param callable $driverFactory
      */
     public function testApi($driverFactory)
     {
@@ -44,6 +45,7 @@ abstract class DriverTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideDriverFactories
+     * @param callable $driverFactory
      */
     public function testModifyingNonintegerValues($driverFactory)
     {
@@ -75,6 +77,7 @@ abstract class DriverTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideDriverFactories
+     * @param callable $driverFactory
      */
     public function testTypeStorage($driverFactory)
     {
@@ -138,6 +141,7 @@ abstract class DriverTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideDriverFactories
+     * @param callable $driverFactory
      */
     public function testPurge($driverFactory)
     {
@@ -155,6 +159,7 @@ abstract class DriverTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideDriverFactories
+     * @param callable $driverFactory
      */
     public function testFilter($driverFactory)
     {
@@ -204,6 +209,7 @@ abstract class DriverTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideDriverFactories
+     * @param callable $driverFactory
      */
     public function testFetchMultiple($driverFactory)
     {

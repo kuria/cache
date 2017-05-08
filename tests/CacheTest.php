@@ -11,7 +11,7 @@ use Kuria\Event\EventSubscriberInterface;
 class CacheTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @return DriverInterface
+     * @return DriverInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     private function getDriverMock()
     {
@@ -19,7 +19,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return EventSubscriberInterface
+     * @return EventSubscriberInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     private function getSubscriberMock()
     {
@@ -27,7 +27,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return TestFilterableDriver
+     * @return TestFilterableDriver|\PHPUnit_Framework_MockObject_MockObject
      */
     private function getFilterableDriverMock()
     {
@@ -35,7 +35,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     }
     
      /**
-      * @return TestMultipleFetchDriver
+      * @return TestMultipleFetchDriver|\PHPUnit_Framework_MockObject_MockObject
       */
     private function getMultipleFetchDriverMock()
     {
@@ -371,10 +371,11 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider provideInvalidPrefixes
      * @expectedException InvalidArgumentException
+     * @param string $invalidPrefix
      */
-    public function testExceptionOnInvalidPrefix($prefix)
+    public function testExceptionOnInvalidPrefix($invalidPrefix)
     {
-        new Cache($this->getDriverMock(), $prefix);
+        new Cache($this->getDriverMock(), $invalidPrefix);
     }
 
     public function provideInvalidPrefixes()
@@ -394,12 +395,13 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider provideInvalidKeys
      * @expectedException InvalidArgumentException
+     * @param string $invalidKey
      */
-    public function testExceptionOnInvalidKey($key)
+    public function testExceptionOnInvalidKey($invalidKey)
     {
         $cache = new Cache($this->getDriverMock());
 
-        $cache->get($key);
+        $cache->get($invalidKey);
     }
 
     public function provideInvalidKeys()
@@ -419,23 +421,25 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider provideInvalidSteps
      * @expectedException InvalidArgumentException
+     * @param int|float $invalidStep
      */
-    public function testExceptionOnInvalidIncrementStep($step)
+    public function testExceptionOnInvalidIncrementStep($invalidStep)
     {
         $cache = new Cache($this->getDriverMock());
 
-        $cache->increment('foo', $step);
+        $cache->increment('foo', $invalidStep);
     }
 
     /**
      * @dataProvider provideInvalidSteps
      * @expectedException InvalidArgumentException
+     * @param int|float $invalidStep
      */
-    public function testExceptionOnInvalidDecrementStep($step)
+    public function testExceptionOnInvalidDecrementStep($invalidStep)
     {
         $cache = new Cache($this->getDriverMock());
 
-        $cache->decrement('foo', $step);
+        $cache->decrement('foo', $invalidStep);
     }
 
     public function provideInvalidSteps()
@@ -451,12 +455,15 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideStoreMethodNames
+     * @param string $storeMethod
      */
     public function testStoreEvent($storeMethod)
     {
         $that = $this;
 
         $driverMock = $this->getDriverMock();
+
+        /** @var EventSubscriberInterface|\PHPUnit_Framework_MockObject_MockObject $subscriberMock */
         $subscriberMock = $this->getMockForAbstractClass(__NAMESPACE__ . '\TestEventSubscriber');
         
         $subscriberMock
@@ -483,7 +490,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $event['options']['extra-option'] = 'hello';
             })
         ;
-            
+
         $subscriberMock
             ->expects($this->once())
             ->method('onStoreB')
@@ -582,6 +589,8 @@ class CacheTest extends \PHPUnit_Framework_TestCase
         $that = $this;
 
         $driverMock = $this->getDriverMock();
+
+        /** @var EventSubscriberInterface|\PHPUnit_Framework_MockObject_MockObject $subscriberMock */
         $subscriberMock = $this->getMockForAbstractClass(__NAMESPACE__ . '\TestEventSubscriber');
 
         $invocationCounterA = 0;

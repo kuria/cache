@@ -85,7 +85,7 @@ class FilesystemDriverTest extends DriverTest
     /**
      * Get test cache directory path
      *
-     * @param scalar $suffix
+     * @param string $suffix
      * @return string
      */
     public function getCacheDir($suffix = 'main')

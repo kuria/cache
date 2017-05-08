@@ -80,6 +80,7 @@ class MemcacheDriverTest extends DriverTest
 
     /**
      * @dataProvider provideDriverFactories
+     * @param callable $driverFactory
      */
     public function testExistsHack($driverFactory)
     {

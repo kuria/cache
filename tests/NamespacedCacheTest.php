@@ -5,7 +5,7 @@ namespace Kuria\Cache;
 class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @return CacheInterface
+     * @return CacheInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected function getWrappedCacheMock()
     {
@@ -256,6 +256,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider provideEmptyPrefixes
      * @expectedException InvalidArgumentException
+     * @param string $prefix
      */
     public function testExceptionOnEmptyPrefix($prefix)
     {

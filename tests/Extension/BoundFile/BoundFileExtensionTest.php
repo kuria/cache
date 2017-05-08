@@ -2,6 +2,8 @@
 
 namespace Kuria\Cache\Extension\BoundFile;
 
+use Kuria\Event\EventEmitterInterface;
+
 class BoundFileExtensionTest extends \PHPUnit_Framework_TestCase
 {
     public static function tearDownAfterClass()
@@ -30,6 +32,7 @@ class BoundFileExtensionTest extends \PHPUnit_Framework_TestCase
             ->setPriority('unwrap', 123)
         ;
 
+        /** @var EventEmitterInterface|\PHPUnit_Framework_MockObject_MockObject $eventEmitterMock */
         $eventEmitterMock = $this->getMock('Kuria\Event\EventEmitterInterface');
 
         $eventEmitterMock
@@ -65,6 +68,7 @@ class BoundFileExtensionTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertInstanceOf(__NAMESPACE__ . '\FileBoundValue', $value);
+        /** @var FileBoundValue $value */
         $this->assertArrayHasKey(realpath($this->getBoundFilePath()), $value->getBoundFileMap());
 
         // store a clone of the not-yet-validated file-bound object for later
