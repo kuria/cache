@@ -154,7 +154,7 @@ or `add()`.
 #### Registration
 
     use Kuria\Cache\Extension\BoundFile\BoundFileExtension;
-    
+
     $extension = new BoundFileExtension();
     $cache->subscribe($extension);
 
