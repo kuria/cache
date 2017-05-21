@@ -9,4 +9,9 @@
         <env name="MEMCACHE_TEST_HOST" value="127.0.0.1"/>
         <env name="MEMCACHE_TEST_PORT" value="11211"/>
     </php>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">./src</directory>
+        </whitelist>
+    </filter>
 </phpunit>
