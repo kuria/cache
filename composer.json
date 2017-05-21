@@ -14,5 +14,10 @@
         "psr-4": {
             "Kuria\\Cache\\": "src"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Kuria\\Cache\\": "tests"
+        }
     }
 }
