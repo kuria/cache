@@ -20,8 +20,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
             ->expects($this->atLeastOnce())
             ->method('has')
             ->with($this->identicalTo('foo.bar'))
-            ->willReturn(true)
-        ;
+            ->willReturn(true);
 
         $wrappedCacheMock
             ->expects($this->atLeastOnce())
@@ -30,8 +29,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
                 $this->identicalTo('foo.bar'),
                 $this->identicalTo(array('some-option' => 'some-value'))
             )
-            ->willReturn('test-value')
-        ;
+            ->willReturn('test-value');
 
         $wrappedCacheMock
             ->expects($this->atLeastOnce())
@@ -43,8 +41,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
             ->willReturn(array(
                 'foo.bar' => 'test-value',
                 'foo.baz' => false,
-            ))
-        ;
+            ));
 
         $wrappedCacheMock
             ->expects($this->atLeastOnce())
@@ -55,8 +52,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
                 $this->identicalTo(123),
                 $this->identicalTo(array('some-option' => 'some-value'))
             )
-            ->willReturn(true)
-        ;
+            ->willReturn(true);
 
         $wrappedCacheMock
             ->expects($this->atLeastOnce())
@@ -67,8 +63,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
                 $this->identicalTo(456),
                 $this->identicalTo(array('some-other-option' => 'some-other-value'))
             )
-            ->willReturn(false)
-        ;
+            ->willReturn(false);
 
         $wrappedCacheMock
             ->expects($this->atLeastOnce())
@@ -81,8 +76,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
                 $success = true;
 
                 return 123;
-            })
-        ;
+            });
 
         $wrappedCacheMock
             ->expects($this->atLeastOnce())
@@ -95,8 +89,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
                 $success = false;
 
                 return false;
-            })
-        ;
+            });
             
         $wrappedCacheMock
             ->expects($this->exactly(2))
@@ -108,8 +101,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
             ->willReturnOnConsecutiveCalls(
                 true,
                 false
-            )
-        ;
+            );
 
         $namespacedCache = new NamespacedCache($wrappedCacheMock, 'foo.');
 
@@ -134,8 +126,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
             ->expects($this->once())
             ->method('get')
             ->with($this->identicalTo('foo.bar.baz'))
-            ->willReturn('test-value')
-        ;
+            ->willReturn('test-value');
 
         $namespacedCache = new TestNamespacedCache($wrappedCacheMock, 'foo.');
         $this->assertSame($wrappedCacheMock, $namespacedCache->getWrappedCache());
@@ -162,8 +153,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
                 $this->identicalTo($cachedCallback),
                 $this->identicalTo(array('test-fetch-option' => 'banana'))
             )
-            ->willReturn('test-value')
-        ;
+            ->willReturn('test-value');
 
         $namespacedCache = new NamespacedCache($wrappedCacheMock, 'foo.');
 
@@ -183,29 +173,24 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
         $wrappedCacheMock
             ->expects($this->any())
             ->method('canFilter')
-            ->willReturn(false)
-        ;
+            ->willReturn(false);
 
         $wrappedCacheMock
             ->expects($this->exactly(2))
             ->method('filter')
             ->withConsecutive(
                 array($this->identicalTo('foo.bar')),
-                array($this->identicalTo('foo.baz'))/*,
-                array($this->identicalTo('foo.'))*/
+                array($this->identicalTo('foo.baz'))
             )
             ->willReturnOnConsecutiveCalls(
                 false,
-                false/*,
-                false*/
-            )
-        ;
+                false
+            );
 
         $wrappedCacheMock
             ->expects($this->once())
             ->method('clear')
-            ->willReturn(true)
-        ;
+            ->willReturn(true);
 
         $namespacedCache = new NamespacedCache($wrappedCacheMock, 'foo.');
 
@@ -222,8 +207,7 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
         $wrappedCacheMock
             ->expects($this->any())
             ->method('canFilter')
-            ->willReturn(true)
-        ;
+            ->willReturn(true);
 
         $wrappedCacheMock
             ->expects($this->exactly(3))
@@ -237,13 +221,11 @@ class NamespacedCacheTest extends \PHPUnit_Framework_TestCase
                 true,
                 false,
                 true
-            )
-        ;
+            );
 
         $wrappedCacheMock
             ->expects($this->never())
-            ->method('clear')
-        ;
+            ->method('clear');
 
         $namespacedCache = new NamespacedCache($wrappedCacheMock, 'foo.');
 

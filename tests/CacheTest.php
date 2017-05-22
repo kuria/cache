@@ -59,8 +59,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->willReturnOnConsecutiveCalls(
                 true,
                 false
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->exactly(2))
@@ -72,8 +71,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->willReturnOnConsecutiveCalls(
                 $existingTestValue,
                 false
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->exactly(2))
@@ -95,8 +93,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->willReturnOnConsecutiveCalls(
                 false,
                 true
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->exactly(2))
@@ -108,8 +105,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->willReturnOnConsecutiveCalls(
                 true,
                 false
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->exactly(2))
@@ -136,8 +132,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
                     return false;
                 }
-            })
-        ;
+            });
 
         $cache = new Cache($driverMock, 'foo.');
 
@@ -174,8 +169,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 1,
                 2,
                 false
-            )
-        ;
+            );
 
         $cache = new Cache($driverMock, 'test.');
 
@@ -213,13 +207,11 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 array(),
                 array('test.foo' => false),
                 array('test.foo' => 1, 'test.bar' => 2, 'test.baz' => false)
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->never())
-            ->method('fetch')
-        ;
+            ->method('fetch');
         
         $cache = new Cache($driverMock, 'test.');
         
@@ -254,8 +246,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->willReturnCallback(function (array $event) use ($that) {
                 $that->assertSame('foo', $event['key']);
                 $that->assertSame(array('test-fetch-option' => 'potato'), $event['options']);
-            })
-        ;
+            });
 
         $subscriberMock
             ->expects($this->once())
@@ -264,8 +255,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $that->assertSame(123, $event['ttl']);
                 $that->assertSame('new-value', $event['value']);
                 $that->assertSame(array('test-store-option' => 'hello'), $event['options']);
-            })
-        ;
+            });
 
         $driverMock
             ->expects($this->exactly(2))
@@ -273,8 +263,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->willReturnOnConsecutiveCalls(
                 false,
                 'existing-value'
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->once())
@@ -284,8 +273,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $this->identicalTo('new-value'),
                 $this->isFalse(),
                 $this->identicalTo(123)
-            )
-        ;
+            );
 
         $cache = new Cache($driverMock);
         $cache->subscribe($subscriberMock);
@@ -325,8 +313,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
         $driverMock
             ->expects($this->exactly(2))
             ->method('purge')
-            ->willReturnOnConsecutiveCalls(true, false)
-        ;
+            ->willReturnOnConsecutiveCalls(true, false);
 
         $cache = new Cache($driverMock);
 
@@ -352,13 +339,11 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 true,
                 false,
                 true
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->never())
-            ->method('purge')
-        ;
+            ->method('purge');
 
         $cache = new Cache($driverMock, 'foo.');
 
@@ -488,8 +473,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $event['value'] = 'changed-test-value';
                 $event['ttl'] = 120;
                 $event['options']['extra-option'] = 'hello';
-            })
-        ;
+            });
 
         $subscriberMock
             ->expects($this->once())
@@ -500,8 +484,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $that->assertSame('changed-test-value', $event['value']);
                 $that->assertSame(120, $event['ttl']);
                 $that->assertSame(array('some-option' => 'some-value', 'extra-option' => 'hello'), $event['options']);
-            })
-        ;
+            });
 
         $driverMock
             ->expects($this->once())
@@ -513,8 +496,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $that->assertSame(120, $ttl);
 
                 return true;
-            })
-        ;
+            });
         
         $cache = new Cache($driverMock);
         $cache->subscribe($subscriberMock);
@@ -540,8 +522,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
         $driverMock
             ->expects($this->once())
             ->method('fetch')
-            ->willReturn('test-value')
-        ;
+            ->willReturn('test-value');
 
         $subscriberMock
             ->expects($this->once())
@@ -564,8 +545,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 // the value and options keys should be references
                 $event['value'] = 'changed-test-value';
                 $event['options']['extra-option'] = 'hello';
-            })
-        ;
+            });
 
         $subscriberMock
             ->expects($this->once())
@@ -575,8 +555,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $that->assertSame('foo', $event['key']);
                 $that->assertSame('changed-test-value', $event['value']);
                 $that->assertSame(array('some-option' => 'some-value', 'extra-option' => 'hello'), $event['options']);
-            })
-        ;
+            });
 
         $cache = new Cache($driverMock);
         $cache->subscribe($subscriberMock);
@@ -614,8 +593,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $invocationMap[0]['value'],
                 $invocationMap[1]['value'],
                 $invocationMap[2]['value']
-            )
-        ;
+            );
 
         $subscriberMock
             ->expects($this->exactly(3))
@@ -642,8 +620,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $event['options']["extra-{$current['key']}-option"] = $current['key'];
 
                 ++$invocationCounterA;
-            })
-        ;
+            });
 
         $subscriberMock
             ->expects($this->exactly(3))
@@ -657,8 +634,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $that->assertSame(array('some-option' => 'some-value', "extra-{$current['key']}-option" => $current['key']), $event['options']);
 
                 ++$invocationCounterB;
-            })
-        ;
+            });
 
         $cache = new Cache($driverMock);
         $cache->subscribe($subscriberMock);
@@ -688,14 +664,12 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $this->callback(function ($event) {
                     return false === $event['value'];
                 })
-            )
-        ;
+            );
 
         $driverMock
             ->expects($this->any())
             ->method('fetch')
-            ->willReturn(false)
-        ;
+            ->willReturn(false);
 
         $cache = new Cache($driverMock);
         $cache->subscribe($subscriberMock);
@@ -718,8 +692,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 array($this->identicalTo('lorem')),
                 array($this->identicalTo('ipsum'))
             )
-            ->willReturn(true)
-        ;
+            ->willReturn(true);
 
         $driverMock
             ->expects($this->any())
@@ -734,16 +707,14 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                     default:
                         return false;
                 }
-            })
-        ;
+            });
 
         $subscriberMock
             ->expects($this->exactly(6))
             ->method('onFetchA')
             ->willReturnCallback(function ($event) {
                 $event['value'] = false; // discard
-            })
-        ;
+            });
 
         $cache = new Cache($driverMock);
         $cache->subscribe($subscriberMock);

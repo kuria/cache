@@ -35,8 +35,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
     {
         $this
             ->setCacheDir($cacheDir)
-            ->setTemporaryDir($temporaryDir)
-        ;
+            ->setTemporaryDir($temporaryDir);
 
         $isWindows = '\\' === DIRECTORY_SEPARATOR;
 
@@ -288,8 +287,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
                 } else {
                     return false;
                 }
-            })
-        ;
+            });
 
         return $newValue;
     }
@@ -309,8 +307,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
                     ? '.php'
                     : '.dat')
                 : ''
-            )
-        ;
+            );
     }
 
     /**

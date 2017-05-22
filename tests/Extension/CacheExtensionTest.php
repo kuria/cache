@@ -15,8 +15,7 @@ class CacheExtensionTest extends \PHPUnit_Framework_TestCase
 
         $ext
             ->setPriority('foo', 5)
-            ->setPriority('bar', -5)
-        ;
+            ->setPriority('bar', -5);
 
         $events = $ext->getEvents();
         $expectedEvents = array(

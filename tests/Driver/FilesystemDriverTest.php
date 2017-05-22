@@ -15,8 +15,7 @@ class FilesystemDriverTest extends DriverTest
                 $driver
                     ->setStorageMode(FilesystemDriver::STORAGE_NORMAL)
                     ->setUseTemporaryFiles(false)
-                    ->setUseUnlink(false)
-                ;
+                    ->setUseUnlink(false);
 
                 return $driver;
             }),
@@ -27,8 +26,7 @@ class FilesystemDriverTest extends DriverTest
                 $driver
                     ->setStorageMode(FilesystemDriver::STORAGE_PHP)
                     ->setUseTemporaryFiles(false)
-                    ->setUseUnlink(false)
-                ;
+                    ->setUseUnlink(false);
 
                 return $driver;
             }),
@@ -39,8 +37,7 @@ class FilesystemDriverTest extends DriverTest
                 $driver
                     ->setStorageMode(FilesystemDriver::STORAGE_NORMAL)
                     ->setUseTemporaryFiles(true)
-                    ->setUseUnlink(true)
-                ;
+                    ->setUseUnlink(true);
 
                 return $driver;
             }),
@@ -51,8 +48,7 @@ class FilesystemDriverTest extends DriverTest
                 $driver
                     ->setStorageMode(FilesystemDriver::STORAGE_PHP)
                     ->setUseTemporaryFiles(true)
-                    ->setUseUnlink(true)
-                ;
+                    ->setUseUnlink(true);
 
                 return $driver;
             }),
@@ -64,8 +60,7 @@ class FilesystemDriverTest extends DriverTest
                     ->setStorageMode(FilesystemDriver::STORAGE_NORMAL)
                     ->setUseTemporaryFiles(true)
                     ->setUseUnlink(true)
-                    ->setTemporaryDir($that->getCacheDir())
-                ;
+                    ->setTemporaryDir($that->getCacheDir());
 
                 return $driver;
             }),

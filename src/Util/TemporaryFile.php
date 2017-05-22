@@ -100,8 +100,7 @@ class TemporaryFile extends \SplFileInfo
         if ($this->valid) {
             $removed = is_file($this->realPath)
                 ? @unlink($this->realPath)
-                : true
-            ;
+                : true;
 
             if ($removed) {
                 $this->unregister();

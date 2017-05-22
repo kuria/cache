@@ -43,8 +43,7 @@ class MemcacheDriver implements DriverInterface, MultipleFetchInterface
                 ($error = error_get_last())
                 && $error['file'] === __FILE__
                 && $error['line'] === __LINE__ - 10
-            )
-        ;
+            );
     }
 
     public function fetch($key)

@@ -29,8 +29,7 @@ class BoundFileExtensionTest extends \PHPUnit_Framework_TestCase
 
         $ext
             ->setPriority('wrap', -123)
-            ->setPriority('unwrap', 123)
-        ;
+            ->setPriority('unwrap', 123);
 
         /** @var EventEmitterInterface|\PHPUnit_Framework_MockObject_MockObject $eventEmitterMock */
         $eventEmitterMock = $this->getMock('Kuria\Event\EventEmitterInterface');
@@ -41,8 +40,7 @@ class BoundFileExtensionTest extends \PHPUnit_Framework_TestCase
             ->withConsecutive(
                 array('store', array($ext, 'onStore'), -123),
                 array('fetch', array($ext, 'onFetch'), 123)
-            )
-        ;
+            );
 
         $ext->subscribeTo($eventEmitterMock);
     }

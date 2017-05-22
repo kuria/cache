@@ -127,8 +127,7 @@ class FilesystemEntry
         return
             $this->initHandle(true, false)
             && false !== ($header = $this->readHeader())
-            && $this->isFresh($header)
-        ;
+            && $this->isFresh($header);
     }
 
     /**

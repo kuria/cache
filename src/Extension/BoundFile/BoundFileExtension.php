@@ -41,8 +41,7 @@ class BoundFileExtension extends CacheExtension
         if ($event['value'] instanceof FileBoundValue) {
             $event['value'] = $event['value']->validate()
                 ? $event['value']->getWrappedValue()
-                : false
-            ;
+                : false;
         }
     }
 }
