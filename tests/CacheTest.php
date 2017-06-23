@@ -123,7 +123,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 )
             )
             ->willReturnCallback(function ($key, $offset, &$success) {
-                if ('foo.bar' === $key) {
+                if ($key === 'foo.bar') {
                     $success = true;
 
                     return 2;
@@ -610,7 +610,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 $that->assertSame(array('some-option' => 'some-value'), $event['options']);
 
                 $that->assertArrayHasKey('found', $event);
-                $that->assertSame(false !== $current['value'], $event['found']);
+                $that->assertSame($current['value'] !== false, $event['found']);
 
                 $that->assertArrayHasKey('value', $event);
                 $that->assertSame($current['value'], $event['value']);
@@ -662,7 +662,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
             ->method('onFetchA')
             ->with(
                 $this->callback(function ($event) {
-                    return false === $event['value'];
+                    return $event['value'] === false;
                 })
             );
 

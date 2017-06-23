@@ -53,7 +53,7 @@ class TemporaryFileTest extends \PHPUnit_Framework_TestCase
         @unlink($newPath2);
         @rmdir(__DIR__ . '/../test_directory/moved_tmp_file');
         
-        if (null !== $e) {
+        if ($e !== null) {
             throw $e;
         }
     }

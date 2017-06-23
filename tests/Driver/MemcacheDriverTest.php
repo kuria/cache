@@ -18,7 +18,7 @@ class MemcacheDriverTest extends DriverTest
             array(function () use ($that) {
                 $memcache = $that->getMemcache();
 
-                if (false === $memcache) {
+                if ($memcache === false) {
                     $that->markTestSkipped(sprintf(
                         'The memcache server %s:%d is not responding',
                         $_ENV['MEMCACHE_TEST_HOST'],
@@ -43,7 +43,7 @@ class MemcacheDriverTest extends DriverTest
      */
     public function getMemcache()
     {
-        if (null === $this->memcache) {
+        if ($this->memcache === null) {
             $this->memcache = $this->createMemcache();
         }
 
@@ -68,7 +68,7 @@ class MemcacheDriverTest extends DriverTest
         if (
             is_array($status)
             && isset($status["{$host}:{$port}"])
-            && false !== $status["{$host}:{$port}"]
+            && $status["{$host}:{$port}"] !== false
         ) {
             // the memcache server is up and running
             return $memcache;

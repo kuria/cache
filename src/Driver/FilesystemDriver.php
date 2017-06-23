@@ -62,7 +62,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
 
         // make sure the cache directory is not set to a filesystem root
         $cacheDirRealPath = realpath($cacheDir);
-        if ('' === trim($cacheDirRealPath, '.\\/ ') || 0 !== preg_match('~^[A-Za-z]+:(\\\\|/)?$~', $cacheDirRealPath)) {
+        if (trim($cacheDirRealPath, '.\\/ ') === '' || preg_match('~^[A-Za-z]+:(\\\\|/)?$~', $cacheDirRealPath) !== 0) {
             throw new \InvalidArgumentException(sprintf('Invalid cache directory "%s"', $cacheDirRealPath));
         }
 
@@ -101,7 +101,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
      */
     public function setTemporaryDir($temporaryDir)
     {
-        if (null !== $temporaryDir && !is_dir($temporaryDir) && !@mkdir($temporaryDir, 0777, true)) {
+        if ($temporaryDir !== null && !is_dir($temporaryDir) && !@mkdir($temporaryDir, 0777, true)) {
             throw new \RuntimeException(sprintf('Could not create temporary directory "%s"', $temporaryDir));
         }
 
@@ -211,7 +211,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
     {
         $path = $this->getPath($prefix, false);
 
-        if ('/' === substr($path, -1)) {
+        if (substr($path, -1) === '/') {
             $directoryPath = rtrim($path, '/');
             $localPrefix = null;
         } else {
@@ -225,8 +225,8 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
         if (is_dir($directoryPath)) {
             foreach (new \FilesystemIterator($directoryPath) as $item) {
                 if (
-                    null === $localPrefix
-                    || 0 === strncmp($item->getFilename(), $localPrefix, $localPrefixLen)
+                    $localPrefix === null
+                    || strncmp($item->getFilename(), $localPrefix, $localPrefixLen) === 0
                 ) {
                     if ($item->isDir()) {
                         if (!$this->purgeDirectory($item) || !@rmdir($item)) {
@@ -238,7 +238,7 @@ class FilesystemDriver implements DriverInterface, FilterableInterface
                 }
             }
             
-            if ($success && null === $localPrefix) {
+            if ($success && $localPrefix === null) {
                 @rmdir($directoryPath);
             }
         }

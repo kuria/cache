@@ -59,7 +59,7 @@ class WinCacheDriver implements DriverInterface, FilterableInterface, MultipleFe
 
         $keysToDelete = array();
         foreach ($info['ucache_entries'] as $entry) {
-            if (empty($entry['is_session']) && 0 === strncmp($entry['key_name'], $prefix, $prefixLen)) {
+            if (empty($entry['is_session']) && strncmp($entry['key_name'], $prefix, $prefixLen) === 0) {
                 $keysToDelete[] = $entry['key_name'];
             }
         }

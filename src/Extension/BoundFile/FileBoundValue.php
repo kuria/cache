@@ -44,7 +44,7 @@ class FileBoundValue
      */
     public function validate($bypassCache = false)
     {
-        if (null === $this->isValid || $bypassCache) {
+        if ($this->isValid === null || $bypassCache) {
             $this->isValid = $this->verifyBoundFileMap($this->boundFileMap, $bypassCache);
         }
 

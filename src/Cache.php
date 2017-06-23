@@ -30,7 +30,7 @@ class Cache extends EventEmitter implements CacheInterface
     {
         $this->driver = $driver;
         
-        if (null !== $prefix) {
+        if ($prefix !== null) {
             $this->setPrefix($prefix);
         }
     }
@@ -59,7 +59,7 @@ class Cache extends EventEmitter implements CacheInterface
         $value = $this->driver->fetch($key);
 
         if ($this->hasListeners('fetch')) {
-            $found = false !== $value;
+            $found = $value !== false;
 
             $this->emit('fetch', array(
                 'key' => $key,
@@ -68,7 +68,7 @@ class Cache extends EventEmitter implements CacheInterface
                 'found' => $found,
             ));
 
-            if ($found && false === $value) {
+            if ($found && $value === false) {
                 // invalidated by extension
                 $this->driver->expunge($key);
             }
@@ -123,7 +123,7 @@ class Cache extends EventEmitter implements CacheInterface
         // emit an event for each key
         if ($this->hasListeners('fetch')) {
             foreach ($values as $key => &$value) {
-                $found = false !== $value;
+                $found = $value !== false;
                 $currentOptions = $options; // each emit should use its own copy
 
                 $this->emit('fetch', array(
@@ -133,7 +133,7 @@ class Cache extends EventEmitter implements CacheInterface
                     'found' => $found,
                 ));
 
-                if ($found && false === $value) {
+                if ($found && $value === false) {
                     // invalidated by extension
                     $this->driver->expunge($key);
                 }
@@ -147,12 +147,12 @@ class Cache extends EventEmitter implements CacheInterface
     {
         $value = $this->get($key, $options);
 
-        if (false === $value) {
+        if ($value === false) {
             $addTtl = 0;
             $addOptions = array();
             $value = call_user_func_array($callback, array(&$addTtl, &$addOptions));
 
-            if (false !== $value) {
+            if ($value !== false) {
                 $this->add($key, $value, $addTtl, $addOptions);
             }
         }
@@ -221,7 +221,7 @@ class Cache extends EventEmitter implements CacheInterface
 
     public function clear()
     {
-        if ('' !== $this->prefix && $this->canFilter()) {
+        if ($this->prefix !== '' && $this->canFilter()) {
             return $this->driver->filter($this->prefix);
         } else {
             return $this->driver->purge();

@@ -18,7 +18,7 @@ class XcacheDriver implements DriverInterface, FilterableInterface
     {
         $value = xcache_get($key);
 
-        if (null === $value) {
+        if ($value === null) {
             // xcache returns NULL on failure
             // NULLs are stored serialized (as a string) so this is OK
             return false;

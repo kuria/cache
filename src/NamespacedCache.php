@@ -26,7 +26,7 @@ class NamespacedCache implements CacheInterface
 
     public function setPrefix($prefix)
     {
-        if ('' === $prefix || null === $prefix) {
+        if ($prefix === '' || $prefix === null) {
             throw new \InvalidArgumentException('The prefix must not be empty');
         }
         

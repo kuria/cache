@@ -22,7 +22,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface
     public function fetch($key)
     {
         $entry = $this->load($key);
-        if (false !== $entry) {
+        if ($entry !== false) {
             return $entry['value'];
         }
 
@@ -67,7 +67,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface
         $prefixLen = strlen($prefix);
 
         foreach (array_keys($this->registry) as $key) {
-            if (0 === strncmp($key, $prefix, $prefixLen)) {
+            if (strncmp($key, $prefix, $prefixLen) === 0) {
                 unset($this->registry[$key]);
             }
         }
@@ -79,7 +79,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface
     {
         $entry = $this->load($key);
 
-        if (false !== $entry && is_int($entry['value'])) {
+        if ($entry !== false && is_int($entry['value'])) {
             $entry['value'] += $offset;
             $this->registry[$key] = $entry;
             $success = true;
@@ -123,7 +123,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface
      */
     protected function isFresh(array $entry)
     {
-        if (0 === $entry['ttl'] || $entry['created_at'] + $entry['ttl'] > time()) {
+        if ($entry['ttl'] === 0 || $entry['created_at'] + $entry['ttl'] > time()) {
             // fresh
             return true;
         } else {

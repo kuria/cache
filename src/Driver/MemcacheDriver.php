@@ -38,7 +38,7 @@ class MemcacheDriver implements DriverInterface, MultipleFetchInterface
         // if the result is FALSE and no error has been raised, the entry does not exist
         // if the result is FALSE and an error has been raised, the entry exists (and is not an integer)
         return
-            false !== $result
+            $result !== false
             || (
                 ($error = error_get_last())
                 && $error['file'] === __FILE__
@@ -55,7 +55,7 @@ class MemcacheDriver implements DriverInterface, MultipleFetchInterface
     {
         $values = $this->memcache->get($keys);
 
-        if (false === $values) {
+        if ($values === false) {
             $values = array(); // @codeCoverageIgnore
         } // @codeCoverageIgnore
 
@@ -94,7 +94,7 @@ class MemcacheDriver implements DriverInterface, MultipleFetchInterface
     public function modifyInteger($key, $offset, &$success = null)
     {
         $result = @$this->memcache->increment($key, $offset);
-        $success = (false !== $result);
+        $success = ($result !== false);
 
         return $result;
     }

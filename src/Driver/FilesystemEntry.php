@@ -82,7 +82,7 @@ class FilesystemEntry
                 $create
             ));
         }
-        if (null === static::$headerLength) {
+        if (static::$headerLength === null) {
             static::detectPackSettings();
         }
 
@@ -107,8 +107,8 @@ class FilesystemEntry
      */
     public function close()
     {
-        if (null !== $this->handle) {
-            if (false !== $this->handle) {
+        if ($this->handle !== null) {
+            if ($this->handle !== false) {
                 if ($this->lock) {
                     flock($this->handle, LOCK_UN);
                 }
@@ -126,7 +126,7 @@ class FilesystemEntry
     {
         return
             $this->initHandle(true, false)
-            && false !== ($header = $this->readHeader())
+            && ($header = $this->readHeader()) !== (false)
             && $this->isFresh($header);
     }
 
@@ -137,7 +137,7 @@ class FilesystemEntry
     {
         if (
             $this->initHandle(true, false)
-            && false !== ($header = $this->readHeader())
+            && ($header = $this->readHeader()) !== (false)
             && $this->isFresh($header)
         ) {
             $dataBlock = fread($this->handle, $header['data_length']);
@@ -155,7 +155,7 @@ class FilesystemEntry
      */
     public function write($data, $ttl = 0)
     {
-        if (false !== $this->initHandle(false, true)) {
+        if ($this->initHandle(false, true) !== false) {
             $headerLength = ($this->isPhpFile ? 24 : 0) + static::$headerLength;
 
             $dataBlock = serialize($data);
@@ -200,15 +200,15 @@ class FilesystemEntry
     {
         if (
             $this->initHandle(true, true)
-            && false !== ($header = $this->readHeader())
+            && ($header = $this->readHeader()) !== (false)
             && $this->isFresh($header)
         ) {
             $dataBlock = fread($this->handle, $header['data_length']);
             $data = @unserialize($dataBlock);
 
             if (
-                false !== $data
-                && false !== ($newValue = call_user_func($callback, $data))
+                $data !== false
+                && ($newValue = call_user_func($callback, $data)) !== (false)
                 && $this->write($newValue, $header['ttl'])
             ) {
                 return array(true, $newValue);
@@ -239,7 +239,7 @@ class FilesystemEntry
     {
         $this->initHandle(false, true);
 
-        if (false !== $this->handle) {
+        if ($this->handle !== false) {
             return @ftruncate($this->handle, 0);
         }
 
@@ -252,7 +252,7 @@ class FilesystemEntry
      */
     protected function isFresh(array $header)
     {
-        return 0 === $header['ttl'] || $header['created_at'] + $header['ttl'] > time();
+        return $header['ttl'] === 0 || $header['created_at'] + $header['ttl'] > time();
     }
     
     /**
@@ -272,7 +272,7 @@ class FilesystemEntry
 
             $header = unpack(static::$headerReadFormat, fread($this->handle, static::$headerLength));
 
-            if (false !== $header && $fileSize === $totalHeaderLength + $header['data_length']) {
+            if ($header !== false && $fileSize === $totalHeaderLength + $header['data_length']) {
                 return $header;
             }
         }
@@ -297,11 +297,11 @@ class FilesystemEntry
         }
 
         // initialize the handle
-        if (null === $this->handle) {
+        if ($this->handle === null) {
             // open
             $mode = static::$modeMap[$this->read][$this->write][$this->create];
 
-            if (false === $mode) {
+            if ($mode === false) {
                 throw new \LogicException('The entry has been opened in a handle-less mode, cannot initialize the handle');
             }
 
@@ -313,7 +313,7 @@ class FilesystemEntry
 
             // attempt to acquire an advisory file lock if locking is enabled
             if (
-                false !== $this->handle
+                $this->handle !== false
                 && $this->lock
                 && !flock($this->handle, $this->write ? LOCK_EX : LOCK_SH)
             ) {
@@ -321,12 +321,12 @@ class FilesystemEntry
                 @fclose($this->handle);
                 $this->handle = false;
             }
-        } elseif (false !== $this->handle) {
+        } elseif ($this->handle !== false) {
             // rewind if already opened
             rewind($this->handle);
         }
 
-        return false !== $this->handle;
+        return $this->handle !== false;
     }
 
     /**
