@@ -1,6 +1,18 @@
 Changelog
 #########
 
+2.0.0
+*****
+
+- major refactoring
+- updated to PHP 7.1
+- removed key restrictions
+- removed obsolete drivers
+- implemented redis driver
+- implemented memcached driver
+- code style improvements
+
+
 1.0.1
 *****
 

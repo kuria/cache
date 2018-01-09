@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="./vendor/autoload.php">
+<phpunit bootstrap="./tests/bootstrap.php">
     <testsuites>
-        <testsuite name="Cache">
-            <directory>./tests/</directory>
+        <testsuite name="Cache (unit)">
+            <directory>./tests/unit/</directory>
+        </testsuite>
+        <testsuite name="Cache (integration)">
+            <directory>./tests/integration/</directory>
         </testsuite>
     </testsuites>
     <php>
-        <env name="MEMCACHE_TEST_HOST" value="127.0.0.1"/>
-        <env name="MEMCACHE_TEST_PORT" value="11211"/>
+        <!-- Memcached driver integration tests -->
+        <env name="MEMCACHED_TEST_HOST" value=""/>
+        <env name="MEMCACHED_TEST_PORT" value="11211"/>
+
+        <!-- Redis driver integration tests -->
+        <env name="REDIS_TEST_HOST" value=""/>
+        <env name="REDIS_TEST_PORT" value="6379"/>
     </php>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">

@@ -1,127 +1,122 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Kuria\Cache;
 
 /**
- * Namespaced cache facade
- *
- * @author ShiraNai7 <shira.cz>
+ * Cache wrapper that prefixes keys for all operations
  */
 class NamespacedCache implements CacheInterface
 {
+    use CachePrefixTrait;
+
     /** @var CacheInterface */
     protected $wrappedCache;
-    /** @var string */
-    protected $prefix;
 
-    /**
-     * @param CacheInterface $wrappedCache
-     * @param string         $prefix
-     */
-    public function __construct(CacheInterface $wrappedCache, $prefix)
+    function __construct(CacheInterface $wrappedCache, string $prefix)
     {
         $this->wrappedCache = $wrappedCache;
         $this->setPrefix($prefix);
     }
-
-    public function setPrefix($prefix)
+    
+    function getWrappedCache(): CacheInterface
     {
-        if ($prefix === '' || $prefix === null) {
-            throw new \InvalidArgumentException('The prefix must not be empty');
-        }
-        
-        $this->prefix = $prefix;
-        
-        return $this;
+        return $this->wrappedCache;
     }
 
-    public function getNamespace($prefix)
+    function has(string $key): bool
     {
-        // do not wrap self again, just combine the prefixes
-        return new static($this->wrappedCache, $this->prefix . $prefix);
+        return $this->wrappedCache->has($this->applyPrefix($key));
     }
 
-    public function has($key)
+    function get(string $key)
     {
-        return $this->wrappedCache->has($this->prefix . $key);
+        return $this->wrappedCache->get($this->applyPrefix($key));
     }
 
-    public function get($key, array $options = array())
+    function getMultiple(iterable $keys): array
     {
-        return $this->wrappedCache->get($this->prefix . $key, $options);
-    }
+        $values = [];
 
-    public function getMultiple(array $keys, array $options = array())
-    {
-        // prepare keys
-        $keyMap = array();
-        $prefixedKeys = array();
-        foreach ($keys as $key) {
-            $prefixedKey = $this->prefix . $key;
-
-            $prefixedKeys[] = $prefixedKey;
-            $keyMap[$prefixedKey] = $key;
+        foreach ($this->wrappedCache->getMultiple($this->applyPrefixToValues($keys)) as $prefixedKey => $value) {
+            $values[$this->stripPrefix($prefixedKey)] = $value;
         }
 
-        // fetch the values
-        $values = $this->wrappedCache->getMultiple($prefixedKeys, $options);
-        
-        // remap the value array to use the original keys
-        $output = array();
-        
-        foreach ($keyMap as $prefixedKey => $key) {
-            $output[$key] = $values[$prefixedKey];
+        return $values;
+    }
+
+    function listKeys(string $prefix = ''): iterable
+    {
+        foreach ($this->wrappedCache->listKeys($this->applyPrefix($prefix)) as $processedKey) {
+            yield $this->stripPrefix($processedKey);
         }
-
-        return $output;
     }
 
-    public function cached($key, $callback, array $options = array())
+    function add(string $key, $value, ?int $ttl = null): bool
     {
-        return $this->wrappedCache->cached($this->prefix . $key, $callback, $options);
+        return $this->wrappedCache->add($this->applyPrefix($key), $value, $ttl);
     }
 
-    public function add($key, $value, $ttl = 0, array $options = array())
+    function addMultiple(iterable $values, ?int $ttl = null): bool
     {
-        return $this->wrappedCache->add($this->prefix . $key, $value, $ttl, $options);
+        return $this->wrappedCache->addMultiple($this->applyPrefixToKeys($values), $ttl);
     }
 
-    public function set($key, $value, $ttl = 0, array $options = array())
+    function set(string $key, $value, ?int $ttl = null): bool
     {
-        return $this->wrappedCache->set($this->prefix . $key, $value, $ttl, $options);
+        return $this->wrappedCache->set($this->applyPrefix($key), $value, $ttl);
     }
 
-    public function increment($key, $step = 1, &$success = null)
+    function setMultiple(iterable $values, ?int $ttl = null): bool
     {
-        return $this->wrappedCache->increment($this->prefix . $key, $step, $success);
+        return $this->wrappedCache->setMultiple($this->applyPrefixToKeys($values), $ttl);
     }
 
-    public function decrement($key, $step = 1, &$success = null)
+    function cached(string $key, ?int $ttl, callable $callback, bool $overwrite = false)
     {
-        return $this->wrappedCache->decrement($this->prefix . $key, $step, $success);
+        return $this->wrappedCache->cached($this->applyPrefix($key), $ttl, $callback, $overwrite);
     }
 
-    public function remove($key)
+    function delete(string $key): bool
     {
-        return $this->wrappedCache->remove($this->prefix . $key);
+        return $this->wrappedCache->delete($this->applyPrefix($key));
     }
 
-    public function clear()
+    function deleteMultiple(iterable $keys): bool
     {
-        if ($this->wrappedCache->canFilter()) {
+        return $this->wrappedCache->deleteMultiple($this->applyPrefixToValues($keys));
+    }
+
+    function filter(string $prefix): bool
+    {
+        return $this->wrappedCache->filter($this->applyPrefix($prefix));
+    }
+
+    function isFilterable(): bool
+    {
+        return $this->wrappedCache->isFilterable();
+    }
+
+    function clear(): bool
+    {
+        if ($this->wrappedCache->isFilterable() && $this->prefix !== '') {
             return $this->wrappedCache->filter($this->prefix);
-        } else {
-            return $this->wrappedCache->clear();
         }
+
+        return $this->wrappedCache->clear();
     }
 
-    public function filter($prefix)
+    function cleanup(): bool
     {
-        return $this->wrappedCache->filter($this->prefix . $prefix);
+        return $this->wrappedCache->cleanup();
     }
 
-    public function canFilter()
+    function supportsCleanup(): bool
     {
-        return $this->wrappedCache->canFilter();
+        return $this->wrappedCache->supportsCleanup();
+    }
+
+    function getIterator(string $prefix = ''): \Traversable
+    {
+        return $this->wrappedCache->getIterator($this->applyPrefix($prefix));
     }
 }

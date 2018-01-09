@@ -1,279 +1,337 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Kuria\Cache;
 
 use Kuria\Cache\Driver\DriverInterface;
-use Kuria\Cache\Driver\FilterableInterface;
-use Kuria\Cache\Driver\MultipleFetchInterface;
-use Kuria\Event\EventEmitter;
+use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
+use Kuria\Cache\Driver\Feature\CleanupInterface;
+use Kuria\Cache\Driver\Feature\FilterableInterface;
+use Kuria\Cache\Driver\Feature\MultiDeleteInterface;
+use Kuria\Cache\Driver\Feature\MultiReadInterface;
+use Kuria\Cache\Driver\Feature\MultiWriteInterface;
+use Kuria\Cache\Exception\UnsupportedOperationException;
+use Kuria\Cache\Helper\IterableHelper;
+use Kuria\Event\Observable;
 
-/**
- * Cache facade
- *
- * @emits fetch(array $event) after the value been read from the driver
- * @emits store(array $event) before a value is stored using the driver
- * 
- * @author ShiraNai7 <shira.cz>
- */
-class Cache extends EventEmitter implements CacheInterface
+class Cache extends Observable implements CacheInterface
 {
-    /** @var string */
-    protected $prefix = '';
-    /** @var DriverInterface */
+    use CachePrefixTrait;
+
+    /** @var DriverInterface|CleanupInterface|FilterableInterface|MultiReadInterface|MultiWriteInterface|MultiDeleteInterface */
     protected $driver;
 
-    /**
-     * @param DriverInterface $driver
-     * @param string|null     $prefix
-     */
-    public function __construct(DriverInterface $driver, $prefix = null)
+    function __construct(DriverInterface $driver, string $prefix = '')
     {
         $this->driver = $driver;
-        
-        if ($prefix !== null) {
-            $this->setPrefix($prefix);
-        }
+        $this->setPrefix($prefix);
     }
 
-    public function setPrefix($prefix)
+    function getDriver(): DriverInterface
     {
-        $this->ensureValidPrefix($prefix);
-        $this->prefix = $prefix;
-
-        return $this;
+        return $this->driver;
     }
 
-    public function getNamespace($prefix)
+    /**
+     * Get a cache wrapper that applies the given prefix to keys for all operations
+     */
+    function getNamespace(string $prefix): NamespacedCache
     {
         return new NamespacedCache($this, $prefix);
     }
 
-    public function has($key)
+    function has(string $key): bool
     {
-        return $this->driver->exists($this->processKey($key));
+        try {
+            return $this->driver->exists($this->applyPrefix($key));
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+
+            return false;
+        }
     }
 
-    public function get($key, array $options = array())
+    function get(string $key)
     {
-        $key = $this->processKey($key);
-        $value = $this->driver->fetch($key);
+        try {
+            $event = new CacheEvent($key, $this->driver->read($this->applyPrefix($key)));
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
 
-        if ($this->hasListeners('fetch')) {
-            $found = $value !== false;
-
-            $this->emit('fetch', array(
-                'key' => $key,
-                'options' => &$options,
-                'value' => &$value,
-                'found' => $found,
-            ));
-
-            if ($found && $value === false) {
-                // invalidated by extension
-                $this->driver->expunge($key);
-            }
+            return null;
         }
 
-        return $value;
+        $this->emit(CacheEvents::READ, $event);
+
+        return $event->value;
     }
 
-    public function getMultiple(array $keys, array $options = array())
+    function getMultiple(iterable $keys): array
     {
-        // prepare keys
-        $keyMap = array();
-        $processedKeys = array();
-        $numDifferentKeys = 0;
-        foreach ($keys as $key) {
-            $processedKey = $this->processKey($key);
+        return $this->driver instanceof MultiReadInterface
+            ? $this->getMultipleNative($keys)
+            : $this->getMultipleEmulated($keys);
+    }
 
-            $processedKeys[] = $processedKey;
-            $keyMap[$processedKey] = $key;
+    protected function getMultipleNative(iterable $keys): array
+    {
+        $keys = IterableHelper::toArray($keys);
 
-            if ($processedKey !== $key) {
-                ++$numDifferentKeys;
-            }
+        if (empty($keys)) {
+            return [];
         }
 
-        // fetch the values
-        if ($this->driver instanceof MultipleFetchInterface) {
-            // using a multi-fetch driver
-            $values = $this->driver->fetchMultiple($processedKeys);
+        $values = array_fill_keys($keys, null);
 
-            // remap the value array to use the original keys
-            if ($numDifferentKeys > 0) {
-                $remappedValues = array();
+        try {
+            foreach ($this->driver->readMultiple($this->applyPrefixToValues($keys)) as $prefixedKey => $value) {
+                $key = $this->stripPrefix($prefixedKey);
 
-                foreach ($keyMap as $processedKey => $key) {
-                    $remappedValues[$key] = $values[$processedKey];
-                }
+                $event = new CacheEvent($key, $value);
+                $this->emit(CacheEvents::READ, $event);
 
-                $values = $remappedValues;
-                $remappedValues = null;
+                $values[$key] = $event->value;
             }
-        } else {
-            // one by one
-            $values = array();
-
-            // fetch and map in a single loop
-            foreach ($keyMap as $processedKey => $key) {
-                $values[$key] = $this->driver->fetch($processedKey);
-            }
-        }
-
-        // emit an event for each key
-        if ($this->hasListeners('fetch')) {
-            foreach ($values as $key => &$value) {
-                $found = $value !== false;
-                $currentOptions = $options; // each emit should use its own copy
-
-                $this->emit('fetch', array(
-                    'key' => $key,
-                    'options' => &$currentOptions,
-                    'value' => &$value,
-                    'found' => $found,
-                ));
-
-                if ($found && $value === false) {
-                    // invalidated by extension
-                    $this->driver->expunge($key);
-                }
-            }
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
         }
 
         return $values;
     }
 
-    public function cached($key, $callback, array $options = array())
+    protected function getMultipleEmulated(iterable $keys): array
     {
-        $value = $this->get($key, $options);
+        $values = [];
 
-        if ($value === false) {
-            $addTtl = 0;
-            $addOptions = array();
-            $value = call_user_func_array($callback, array(&$addTtl, &$addOptions));
+        foreach ($keys as $key) {
+            $values[$key] = $this->get($key);
+        }
 
-            if ($value !== false) {
-                $this->add($key, $value, $addTtl, $addOptions);
+        return $values;
+    }
+
+    function listKeys(string $prefix = ''): iterable
+    {
+        if (!$this->isFilterable()) {
+            throw new UnsupportedOperationException(sprintf('Cannot list keys - the "%s" driver is not filterable', get_class($this->driver)));
+        }
+
+        try {
+            foreach ($this->driver->listKeys($this->applyPrefix($prefix)) as $prefixedKey) {
+                yield $this->stripPrefix($prefixedKey);
+            }
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+        }
+    }
+
+    function add(string $key, $value, ?int $ttl = null): bool
+    {
+        return $this->write($key, $value, $ttl, false);
+    }
+
+    function addMultiple(iterable $values, ?int $ttl = null): bool
+    {
+        return $this->driver instanceof MultiWriteInterface
+            ? $this->writeMultipleNative($values, $ttl, false)
+            : $this->writeMultipleEmulated($values, $ttl, false);
+    }
+
+    function set(string $key, $value, ?int $ttl = null): bool
+    {
+        return $this->write($key, $value, $ttl, true);
+    }
+
+    function setMultiple(iterable $values, ?int $ttl = null): bool
+    {
+        return $this->driver instanceof MultiWriteInterface
+            ? $this->writeMultipleNative($values, $ttl, true)
+            : $this->writeMultipleEmulated($values, $ttl, true);
+    }
+
+    function cached(string $key, ?int $ttl, callable $callback, bool $overwrite = false)
+    {
+        $value = $this->get($key);
+
+        if ($value === null) {
+            $value = $callback();
+
+            if ($value !== null) {
+                if ($overwrite) {
+                    $this->set($key, $value, $ttl);
+                } else {
+                    $this->add($key, $value, $ttl);
+                }
             }
         }
 
         return $value;
     }
 
-    public function add($key, $value, $ttl = 0, array $options = array())
+    protected function write(string $key, $value, ?int $ttl, bool $overwrite): bool
     {
-        $key = $this->processKey($key);
+        $event = new CacheEvent($key, $value);
+        $this->emit(CacheEvents::WRITE, $event);
 
-        if ($this->hasListeners('store')) {
-            $this->emit('store', array(
-                'key' => $key,
-                'value' => &$value,
-                'ttl' => &$ttl,
-                'options' => &$options,
-            ));
-        }
+        try {
+            $this->driver->write($this->applyPrefix($key), $event->value, $ttl, $overwrite);
 
-        return $this->driver->store($key, $value, false, $ttl);
-    }
+            return true;
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
 
-    public function set($key, $value, $ttl = 0, array $options = array())
-    {
-        $key = $this->processKey($key);
-
-        if ($this->hasListeners('store')) {
-            $this->emit('store', array(
-                'key' => $key,
-                'value' => &$value,
-                'ttl' => &$ttl,
-                'options' => &$options,
-            ));
-        }
-
-        return $this->driver->store($key, $value, true, $ttl);
-    }
-
-    public function increment($key, $step = 1, &$success = null)
-    {
-        $step = (int) $step;
-
-        if ($step < 1) {
-            throw new \InvalidArgumentException('The step must be >= 1');
-        }
-
-        return $this->driver->modifyInteger($this->processKey($key), $step, $success);
-    }
-
-    public function decrement($key, $step = 1, &$success = null)
-    {
-        $step = (int) $step;
-
-        if ($step < 1) {
-            throw new \InvalidArgumentException('The step must be >= 1');
-        }
-
-        return $this->driver->modifyInteger($this->processKey($key), -$step, $success);
-    }
-
-    public function remove($key)
-    {
-        return $this->driver->expunge($this->processKey($key));
-    }
-
-    public function clear()
-    {
-        if ($this->prefix !== '' && $this->canFilter()) {
-            return $this->driver->filter($this->prefix);
-        } else {
-            return $this->driver->purge();
-        }
-    }
-
-    public function filter($prefix)
-    {
-        if ($this->canFilter()) {
-            return $this->driver->filter($this->prefix . $prefix);
-        } else {
             return false;
         }
     }
 
-    public function canFilter()
+    protected function writeMultipleNative(iterable $values, ?int $ttl, bool $overwrite): bool
+    {
+        try {
+            $this->driver->writeMultiple($this->filterValuesBeforeWrite($values), $ttl, $overwrite);
+
+            return true;
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+
+            return false;
+        }
+    }
+
+    protected function filterValuesBeforeWrite(iterable $values): iterable
+    {
+        foreach ($values as $key => $value) {
+            $event = new CacheEvent($key, $value);
+            $this->emit(CacheEvents::WRITE, $event);
+
+            yield $this->applyPrefix($key) => $event->value;
+        }
+    }
+
+    protected function writeMultipleEmulated(iterable $values, ?int $ttl, bool $overwrite): bool
+    {
+        $success = true;
+
+        foreach ($values as $key => $value) {
+            if (!$this->write($key, $value, $ttl, $overwrite)) {
+                $success = false;
+            }
+        }
+
+        return $success;
+    }
+
+    function delete(string $key): bool
+    {
+        try {
+            $this->driver->delete($this->applyPrefix($key));
+
+            return true;
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+
+            return false;
+        }
+    }
+
+    function deleteMultiple(iterable $keys): bool
+    {
+        return $this->driver instanceof MultiDeleteInterface
+            ? $this->deleteMultipleNative($keys)
+            : $this->deleteMultipleEmulated($keys);
+    }
+
+    protected function deleteMultipleNative(iterable $keys): bool
+    {
+        try {
+            $this->driver->deleteMultiple($this->applyPrefixToValues($keys));
+
+            return true;
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+
+            return false;
+        }
+    }
+
+    protected function deleteMultipleEmulated(iterable $keys): bool
+    {
+        $success = true;
+
+        foreach ($keys as $key) {
+            if (!$this->delete($key)) {
+                $success = false;
+            }
+        }
+
+        return $success;
+    }
+
+    function filter(string $prefix): bool
+    {
+        if (!$this->isFilterable()) {
+            throw new UnsupportedOperationException(sprintf('Cannot filter - the "%s" driver is not filterable', get_class($this->driver)));
+        }
+
+        try {
+            $this->driver->filter($this->applyPrefix($prefix));
+
+            return true;
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+
+            return false;
+        }
+    }
+
+    function isFilterable(): bool
     {
         return $this->driver instanceof FilterableInterface;
     }
-    
-    /**
-     * Validate a prefix
-     *
-     * @param string $prefix
-     * @throws \InvalidArgumentException if the prefix is not valid
-     */
-    protected function ensureValidPrefix($prefix)
+
+    function clear(): bool
     {
-        if (!preg_match('/^\w(?>\w+|\.(?!\.))*?$/', $prefix)) {
-            throw new \InvalidArgumentException(sprintf(
-                'The given prefix "%s" is invalid. Only alphanumeric characters, underscores and a dots are allowed. The prefix must begin with an alphanumeric character and must not contain consecutive dots.',
-                $prefix
-            ));
+        if ($this->isFilterable() && $this->prefix !== '') {
+            return $this->filter('');
+        }
+
+        try {
+            $this->driver->clear();
+
+            return true;
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+
+            return false;
         }
     }
 
-    /**
-     * Process a key before it is passed to the driver's methods
-     *
-     * @param string $key
-     * @throws \InvalidArgumentException if the key is not valid
-     * @return string
-     */
-    protected function processKey($key)
+    function cleanup(): bool
     {
-        if (!preg_match('/^\w(?>\w+|\.(?!\.|$))*?$/', $key)) {
-            throw new \InvalidArgumentException(sprintf(
-                'The given key "%s" is invalid. Only alphanumeric characters, underscores and a dots are allowed. The key must begin and end with an alphanumeric character and must not contain consecutive dots.',
-                $key
-            ));
+        if (!$this->supportsCleanup()) {
+            throw new UnsupportedOperationException(sprintf('The "%s" driver does not support the cleanup operation', get_class($this->driver)));
         }
 
-        return $this->prefix . $key;
+        try {
+            $this->driver->cleanup();
+
+            return true;
+        } catch (DriverExceptionInterface $e) {
+            $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
+
+            return false;
+        }
+    }
+
+    function supportsCleanup(): bool
+    {
+        return $this->driver instanceof CleanupInterface;
+    }
+
+    function getIterator(string $prefix = ''): \Traversable
+    {
+        foreach ($this->listKeys($prefix) as $key) {
+            if (($value = $this->get($key)) !== null) {
+                yield $key => $value;
+            }
+        }
     }
 }

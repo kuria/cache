@@ -1,0 +1,21 @@
+<?php
+
+if (!extension_loaded('apcu')):
+
+// required for references to work in PHPMock
+function apcu_fetch($key, &$success = null) {}
+
+class APCUIterator implements \Iterator
+{
+	function __construct() {}
+    function current() {}
+    function next() {}
+    function key() {}
+    function valid() { return false; }
+    function rewind() {}
+	function getTotalHits() { return 0; }
+	function getTotalSize() { return 0; }
+	function getTotalCount() { return 0; }
+}
+
+endif;

@@ -1,63 +1,42 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Kuria\Cache\Driver;
 
+use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
+
 /**
- * Cache driver interface
+ * Driver interface
  *
- * @author ShiraNai7 <shira.cz>
+ * All methods should throw DriverExceptionInterface on failure.
+ *
+ * @see DriverExceptionInterface
  */
 interface DriverInterface
 {
     /**
-     * See if a key exists
-     *
-     * @param string $key
-     * @return bool
+     * See if an entry exists
      */
-    public function exists($key);
+    function exists(string $key): bool;
 
     /**
-     * Fetch a value
+     * Read an entry
      *
-     * @param string $key
-     * @return mixed false on failure
+     * Returns NULL for nonexistent entries.
      */
-    public function fetch($key);
+    function read(string $key);
 
     /**
-     * Store a value
-     *
-     * @param string $key
-     * @param mixed  $value
-     * @param bool   $overwrite
-     * @param int    $ttl
-     * @return bool
+     * Write an entry
      */
-    public function store($key, $value, $overwrite, $ttl = 0);
+    function write(string $key, $value, ?int $ttl = null, bool $overwrite = false): void;
 
     /**
-     * Remove a key
-     *
-     * @param string $key
-     * @return bool
+     * Delete an entry
      */
-    public function expunge($key);
+    function delete(string $key): void;
 
     /**
-     * Remove all keys
-     *
-     * @return bool
+     * Delete all entries
      */
-    public function purge();
-
-    /**
-     * Modify existing integer value
-     *
-     * @param string $key
-     * @param int    $offset  non-zero offset, either positive or negative
-     * @param bool   $success variable to put success state into
-     * @return int|bool the new value, current value or false (depending on success)
-     */
-    public function modifyInteger($key, $offset, &$success = null);
+    function clear(): void;
 }

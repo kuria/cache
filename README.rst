@@ -1,8 +1,7 @@
 Cache
 #####
 
-Caching library with driver abstraction and namespacing support.
-
+Caching library with driver abstraction.
 
 .. contents::
 
@@ -10,209 +9,445 @@ Caching library with driver abstraction and namespacing support.
 Features
 ********
 
-- driver abstraction
-- namespacing support
-- built-in driver implementations:
-
-  - Filesystem
-  - Memory
-  - APC / APCu
-  - XCache
-  - WinCache
-  - Memcache
-
-- extension system
-
-  - implemented using the `kuria/event <https://github.com/kuria/event>`_ library
-  - stored and loaded data can be manipulated by extensions
-
-- built-in extensions:
-
-  - ``BoundFileExtension``
-
-    - invalidates cache entries if any one of the bound files is modified
-    - useful during development
+- entry operations: has, add, set, get, delete
+- multiple-entry operations: getting, setting, adding, deleting
+- listing, filtering, cleanup (requires driver support)
+- TTL expiration
+- key prefixing
+- stored and retrieved values can be manipulated via events
+- `PSR-16 <http://www.php-fig.org/psr/psr-16/>`_ simple cache wrapper
+- multiple built-in driver implementations
 
 
 Requirements
 ************
 
-- PHP 5.3.0+ or 7.0.0+
+- PHP 7.1+
 
 
-Drivers
-*******
+Built-in drivers
+****************
 
--  ``FilesystemDriver`` - stores data in the filesystem
--  ``MemoryDriver`` - stores data in the script's memory
--  ``ApcDriver`` - `APC <http://php.net/manual/en/book.apc.php>`__ or `APCu <https://pecl.php.net/package/APCu>`__
--  ``XcacheDriver`` - `XCache <http://xcache.lighttpd.net/>`__
--  ``WinCacheDriver`` - `WinCache <https://pecl.php.net/package/wincache>`__
--  ``MemcacheDriver`` - `Memcache <https://pecl.php.net/package/memcache>`__
+==================== ========== =========== ============ ========== ======= ==========================================================
+Driver               Multi-read Multi-write Multi-delete Filterable Cleanup Required extension
+==================== ========== =========== ============ ========== ======= ==========================================================
+``FilesystemDriver`` no         no          no           yes        yes     none
+``ApcuDriver``       yes        yes         yes          yes        no      `APCu <http://php.net/manual/en/book.apcu.php>`_
+``MemcachedDriver``  yes        partial     yes          no         no      `Memcached <http://php.net/manual/en/book.memcached.php>`_
+``RedisDriver``      yes        yes         yes          yes        no      `PhpRedis <https://github.com/phpredis/phpredis>`_
+``MemoryDriver``     yes        yes         yes          yes        yes     none
+==================== ========== =========== ============ ========== ======= ==========================================================
+
+.. NOTE::
+
+   The cache will emulate multi-read/write/delete if the driver doesn't support it natively.
+
+.. NOTE::
+
+   Missing cleanup support means that it is managed automatically by the service.
 
 
 Usage
 *****
 
-Creating an instance
-====================
+Creating a cache instance
+=========================
 
 .. code:: php
 
    <?php
 
    use Kuria\Cache\Cache;
-   use Kuria\Cache\Driver\MemoryDriver;
+   use Kuria\Cache\Driver\Filesystem\FilesystemDriver;
 
-   $driver = new MemoryDriver(); // just an example, you can use any other driver
+   // create a driver
+   // (you can use any other implementation)
+   $driver = new FilesystemDriver(__DIR__ . '/cache');
+
    $cache = new Cache($driver);
 
 
-Caching a value
-===============
+``setPrefix()`` - configure cache prefix
+========================================
 
-The most simple way to cache a value is to use the ``cached()`` method. The passed callback is called only if the value is not found in the cache.
+The ``setPefix()`` method defines a prefix that will be applied to all keys before
+they are passed to the underlying driver implementation.
+
+The prefix can be an empty string to disable this functionality.
 
 .. code:: php
 
    <?php
 
-   $value = $cache->cached('foo', function (&$ttl) {
-       $ttl = 60; // cache for 1 minute
-       $result = some_expensive_function();
+   $cache->setPrefix('prefix_');
+
+
+``getNamespace()`` - get a namespaced cache instance
+====================================================
+
+The ``getNamespace()`` method returns a cache instance that applies a prefix to all
+keys before passing them to the original cache.
+
+.. code:: php
+
+   <?php
+
+   $fooCache = $cache->getNamespace('foo.');
+
+   $fooCache->get('bar'); // reads foo.bar
+   $fooCache->delete('baz'); // deletes foo.baz
+   $fooCache->clear(); // deletes foo.* (if the cache is filterable)
+   // etc.
+
+
+``has()`` - check if an entry exists
+====================================
+
+The ``has()`` method returns ``TRUE`` or ``FALSE`` indicating whether the
+entry exists or not.
+
+.. code:: php
+
+   <?php
+
+   if ($cache->has('key')) {
+       echo 'Entry exist';
+   } else {
+       echo 'Entry does not exist';
+   }
+
+.. WARNING::
+
+   Beware of a possible race-condition between calls to ``has()`` and ``get()``.
+
+   If possible, only call ``get()`` and check for a ``NULL`` result.
+
+
+``get()`` - read a single entry
+===============================
+
+The ``get()`` method returns the stored value or ``NULL`` if the entry does not exist.
+
+.. code:: php
+
+   <?php
+
+   $value = $cache->get('key');
+
+
+``getMultiple()`` - read multiple entries
+=========================================
+
+The ``getMultiple()`` method returns a key-value map. Nonexistent keys will have
+a ``NULL`` value.
+
+.. code:: php
+
+   <?php
+
+   $values = $cache->getMultiple(['foo', 'bar', 'baz']);
+
+
+``listKeys()`` - list keys in the cache
+=======================================
+
+The ``listKeys()`` method will return an iterable list of keys in the cache, optionally
+matching a common prefix.
+
+If the driver doesn't support this operation, an ``UnsupportedOperationException``
+exception will be thrown. You can check support using the ``isFilterable()`` method.
+
+.. code:: php
+
+   <?php
+
+   if ($cache->isFilterable()) {
+       // list all keys
+       foreach ($cache->listKeys() as $key) {
+           echo "{$key}\n";
+       }
+
+       // list keys beginning with foo_
+       foreach ($cache->listKeys('foo_') as $key) {
+           echo "{$key}\n";
+       }
+   }
+
+
+``getIterator()`` - list keys and values in the cache
+=====================================================
+
+The ``getIterator()`` method will return an iterator for all keys and values in the
+cache. This is a part of the ``IteratorAggregate`` interface.
+
+If the driver doesn't support this operation, an ``UnsupportedOperationException``
+exception will be thrown. You can check support using the ``isFilterable()`` method.
+
+Listing all keys and values:
+
+.. code:: php
+
+   <?php
+
+   foreach ($cache as $key => $value) {
+       echo $key, ': ';
+       var_dump($value);
+   }
+
+Listing keys and values matching a prefix:
+
+.. code:: php
+
+   <?php
+
+   foreach ($cache->getIterator('foo_') as $key => $value) {
+       echo $key, ': ';
+       var_dump($value);
+   }
+
+
+``add()`` / ``set()`` - create a new entry
+==========================================
+
+The ``add()`` and ``set()`` methods both create an entry in the cache.
+
+The ``set()`` method will overwrite an existing entry, but ``add()`` will not.
+
+.. code:: php
+
+   <?php
+
+   $cache->add('foo', 'foo-value');
+
+   $cache->set('bar', 'bar-value');
+
+TTL (time-to-live in seconds) can be specified using the third argument:
+
+.. code:: php
+
+   <?php
+
+   $cache->set('foo', 'foo-value', 60);
+
+   $cache->add('bar', 'bar-value', 120);
+
+See `Allowed value types`_.
+
+
+``addMultiple()`` / ``setMultiple()`` - create multiple entries
+===============================================================
+
+The ``addMultiple()`` and ``setMultiple()`` methods both create multiple entries
+in the cache.
+
+The ``setMultiple()`` method will overwrite any existing entries with the same keys,
+but ``addMultiple()`` will not.
+
+.. code:: php
+
+   <?php
+
+   $cache->addMultiple(['foo' => 'foo-value', 'bar' => 'bar-value']);
+
+   $cache->setMultiple(['foo' => 'foo-value', 'bar' => 'bar-value']);
+
+TTL (time-to-live in seconds) can be specified using the second argument:
+
+.. code:: php
+
+   <?php
+
+   $cache->addMultiple(['foo' => 'foo-value', 'bar' => 'bar-value'], 60);
+
+   $cache->setMultiple(['foo' => 'foo-value', 'bar' => 'bar-value'], 120);
+
+See `Allowed value types`_.
+
+
+``cached()`` - cache the result of a callback
+=============================================
+
+The ``cached()`` method tries to read a value from the cache. If it does not exist,
+it invokes the given callback and caches its result.
+
+.. code:: php
+
+   <?php
+
+   $value = $cache->cached('key', 60, function () {
+       // some expensive operation
+       $result = 123;
 
        return $result;
    });
 
-This is equivalent to the following:
+
+``delete()`` - delete an entry
+==============================
+
+The ``delete()`` method deletes a single entry from the cache.
 
 .. code:: php
 
    <?php
 
-   $value = $cache->get('foo');
-
-   if (false === $value) {
-       $value = some_expensive_function();
-       $cache->add('foo', $value, 60); // cache for 1 minute
+   if ($cache->delete('key')) {
+       echo 'Entry deleted';
    }
 
 
-The API
-=======
+``deleteMultiple()`` - delete multiple entries
+==============================================
 
--  ``has()`` - see if a key exists
--  ``get()`` - get a value for the given key
--  ``getMultiple()`` - get values for multiple keys
--  ``cached()`` - get a value for the given key or populate it using a callback if the key was not found
--  ``add()`` - create a new value (does not overwrite)
--  ``set()`` - set a value (does overwrite)
--  ``increment()`` - increment an integer value
--  ``decrement()`` - decrement an integer value
--  ``remove()`` - remove a key
--  ``clear()`` - remove all keys
--  ``filter()`` - remove keys that begin with the given prefix
--  ``setPrefix()`` - set key prefix (useful if the driver's storage is shared)
--  ``getNamespace()`` - get namespaced part of the cache
+The ``deleteMultiple()`` method deletes multiple entries from the cache.
+
+.. code:: php
+
+   <?php
+
+   if ($cache->deleteMultiple(['foo', 'bar', 'baz'])) {
+       echo 'All entries deleted';
+   } else {
+       echo 'One or more entries could not be deleted';
+   }
 
 
-Key format
-----------
+``filter()`` - delete entries using a prefix
+============================================
 
--  only alphanumeric characters, underscores and a dots are allowed
--  the key must begin and end with an alphanumeric character and must not contain consecutive dots
+The ``filter()`` method deletes all entries that match the given prefix.
+
+If the driver doesn't support this operation, an ``UnsupportedOperationException``
+exception will be thrown. You can check support using the ``isFilterable()`` method.
+
+.. code:: php
+
+   <?php
+
+   if ($cache->isFilterable()) {
+       $cache->filter('foo_');
+   }
 
 
-Prefix format
--------------
+``clear()`` - delete all entries
+================================
 
--  only alphanumeric characters, underscores and a dots are allowed
--  the prefix must begin with an alphanumeric character and must not contain consecutive dots
+The ``clear()`` method deletes all entries.
+
+If a cache prefix is set and the cache is filterable, only entries matching
+that prefix will be cleared.
+
+.. code:: php
+
+   <?php
+
+   $cache->clear();
 
 
-Allowed data types
-------------------
+``cleanup()`` - clean-up the cache
+==================================
 
-All data types except for the ``resource`` type can be stored in the cache. Objects are stored serialized.
+Some cache drivers (e.g. ``FilesystemDriver``) support explicit triggering of the cleanup
+procedures (removal of expired entries etc).
 
-It is not recommended to store ``false`` if you want to be able to determine whether a cached value is returned, as most operations return ``false`` on failure. However it is perfectly valid to do so.
+If the driver doesn't support this operation, an ``UnsupportedOperationException``
+exception will be thrown. You can check support using the ``supportsCleanup()`` method.
+
+.. code:: php
+
+   <?php
+
+   if ($cache->supportsCleanup()) {
+       $cache->cleanup();
+   }
+
+
+Allowed value types
+*******************
+
+All types except for the resource type can be stored in the cache. Most drivers
+use standard `object serialization <http://php.net/manual/en/language.oop5.serialization.php>`_.
+
+It is not recommended to store ``NULL`` if you want to be able distinguish between
+a nonexistent entry and a ``NULL`` value.
 
 
 Cache events
-============
+************
 
-Possible events emitted by the ``Cache`` class:
+``CacheEvents::READ``
+=====================
 
+Emitted when an entry has been read.
 
-``fetch``
----------
-
--  emitted when a value is being retrieved
--  arguments:
-
-   1. ``array $event``
-
-      -  ``key``: the key being retrieved
-      -  ``options``: reference to the options array
-      -  ``found``: a boolean value indicating whether the driver returned a value
-      -  ``value``: reference to the value returned by the driver (can be ``FALSE`` if not found)
-
-         -  if set to ``FALSE`` and the value was found, the key will be removed from the cache
-
-
-``store``
----------
-
--  emitted when a value is being stored
--  arguments:
-
-   1. ``array $event``
-
-      -  ``key``: the key being stored
-      -  ``value``: reference to the value being stored
-      -  ``ttl``: reference to the TTL
-      -  ``options``: reference to the options array
-
-
-Bound file extension
-====================
-
-This extension invalidates cache entries based on modification time of a given list of files.
-
-To set a list of bound files, set the "bound\_files" option when storing a value using ``set()`` or ``add()``.
-
-
-Registration
-------------
+The listener is passed a single ``CacheEvent`` instance. Its ``value`` property can be
+manipulated.
 
 .. code:: php
 
    <?php
 
-   use Kuria\Cache\Extension\BoundFile\BoundFileExtension;
+   use Kuria\Cache\CacheEvent;
+   use Kuria\Cache\CacheEvents;
 
-   $extension = new BoundFileExtension();
-   $cache->subscribe($extension);
+   $cache->on(CacheEvents::READ, function (CacheEvent $e) {
+       echo "Reading {$e->key}\n";
+   });
 
-**Warning:** If you remove the extension after it has been used, you will need to clear the cache.
 
+``CacheEvents::WRITE``
+======================
 
-Usage
------
+Emitted when an entry is about to be written.
+
+The listener is passed a single ``CacheEvent`` instance. Its ``value`` property can be
+manipulated.
 
 .. code:: php
 
    <?php
 
-   // storing a value with bound files using set() or add()
-   $cache->set('foo', 0, array(
-       'bound_files' => array(
-           'path/to/file1',
-           'path/to/file2',
-           // ...
-       ),
-   );
+   use Kuria\Cache\CacheEvent;
+   use Kuria\Cache\CacheEvents;
 
-   // to get a value that contains bound files, just call get() as you would normally
-   // if any of the bound files were modified, FALSE will be returned
-   $value = $cache->get('foo');
+   $cache->on(CacheEvents::WRITE, function (CacheEvent $e) {
+       echo "Writing {$e->key}\n";
+   });
+
+
+``CacheEvents::DRIVER_EXCEPTION``
+=================================
+
+Emitted when the underlying driver implementation throws an exception.
+
+The listener is passed the exception object. This is useful for debugging / logging
+purposes.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\CacheEvent;
+   use Kuria\Cache\CacheEvents;
+
+   $cache->on(CacheEvents::DRIVER_EXCEPTION, function (\Throwable $e) {
+       echo 'Driver exception: ', $e;
+   });
+
+
+PSR-16: Simple cache wrapper
+****************************
+
+The ``SimpleCache`` class is a wrapper implementing ``Psr\SimpleCache\CacheInterface``.
+
+To use it, you need to have ``psr/simple-cache`` (``^1.0``) installed.
+
+See http://www.php-fig.org/psr/psr-16/
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Psr\SimpleCache;
+
+   $simpleCache = new SimpleCache($cache);

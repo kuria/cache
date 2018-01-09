@@ -1,5 +1,4 @@
-/tests/test_directory/*
-/vendor/
+/vendor
 /composer.lock
 /phpunit.xml
-!.gitkeep
+/tests/tmp-*
