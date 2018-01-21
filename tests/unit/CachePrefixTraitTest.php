@@ -5,6 +5,9 @@ namespace Kuria\Cache;
 use Kuria\Cache\Test\IterableAssertionTrait;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @group unit
+ */
 class CachePrefixTraitTest extends TestCase
 {
     use IterableAssertionTrait;

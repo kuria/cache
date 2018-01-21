@@ -7,6 +7,9 @@ use Kuria\Cache\Test\IterableAssertionTrait;
 use Kuria\Cache\Test\TimeMachine;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @group unit
+ */
 class MemoryDriverTest extends TestCase
 {
     use IterableAssertionTrait;
