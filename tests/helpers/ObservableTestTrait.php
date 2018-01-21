@@ -3,6 +3,7 @@
 namespace Kuria\Cache\Test;
 
 use Kuria\Event\ObservableInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 trait ObservableTestTrait
@@ -44,7 +45,7 @@ trait ObservableTestTrait
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject
+     * @return MockObject
      */
     abstract protected function createMock($originalClassName);
 }

@@ -7,6 +7,7 @@ use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileHandle;
 use Kuria\Cache\Test\TimeMachine;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,11 +20,11 @@ class EntryTest extends TestCase
     private const DUMMY_ENTRY_PATH = __DIR__ . '/dummy-entry-path';
     private const DUMMY_TMP_FILE = __DIR__ . '/dummy-tmp-path/file';
 
-    /** @var FileFormatInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var FileFormatInterface|MockObject */
     private $fileFormatMock;
-    /** @var FileHandle|\PHPUnit_Framework_MockObject_MockObject|null */
+    /** @var FileHandle|MockObject|null */
     private $readHandleMock;
-    /** @var Entry|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Entry|MockObject */
     private $entry;
 
     protected function setUp()

@@ -4,6 +4,7 @@ namespace Kuria\Cache\Psr;
 
 use Kuria\Cache\CacheInterface;
 use Kuria\Cache\Test\IterableAssertionTrait;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,7 +14,7 @@ class SimpleCacheTest extends TestCase
 {
     use IterableAssertionTrait;
 
-    /** @var CacheInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var CacheInterface|MockObject */
     private $cacheMock;
     /** @var SimpleCache */
     private $simpleCache;

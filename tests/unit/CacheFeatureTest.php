@@ -12,6 +12,7 @@ use Kuria\Cache\Driver\Feature\MultiWriteInterface;
 use Kuria\Cache\Test\IterableAssertionTrait;
 use Kuria\Cache\Test\ObservableTestTrait;
 use Kuria\Event\ObservableInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -372,7 +373,7 @@ class CacheFeatureTest extends TestCase
 interface CacheWithMockedDriver extends CacheInterface, ObservableInterface
 {
     /**
-     * @return DriverInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @return DriverInterface|MockObject
      */
     function getDriver();
 }

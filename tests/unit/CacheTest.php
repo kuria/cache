@@ -7,6 +7,7 @@ use Kuria\Cache\Driver\Exception\DriverException;
 use Kuria\Cache\Exception\UnsupportedOperationException;
 use Kuria\Cache\Test\IterableAssertionTrait;
 use Kuria\Cache\Test\ObservableTestTrait;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,7 +20,7 @@ class CacheTest extends TestCase
 
     /** @var Cache */
     private $cache;
-    /** @var DriverInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var DriverInterface|MockObject */
     private $driverMock;
 
     protected function setUp()

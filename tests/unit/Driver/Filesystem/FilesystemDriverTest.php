@@ -6,6 +6,7 @@ use Kuria\Cache\Driver\Filesystem\Entry\EntryFactoryInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\EntryInterface;
 use Kuria\Cache\Test\IterableAssertionTrait;
 use Kuria\Cache\Test\TimeMachine;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,9 +16,9 @@ class FilesystemDriverTest extends TestCase
 {
     use IterableAssertionTrait;
 
-    /** @var EntryFactoryInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var EntryFactoryInterface|MockObject */
     private $entryFactoryMock;
-    /** @var EntryInterface[]|\PHPUnit_Framework_MockObject_MockObject[] */
+    /** @var EntryInterface[]|MockObject[] */
     private $listedEntryMocks;
     /** @var FilesystemDriver */
     private $driver;
@@ -158,7 +159,7 @@ class FilesystemDriverTest extends TestCase
     }
 
     /**
-     * @return EntryInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @return EntryInterface|MockObject
      */
     private function prepareEntry(string $key, bool $valid, ?string $data = null)
     {
@@ -173,7 +174,7 @@ class FilesystemDriverTest extends TestCase
     }
 
     /**
-     * @return EntryInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @return EntryInterface|MockObject
      */
     private function createEntryMock(bool $valid, ?string $key = null, ?string $data = null)
     {

@@ -4,6 +4,9 @@ use phpmock\phpunit\PHPMock;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+// TODO: remove after upgrade to PHPUnit 6.5+
+class_alias('PHPUnit_Framework_MockObject_MockObject', 'PHPUnit\Framework\MockObject\MockObject');
+
 // workaround for https://bugs.php.net/bug.php?id=64346
 $namespaceToMockedFunctions = [
     'Kuria\\Cache\\Driver\\Filesystem' => ['time'],

@@ -5,6 +5,7 @@ namespace Kuria\Cache\Driver\Memcached;
 use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
 use Kuria\Cache\Test\IterableAssertionTrait;
 use Kuria\Cache\Test\TimeMachine;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,7 +15,7 @@ class MemcachedDriverTest extends TestCase
 {
     use IterableAssertionTrait;
 
-    /** @var \Memcached|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var \Memcached|MockObject */
     private $memcachedMock;
     /** @var MemcachedDriver */
     private $driver;

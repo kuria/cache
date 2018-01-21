@@ -4,6 +4,7 @@ namespace Kuria\Cache\Driver\Filesystem\Entry;
 
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
 use Kuria\Cache\Driver\Filesystem\PathResolver\PathResolverInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,7 +14,7 @@ class EntryFactoryTest extends TestCase
 {
     /** @var FileFormatInterface */
     protected $fileFormat;
-    /** @var PathResolverInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var PathResolverInterface|MockObject */
     protected $pathResolverMock;
     /** @var EntryFactoryInterface */
     protected $factory;

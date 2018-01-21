@@ -3,6 +3,7 @@
 namespace Kuria\Cache;
 
 use Kuria\Cache\Test\IterableAssertionTrait;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,7 +13,7 @@ class NamespacedCacheTest extends TestCase
 {
     use IterableAssertionTrait;
 
-    /** @var CacheInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var CacheInterface|MockObject */
     private $wrappedCacheMock;
     /** @var NamespacedCache */
     private $namespacedCache;

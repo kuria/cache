@@ -4,6 +4,7 @@ namespace Kuria\Cache\Driver\Redis;
 
 use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
 use Kuria\Cache\Test\IterableAssertionTrait;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,7 +14,7 @@ class RedisDriverTest extends TestCase
 {
     use IterableAssertionTrait;
 
-    /** @var \Redis|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var \Redis|MockObject */
     private $redisMock;
     /** @var RedisDriver */
     private $driver;
