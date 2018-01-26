@@ -2,10 +2,10 @@
 <phpunit bootstrap="./tests/bootstrap.php">
     <testsuites>
         <testsuite name="Cache (unit)">
-            <directory>./tests/unit/</directory>
+            <directory>./tests/unit</directory>
         </testsuite>
         <testsuite name="Cache (integration)">
-            <directory>./tests/integration/</directory>
+            <directory>./tests/integration</directory>
         </testsuite>
     </testsuites>
     <php>
