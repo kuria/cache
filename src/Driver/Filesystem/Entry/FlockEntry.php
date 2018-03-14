@@ -12,11 +12,11 @@ use Kuria\Cache\Driver\Filesystem\Entry\File\FileHandle;
 class FlockEntry implements EntryInterface
 {
     /** @var FileFormatInterface */
-    protected $format;
+    private $format;
     /** @var string */
-    protected $path;
+    private $path;
     /** @var FileHandle|null */
-    protected $handle;
+    private $handle;
 
     function __construct(FileFormatInterface $format, string $path)
     {
@@ -92,37 +92,42 @@ class FlockEntry implements EntryInterface
         $this->closeHandle();
     }
 
-    protected function getHandle(bool $exclusive = false, bool $createFileIfNotExists = false): ?FileHandle
+    private function getHandle(bool $exclusive = false, bool $createFileIfNotExists = false): ?FileHandle
     {
         if ($this->handle === null) {
             // attempt to create new handle
             if (($this->handle = $this->createHandle($createFileIfNotExists)) === null) {
                 return null;
             }
+
+            /** @var FileHandle $handle */
+            $handle = $this->handle;
         } else {
             // reuse existing handle
-            $this->handle->goto(0);
+            /** @var FileHandle $handle */
+            $handle = $this->handle;
+            $handle->goto(0);
         }
 
         // acquire lock
-        if (!$this->handle->isLocked() && !$this->handle->lock($exclusive)) {
+        if (!$handle->isLocked() && !$handle->lock($exclusive)) {
             throw new EntryException(sprintf('Failed to acquire %s lock for "%s"', $exclusive ? 'exclusive' : 'shared', $this->path));
         }
 
         // upgrade lock to exclusive if needed
         if (
             $exclusive
-            && $this->handle->isLocked()
-            && !$this->handle->hasExclusiveLock()
-            && !$this->handle->lock(true)
+            && $handle->isLocked()
+            && !$handle->hasExclusiveLock()
+            && !$handle->lock(true)
         ) {
             throw new EntryException(sprintf('Failed to upgrade shared lock on "%s" to exclusive', $this->path));
         }
 
-        return $this->handle;
+        return $handle;
     }
 
-    protected function requireHandle(bool $exclusive = false, bool $createFileIfNotExists = false): FileHandle
+    private function requireHandle(bool $exclusive = false, bool $createFileIfNotExists = false): FileHandle
     {
         $readHandle = $this->getHandle($exclusive, $createFileIfNotExists);
 
@@ -133,6 +138,7 @@ class FlockEntry implements EntryInterface
         return $readHandle;
     }
 
+    /** @internal */
     protected function createHandle(bool $createFileIfNotExists): ?FileHandle
     {
         // make sure the target directory exists
@@ -150,7 +156,7 @@ class FlockEntry implements EntryInterface
         return $handle !== false ? new FileHandle($handle) : null;
     }
 
-    protected function closeHandle(): void
+    private function closeHandle(): void
     {
         if ($this->handle !== null) {
             $this->handle->close();

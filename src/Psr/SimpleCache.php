@@ -7,7 +7,7 @@ use Kuria\Cache\CacheInterface;
 class SimpleCache implements \Psr\SimpleCache\CacheInterface
 {
     /** @var CacheInterface */
-    protected $cache;
+    private $cache;
 
     function __construct(CacheInterface $cache)
     {
@@ -68,7 +68,7 @@ class SimpleCache implements \Psr\SimpleCache\CacheInterface
         return $this->cache->has($key);
     }
 
-    protected function convertDateIntervalToTtl(\DateInterval $interval): int
+    private function convertDateIntervalToTtl(\DateInterval $interval): int
     {
         if ($interval->invert) {
             return 0;

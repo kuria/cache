@@ -1,0 +1,28 @@
+language: php
+
+php:
+    - '7.1'
+    - '7.2'
+    - nightly
+
+services:
+    - memcached
+    - redis-server
+
+env:
+    global:
+        - MEMCACHED_TEST_HOST=localhost
+        - REDIS_TEST_HOST=localhost
+    matrix:
+        - COMPOSER_COMMAND="composer install"
+        - COMPOSER_COMMAND="composer update --prefer-lowest"
+
+before_install:
+    - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+    - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+    - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+    - echo "apc.enable_cli = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+
+install: ${COMPOSER_COMMAND}
+
+script: composer all

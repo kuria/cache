@@ -20,9 +20,9 @@ class MemcachedCacheTest extends CacheTest
             $this->markTestSkipped('Test Memcached server is not configured');
         }
 
-        $memcached = new \Memcached();
+        $memcached = new \Memcached(null);
         $memcached->addServer($host, $port);
-        
+
         if (!is_array($memcached->getStats())) {
             $this->fail(sprintf('Could not connect to test Memcached server at %s:%d', $host, $port));
         }

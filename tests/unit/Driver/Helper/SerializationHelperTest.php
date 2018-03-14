@@ -14,7 +14,7 @@ class SerializationHelperTest extends TestCase
     function testSmartUnserialize()
     {
         $this->assertSame([1, 2, 3], SerializationHelper::smartUnserialize(serialize([1, 2, 3])));
-        $this->assertSame(false, SerializationHelper::smartUnserialize(serialize(false)));
+        $this->assertFalse(SerializationHelper::smartUnserialize(serialize(false)));
     }
 
     function testSmartUnserializeShouldThrowExceptionOnMalformedData()

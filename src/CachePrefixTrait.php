@@ -23,12 +23,12 @@ trait CachePrefixTrait
         $this->prefixLength = null;
     }
 
-    protected function applyPrefix(string $to): string
+    private function applyPrefix(string $to): string
     {
         return $this->prefix !== '' ? $this->prefix . $to : $to;
     }
 
-    protected function applyPrefixToValues(iterable $to): \Iterator
+    private function applyPrefixToValues(iterable $to): \Iterator
     {
         if ($this->prefix === '') {
             yield from $to;
@@ -41,7 +41,7 @@ trait CachePrefixTrait
         }
     }
 
-    protected function applyPrefixToKeys(iterable $iterable): \Iterator
+    private function applyPrefixToKeys(iterable $iterable): \Iterator
     {
         if ($this->prefix === '') {
             yield from $iterable;
@@ -54,7 +54,7 @@ trait CachePrefixTrait
         }
     }
 
-    protected function stripPrefix(string $prefixed): string
+    private function stripPrefix(string $prefixed): string
     {
         if ($this->prefix === '') {
             return $prefixed;

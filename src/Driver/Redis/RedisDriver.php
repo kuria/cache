@@ -19,14 +19,14 @@ class RedisDriver implements DriverInterface, MultiReadInterface, MultiWriteInte
     /**
      * @param \Redis $redis
      */
-    public function __construct(\Redis $redis)
+    function __construct(\Redis $redis)
     {
         $this->redis = $redis;
     }
 
     function exists(string $key): bool
     {
-        return $this->redis->exists($key);
+        return (bool) $this->redis->exists($key);
     }
 
     function read(string $key)
@@ -123,7 +123,7 @@ class RedisDriver implements DriverInterface, MultiReadInterface, MultiWriteInte
         return $this->redis->keys($this->escapePattern($prefix) . '*');
     }
 
-    protected function getOptions(?int $ttl, bool $overwrite): array
+    private function getOptions(?int $ttl, bool $overwrite): array
     {
         $options = [];
 
@@ -138,7 +138,7 @@ class RedisDriver implements DriverInterface, MultiReadInterface, MultiWriteInte
         return $options;
     }
 
-    protected function escapePattern(string $pattern): string
+    private function escapePattern(string $pattern): string
     {
         return addcslashes($pattern, '?*[]^');
     }

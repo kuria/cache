@@ -7,11 +7,11 @@ use Kuria\Cache\Driver\Filesystem\Entry\Exception\FileHandleException;
 class FileHandle
 {
     /** @var resource */
-    protected $handle;
+    private $handle;
     /** @var bool */
-    protected $locked = false;
+    private $locked = false;
     /** @var bool */
-    protected $exclusiveLock = false;
+    private $exclusiveLock = false;
 
     /**
      * @param resource $handle
@@ -178,12 +178,12 @@ class FileHandle
         return $this->exclusiveLock;
     }
 
-    protected function getIntPackFormat(): string
+    private function getIntPackFormat(): string
     {
         return PHP_INT_SIZE >= 8 ? 'J' : 'M';
     }
 
-    protected function getHandleUri(): string
+    private function getHandleUri(): string
     {
         $meta = @stream_get_meta_data($this->handle);
 

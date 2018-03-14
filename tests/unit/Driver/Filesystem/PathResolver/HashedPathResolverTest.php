@@ -54,7 +54,10 @@ class HashedPathResolverTest extends TestCase
         $this->resolver->setPathSegmentCount(10);
 
         $this->expectException(\LengthException::class);
-        $this->expectExceptionMessage('Cannot produce path (segment count = 10 and segment length = 5) from hash "04f98100995b2f5633210e10f21ee022" (algo = md5) because the hash is not long enough (need at least 50 bytes, got 32)');
+        $this->expectExceptionMessage(
+            'Cannot produce path (segment count = 10 and segment length = 5) from hash "04f98100995b2f5633210e10f21ee022" (algo = md5)'
+                . ' because the hash is not long enough (need at least 50 bytes, got 32)'
+        );
 
         $this->resolver->resolve($this->fileFormat, 'foo.bar');
     }

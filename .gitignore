@@ -1,4 +1,5 @@
 /vendor
+/tests/temp.filesystem.cache
+/coverage
 /composer.lock
 /phpunit.xml
-/tests/tmp-*

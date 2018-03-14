@@ -198,17 +198,17 @@ class MemcachedDriverTest extends TestCase
     }
 
     function testWriteMultiple()
-{
-    $this->memcachedMock->expects($this->exactly(2))
-        ->method('add')
-        ->withConsecutive(
-            ['foo', 'bar', 0],
-            ['baz', 'qux', 0]
-        )
-        ->willReturn(true);
+    {
+        $this->memcachedMock->expects($this->exactly(2))
+            ->method('add')
+            ->withConsecutive(
+                ['foo', 'bar', 0],
+                ['baz', 'qux', 0]
+            )
+            ->willReturn(true);
 
-    $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
-}
+        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
+    }
 
     function testWriteMultipleWithTtl()
     {

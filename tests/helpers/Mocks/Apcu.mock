@@ -2,12 +2,18 @@
 
 if (!extension_loaded('apcu')):
 
-// required for references to work in PHPMock
+define('APC_ITER_KEY', 2);
+
+function apcu_exists($keys) {}
+function apcu_store($key, $var, $ttl = 0) {}
+function apcu_add($key, $var, $ttl = 0) {}
+function apcu_delete($key) {}
+function apcu_clear_cache() {}
 function apcu_fetch($key, &$success = null) {}
 
-class APCUIterator implements \Iterator
+class APCuIterator implements \Iterator
 {
-	function __construct() {}
+	function __construct($search = null, $format = 0, $chunk_size = 0, $list = 0) {}
     function current() {}
     function next() {}
     function key() {}

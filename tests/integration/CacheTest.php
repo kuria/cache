@@ -247,7 +247,7 @@ abstract class CacheTest extends TestCase
             [0],
             [1.23],
             [-1.23],
-            [NAN, $this->isNaN()],
+            [NAN, $this->isNan()],
             [INF],
             [-INF],
             ['foo'],

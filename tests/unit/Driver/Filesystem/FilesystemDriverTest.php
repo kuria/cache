@@ -193,4 +193,3 @@ class FilesystemDriverTest extends TestCase
         return $entry;
     }
 }
-

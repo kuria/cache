@@ -13,9 +13,9 @@ use Kuria\Cache\Driver\Helper\SerializationHelper;
 class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableInterface
 {
     /** @var string */
-    protected $cachePath;
+    private $cachePath;
     /** @var EntryFactoryInterface */
-    protected $entryFactory;
+    private $entryFactory;
 
     function __construct(string $cachePath, ?EntryFactoryInterface $entryFactory = null)
     {
@@ -77,7 +77,7 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
         $this->cleanupEmptySubdirs();
     }
 
-    protected function cleanupEmptySubdirs(): void
+    private function cleanupEmptySubdirs(): void
     {
         foreach ($this->createCacheIterator(false) as $path) {
             if (is_dir($path) && !(new \FilesystemIterator($path))->valid()) {
@@ -118,7 +118,7 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
         }
     }
 
-    protected function getEntryForKey(string $key): EntryInterface
+    private function getEntryForKey(string $key): EntryInterface
     {
         return $this->entryFactory->fromKey($this->cachePath, $key);
     }

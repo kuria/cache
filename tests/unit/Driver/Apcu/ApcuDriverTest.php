@@ -303,7 +303,7 @@ class ApcuDriverTest extends TestCase
 
         $this->getFunctionMock(__NAMESPACE__, 'apcu_delete')
             ->expects($this->once())
-            ->with($this->isInstanceOf(\APCUIterator::class))
+            ->with($this->isInstanceOf(\APCuIterator::class))
             ->willReturn(true);
 
         $this->driver->filter('prefix_');
@@ -338,7 +338,7 @@ class ApcuDriverTest extends TestCase
             }
         };
 
-        $apcuIterator = new class($entryGenerator()) extends \APCUIterator {
+        $apcuIterator = new class($entryGenerator()) extends \APCuIterator {
             private $iterator;
 
             function __construct(\Iterator $iterator)
@@ -348,11 +348,30 @@ class ApcuDriverTest extends TestCase
                 $this->iterator = $iterator;
             }
 
-            function rewind() { $this->iterator->rewind(); }
-            function valid() { return $this->iterator->valid(); }
-            function current() { return $this->iterator->current(); }
-            function key() { return $this->iterator->key(); }
-            function next() { $this->iterator->next(); }
+            function rewind()
+            {
+                $this->iterator->rewind();
+            }
+
+            function valid()
+            {
+                return $this->iterator->valid();
+            }
+
+            function current()
+            {
+                return $this->iterator->current();
+            }
+
+            function key()
+            {
+                return $this->iterator->key();
+            }
+
+            function next()
+            {
+                $this->iterator->next();
+            }
         };
 
         $this->driver->expects($this->once())

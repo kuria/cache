@@ -541,7 +541,7 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->supportsCleanup());
 
         $this->expectException(UnsupportedOperationException::class);
-        $this->expectExceptionMessageRegExp('{The ".+" driver does not support the cleanup operation}');
+        $this->expectExceptionMessageRegExp('{The ".+" driver does not support cleanup}');
 
         $this->cache->cleanup();
     }

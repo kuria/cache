@@ -7,11 +7,11 @@ use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
 class HashedPathResolver implements PathResolverInterface
 {
     /** @var string */
-    protected $hashAlgo = 'fnv1a64';
+    private $hashAlgo = 'fnv1a64';
     /** @var int */
-    protected $pathSegmentCount = 1;
+    private $pathSegmentCount = 1;
     /** @var int */
-    protected $pathSegmentLength = 2;
+    private $pathSegmentLength = 2;
 
     function setHashAlgo(string $hashAlgo): void
     {
@@ -35,7 +35,7 @@ class HashedPathResolver implements PathResolverInterface
         return $this->resolvePath($hash) . '/' . $hash . $format->getFilenameSuffix();
     }
 
-    protected function resolvePath(string $hash): string
+    private function resolvePath(string $hash): string
     {
         $path = '';
 
@@ -43,7 +43,8 @@ class HashedPathResolver implements PathResolverInterface
 
         if ($end > 0 && !isset($hash[$end - 1])) {
             throw new \LengthException(sprintf(
-                'Cannot produce path (segment count = %d and segment length = %d) from hash "%s" (algo = %s) because the hash is not long enough (need at least %d bytes, got %d)',
+                'Cannot produce path (segment count = %d and segment length = %d) from hash "%s" (algo = %s)'
+                    . ' because the hash is not long enough (need at least %d bytes, got %d)',
                 $this->pathSegmentCount,
                 $this->pathSegmentLength,
                 $hash,

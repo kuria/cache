@@ -18,13 +18,13 @@ use Kuria\Cache\Driver\Filesystem\Entry\File\FileHandle;
 class Entry implements EntryInterface
 {
     /** @var FileFormatInterface */
-    protected $format;
+    private $format;
     /** @var string */
-    protected $path;
+    private $path;
     /** @var string */
-    protected $temporaryDirPath;
+    private $temporaryDirPath;
     /** @var FileHandle|null */
-    protected $readHandle;
+    private $readHandle;
 
     function __construct(FileFormatInterface $format, string $path, string $temporaryDirPath)
     {
@@ -137,7 +137,7 @@ class Entry implements EntryInterface
         $this->closeReadHandle();
     }
 
-    protected function getReadHandle(): ?FileHandle
+    private function getReadHandle(): ?FileHandle
     {
         if ($this->readHandle === null) {
             // create new handle
@@ -150,7 +150,7 @@ class Entry implements EntryInterface
         return $this->readHandle;
     }
 
-    protected function requireReadHandle(): FileHandle
+    private function requireReadHandle(): FileHandle
     {
         $readHandle = $this->getReadHandle();
 
@@ -161,6 +161,7 @@ class Entry implements EntryInterface
         return $readHandle;
     }
 
+    /** @internal */
     protected function createReadHandle(): ?FileHandle
     {
         $handle = @fopen($this->path, 'r');
@@ -168,7 +169,7 @@ class Entry implements EntryInterface
         return $handle !== false ? new FileHandle($handle) : null;
     }
 
-    protected function closeReadHandle(): void
+    private function closeReadHandle(): void
     {
         if ($this->readHandle) {
             $this->readHandle->close();

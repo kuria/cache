@@ -22,7 +22,7 @@ class EntryTest extends TestCase
 
     /** @var FileFormatInterface|MockObject */
     private $fileFormatMock;
-    /** @var FileHandle|MockObject|null */
+    /** @var MockObject|null */
     private $readHandleMock;
     /** @var Entry|MockObject */
     private $entry;

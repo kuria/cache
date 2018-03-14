@@ -1,0 +1,7 @@
+includes:
+    - vendor/kuria/dev-meta/PHPStan/src.neon
+
+parameters:
+    ignoreErrors:
+        - '#.*Redis::.*#'
+    reportUnmatchedIgnoredErrors: false

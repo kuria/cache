@@ -42,7 +42,7 @@ class PhpFileFormat extends BinaryFileFormat
         return '.php';
     }
 
-    protected function skipPhpHeader(FileHandle $handle): void
+    private function skipPhpHeader(FileHandle $handle): void
     {
         $handle->move(24);
     }

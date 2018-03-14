@@ -10,14 +10,14 @@ class NamespacedCache implements CacheInterface
     use CachePrefixTrait;
 
     /** @var CacheInterface */
-    protected $wrappedCache;
+    private $wrappedCache;
 
     function __construct(CacheInterface $wrappedCache, string $prefix)
     {
         $this->wrappedCache = $wrappedCache;
         $this->setPrefix($prefix);
     }
-    
+
     function getWrappedCache(): CacheInterface
     {
         return $this->wrappedCache;

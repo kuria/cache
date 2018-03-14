@@ -10,7 +10,7 @@ use Kuria\Cache\Driver\Feature\FilterableInterface;
 class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInterface, \Countable
 {
     /** @var array[] */
-    protected $entries = [];
+    private $entries = [];
 
     function exists(string $key): bool
     {
@@ -88,7 +88,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInter
         return sizeof($this->entries);
     }
 
-    protected function validate(string $key): bool
+    private function validate(string $key): bool
     {
         if (!isset($this->entries[$key])) {
             return false;

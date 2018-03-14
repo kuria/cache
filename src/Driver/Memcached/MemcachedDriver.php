@@ -17,9 +17,9 @@ use Kuria\Cache\Helper\IterableHelper;
 class MemcachedDriver implements DriverInterface, MultiReadInterface, MultiWriteInterface, MultiDeleteInterface
 {
     /** @var \Memcached */
-    protected $memcached;
+    private $memcached;
 
-    public function __construct(\Memcached $memcached)
+    function __construct(\Memcached $memcached)
     {
         $this->memcached = $memcached;
     }
@@ -115,7 +115,7 @@ class MemcachedDriver implements DriverInterface, MultiReadInterface, MultiWrite
     {
         $failedKeyMap = array_filter(
             $this->memcached->deleteMulti(IterableHelper::toArray($keys)),
-            function ($status) { return $status !== true; }
+            function ($status) {return $status !== true; }
         );
 
         if ($failedKeyMap) {

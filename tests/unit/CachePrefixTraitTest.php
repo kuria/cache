@@ -12,7 +12,7 @@ class CachePrefixTraitTest extends TestCase
 {
     use IterableAssertionTrait;
 
-    /** @var CachePrefixTrait */
+    /** @var CachePrefixTrait|mixed */
     private $cachePrefix;
 
     protected function setUp()

@@ -17,8 +17,10 @@ class Cache extends Observable implements CacheInterface
 {
     use CachePrefixTrait;
 
-    /** @var DriverInterface|CleanupInterface|FilterableInterface|MultiReadInterface|MultiWriteInterface|MultiDeleteInterface */
-    protected $driver;
+    /**
+     * @var DriverInterface|CleanupInterface|FilterableInterface|MultiReadInterface|MultiWriteInterface|MultiDeleteInterface|mixed
+     */
+    private $driver;
 
     function __construct(DriverInterface $driver, string $prefix = '')
     {
@@ -72,7 +74,7 @@ class Cache extends Observable implements CacheInterface
             : $this->getMultipleEmulated($keys);
     }
 
-    protected function getMultipleNative(iterable $keys): array
+    private function getMultipleNative(iterable $keys): array
     {
         $keys = IterableHelper::toArray($keys);
 
@@ -98,7 +100,7 @@ class Cache extends Observable implements CacheInterface
         return $values;
     }
 
-    protected function getMultipleEmulated(iterable $keys): array
+    private function getMultipleEmulated(iterable $keys): array
     {
         $values = [];
 
@@ -167,7 +169,7 @@ class Cache extends Observable implements CacheInterface
         return $value;
     }
 
-    protected function write(string $key, $value, ?int $ttl, bool $overwrite): bool
+    private function write(string $key, $value, ?int $ttl, bool $overwrite): bool
     {
         $event = new CacheEvent($key, $value);
         $this->emit(CacheEvents::WRITE, $event);
@@ -183,7 +185,7 @@ class Cache extends Observable implements CacheInterface
         }
     }
 
-    protected function writeMultipleNative(iterable $values, ?int $ttl, bool $overwrite): bool
+    private function writeMultipleNative(iterable $values, ?int $ttl, bool $overwrite): bool
     {
         try {
             $this->driver->writeMultiple($this->filterValuesBeforeWrite($values), $ttl, $overwrite);
@@ -196,7 +198,7 @@ class Cache extends Observable implements CacheInterface
         }
     }
 
-    protected function filterValuesBeforeWrite(iterable $values): iterable
+    private function filterValuesBeforeWrite(iterable $values): iterable
     {
         foreach ($values as $key => $value) {
             $event = new CacheEvent($key, $value);
@@ -206,7 +208,7 @@ class Cache extends Observable implements CacheInterface
         }
     }
 
-    protected function writeMultipleEmulated(iterable $values, ?int $ttl, bool $overwrite): bool
+    private function writeMultipleEmulated(iterable $values, ?int $ttl, bool $overwrite): bool
     {
         $success = true;
 
@@ -239,7 +241,7 @@ class Cache extends Observable implements CacheInterface
             : $this->deleteMultipleEmulated($keys);
     }
 
-    protected function deleteMultipleNative(iterable $keys): bool
+    private function deleteMultipleNative(iterable $keys): bool
     {
         try {
             $this->driver->deleteMultiple($this->applyPrefixToValues($keys));
@@ -252,7 +254,7 @@ class Cache extends Observable implements CacheInterface
         }
     }
 
-    protected function deleteMultipleEmulated(iterable $keys): bool
+    private function deleteMultipleEmulated(iterable $keys): bool
     {
         $success = true;
 
@@ -307,7 +309,7 @@ class Cache extends Observable implements CacheInterface
     function cleanup(): bool
     {
         if (!$this->supportsCleanup()) {
-            throw new UnsupportedOperationException(sprintf('The "%s" driver does not support the cleanup operation', get_class($this->driver)));
+            throw new UnsupportedOperationException(sprintf('The "%s" driver does not support cleanup', get_class($this->driver)));
         }
 
         try {

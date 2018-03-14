@@ -21,14 +21,14 @@ abstract class SerializationHelper
         }
 
         // distinguish between "false on error" and a serialized FALSE value
-        if ($value === false && $data !== static::getSerializedFalse()) {
+        if ($value === false && $data !== self::getSerializedFalse()) {
             throw new DeserializationFailedException('Unserialization failed - data possibly malformed');
         }
 
         return $value;
     }
 
-    protected static function getSerializedFalse(): string
+    private static function getSerializedFalse(): string
     {
         static $serializedFalse;
 
