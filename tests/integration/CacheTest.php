@@ -68,6 +68,17 @@ abstract class CacheTest extends TestCase
         $this->assertSame('qux', $this->cache->cached('baz', null, function () { return 'new_qux'; }));
     }
 
+    function testAddWithExistingNullEntry()
+    {
+        $this->cache->set('foo', null);
+        $this->assertNull($this->cache->get('foo'));
+        $this->assertTrue($this->cache->has('foo'));
+
+        $this->cache->add('foo', 'bar');
+        $this->assertTrue($this->cache->has('foo'));
+        $this->assertNull($this->cache->get('foo'));
+    }
+
     function testClear()
     {
         $this->assertTrue($this->cache->set('foo', 'foo_value'));
