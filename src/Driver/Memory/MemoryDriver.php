@@ -85,7 +85,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInter
      */
     function count()
     {
-        return sizeof($this->entries);
+        return count($this->entries);
     }
 
     private function validate(string $key): bool

@@ -98,7 +98,7 @@ class RedisDriver implements DriverInterface, MultiReadInterface, MultiWriteInte
     {
         $allKeys = IterableHelper::toArray($keys);
 
-        $totalKeys = sizeof($allKeys);
+        $totalKeys = count($allKeys);
         $numDeletedKeys = $this->redis->del(...$allKeys);
 
         if ($numDeletedKeys < $totalKeys) {

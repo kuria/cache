@@ -25,7 +25,7 @@ trait ObservableTestTrait
         $listener = $this->createMock(ListenerInterface::class);
         $callCounter = 0;
 
-        $listener->expects(TestCase::exactly(sizeof($expectedArgumentGroups)))
+        $listener->expects(TestCase::exactly(count($expectedArgumentGroups)))
             ->method('__invoke')
             // cannot use withConsecutive() because it doesn't work with arguments that are modified after the call
             ->willReturnCallback(function (...$args) use (&$callCounter, $expectedArgumentGroups) {
