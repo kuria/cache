@@ -31,23 +31,19 @@ Requirements
 Built-in drivers
 ****************
 
-==================== ========== =========== ============ ========== ======= ==========================================================
-Driver               Multi-read Multi-write Multi-delete Filterable Cleanup Required extension
-==================== ========== =========== ============ ========== ======= ==========================================================
-``FilesystemDriver`` no         no          no           yes        yes     none
-``ApcuDriver``       yes        yes         yes          yes        no      `APCu <http://php.net/manual/en/book.apcu.php>`_
-``MemcachedDriver``  yes        partial     yes          no         no      `Memcached <http://php.net/manual/en/book.memcached.php>`_
-``RedisDriver``      yes        yes         yes          yes        no      `PhpRedis <https://github.com/phpredis/phpredis>`_
-``MemoryDriver``     yes        yes         yes          yes        yes     none
-==================== ========== =========== ============ ========== ======= ==========================================================
+==================== ========== =========== ============ ========== ============== ==========================================================
+Driver               Multi-read Multi-write Multi-delete Filterable Manual cleanup Required extension
+==================== ========== =========== ============ ========== ============== ==========================================================
+``FilesystemDriver`` no         no          no           yes        yes            none
+``ApcuDriver``       yes        yes         yes          yes        no             `APCu <http://php.net/manual/en/book.apcu.php>`_
+``MemcachedDriver``  yes        partial     yes          no         no             `Memcached <http://php.net/manual/en/book.memcached.php>`_
+``RedisDriver``      yes        yes         yes          yes        no             `PhpRedis <https://github.com/phpredis/phpredis>`_
+``MemoryDriver``     yes        yes         yes          yes        yes            none
+==================== ========== =========== ============ ========== ============== ==========================================================
 
 .. NOTE::
 
    The cache will emulate multi-read/write/delete if the driver doesn't support it natively.
-
-.. NOTE::
-
-   Missing cleanup support means that it is managed automatically by the service.
 
 
 Usage
