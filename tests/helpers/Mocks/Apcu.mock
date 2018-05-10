@@ -13,15 +13,15 @@ function apcu_fetch($key, &$success = null) {}
 
 class APCuIterator implements \Iterator
 {
-	function __construct($search = null, $format = 0, $chunk_size = 0, $list = 0) {}
+    function __construct($search = null, $format = 0, $chunk_size = 0, $list = 0) {}
     function current() {}
     function next() {}
     function key() {}
     function valid() { return false; }
     function rewind() {}
-	function getTotalHits() { return 0; }
-	function getTotalSize() { return 0; }
-	function getTotalCount() { return 0; }
+    function getTotalHits() { return 0; }
+    function getTotalSize() { return 0; }
+    function getTotalCount() { return 0; }
 }
 
 endif;
