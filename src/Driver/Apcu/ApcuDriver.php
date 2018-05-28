@@ -111,7 +111,7 @@ class ApcuDriver implements DriverInterface, MultiReadInterface, MultiWriteInter
     protected function createApcuIterator(string $prefix): \APCuIterator
     {
         if ($prefix !== '') {
-            $search = sprintf('{^%s}', preg_quote($prefix));
+            $search = sprintf('{%s}A', preg_quote($prefix));
         } else {
             $search = null;
         }
