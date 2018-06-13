@@ -28,17 +28,24 @@ class NamespacedCache implements CacheInterface
         return $this->wrappedCache->has($this->applyPrefix($key));
     }
 
-    function get(string $key)
+    function get(string $key, &$exists = null)
     {
-        return $this->wrappedCache->get($this->applyPrefix($key));
+        return $this->wrappedCache->get($this->applyPrefix($key), $exists);
     }
 
-    function getMultiple(iterable $keys): array
+    function getMultiple(iterable $keys, &$failedKeys = null): array
     {
         $values = [];
 
-        foreach ($this->wrappedCache->getMultiple($this->applyPrefixToValues($keys)) as $prefixedKey => $value) {
+        $failedKeys = [];
+        $failedPrefixedKeys = [];
+
+        foreach ($this->wrappedCache->getMultiple($this->applyPrefixToValues($keys), $failedPrefixedKeys) as $prefixedKey => $value) {
             $values[$this->stripPrefix($prefixedKey)] = $value;
+        }
+
+        foreach ($failedPrefixedKeys as $failedPrefixedKey) {
+            $failedKeys[] = $this->stripPrefix($failedPrefixedKey);
         }
 
         return $values;

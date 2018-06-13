@@ -45,7 +45,8 @@ class ApcuDriverTest extends TestCase
                 return 'value';
             });
 
-        $this->assertSame('value', $this->driver->read('key'));
+        $this->assertSame('value', $this->driver->read('key', $exists));
+        $this->assertTrue($exists);
     }
 
     function testReadFailure()
@@ -59,7 +60,8 @@ class ApcuDriverTest extends TestCase
                 return 'unused';
             });
 
-        $this->assertNull($this->driver->read('key'));
+        $this->assertNull($this->driver->read('key', $exists));
+        $this->assertFalse($exists);
     }
 
     function testReadWithException()
@@ -71,7 +73,13 @@ class ApcuDriverTest extends TestCase
         $this->expectException(DriverExceptionInterface::class);
         $this->expectExceptionMessage('An exception was thrown when reading the entry');
 
-        $this->driver->read('key');
+        $exists = 'initial';
+
+        try {
+            $this->driver->read('key', $exists);
+        } finally {
+            $this->assertSame('initial', $exists);
+        }
     }
 
     function testReadMultiple()
@@ -126,14 +134,17 @@ class ApcuDriverTest extends TestCase
         $this->driver->write('key', 'value');
     }
 
-    function testWriteWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWriteWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
-            ->with('key', 'value', 60)
+            ->with('key', 'value', $expectedTtlValue)
             ->willReturn(true);
 
-        $this->driver->write('key', 'value', 60);
+        $this->driver->write('key', 'value', $ttl);
     }
 
     function testWriteFailure()
@@ -158,14 +169,17 @@ class ApcuDriverTest extends TestCase
         $this->driver->write('key', 'value', null, true);
     }
 
-    function testOverwriteWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testOverwriteWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
-            ->with('key', 'value', 60)
+            ->with('key', 'value', $expectedTtlValue)
             ->willReturn(true);
 
-        $this->driver->write('key', 'value', 60, true);
+        $this->driver->write('key', 'value', $ttl, true);
     }
 
     function testOverwriteFailure()
@@ -190,14 +204,17 @@ class ApcuDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
     }
 
-    function testWriteMultipleWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWriteMultipleWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
-            ->with(['foo' => 'bar', 'baz' => 'qux'], null, 60)
+            ->with(['foo' => 'bar', 'baz' => 'qux'], null, $expectedTtlValue)
             ->willReturn([]);
 
-        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], 60);
+        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl);
     }
 
     function testWriteMultipleFailure()
@@ -222,14 +239,17 @@ class ApcuDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], null, true);
     }
 
-    function testOverwriteMultipleWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testOverwriteMultipleWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
-            ->with(['foo' => 'bar', 'baz' => 'qux'], null, 60)
+            ->with(['foo' => 'bar', 'baz' => 'qux'], null, $expectedTtlValue)
             ->willReturn([]);
 
-        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], 60, true);
+        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl, true);
     }
 
     function testOverwriteMultipleFailure()
@@ -242,6 +262,18 @@ class ApcuDriverTest extends TestCase
         $this->expectExceptionMessage('Failed to write entries: foo, baz');
 
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], null, true);
+    }
+
+    function provideTtl(): array
+    {
+        return [
+            // ttl, expectedTtlValue
+            [123, 123],
+            [1, 1],
+            [0, 0],
+            [-1, 0],
+            [null, 0],
+        ];
     }
 
     function testDelete()

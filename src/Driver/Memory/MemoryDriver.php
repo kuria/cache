@@ -6,6 +6,7 @@ use Kuria\Cache\Driver\DriverInterface;
 use Kuria\Cache\Driver\Exception\DriverException;
 use Kuria\Cache\Driver\Feature\CleanupInterface;
 use Kuria\Cache\Driver\Feature\FilterableInterface;
+use Kuria\Cache\Driver\Helper\TtlHelper;
 
 class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInterface, \Countable
 {
@@ -17,9 +18,9 @@ class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInter
         return $this->validate($key);
     }
 
-    function read(string $key)
+    function read(string $key, &$exists = null)
     {
-        if (!$this->validate($key)) {
+        if (!($exists = $this->validate($key))) {
             return null;
         }
 
@@ -32,11 +33,10 @@ class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInter
             throw new DriverException('A valid entry for this key already exists');
         }
 
-        $entry = ['value' => $value];
-
-        if ($ttl !== null) {
-            $entry['expires'] = time() + $ttl;
-        }
+        $entry = [
+            'value' => $value,
+            'expires' => TtlHelper::toExpirationTime($ttl),
+        ];
 
         $this->entries[$key] = $entry;
     }
@@ -94,7 +94,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInter
             return false;
         }
 
-        if (isset($this->entries[$key]['expires']) && $this->entries[$key]['expires'] <= time()) {
+        if ($this->entries[$key]['expires'] !== 0 && $this->entries[$key]['expires'] <= time()) {
             unset($this->entries[$key]);
 
             return false;

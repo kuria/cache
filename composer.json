@@ -1,7 +1,7 @@
 {
     "name": "kuria/cache",
     "description": "Caching library with driver abstraction",
-    "keywords": ["cache", "file", "filesystem", "memcached", "redis", "apcu", "PSR-16", "simple cache"],
+    "keywords": ["cache", "file", "filesystem", "memcached", "redis", "apcu", "psr", "PSR-6", "PSR-16", "simple cache"],
     "license": "MIT",
     "require": {
         "php": ">=7.1.0",
@@ -10,9 +10,11 @@
     "require-dev": {
         "kuria/dev-meta": "^0.3.0",
         "php-mock/php-mock-phpunit": "^2.1.0",
+        "psr/cache": "^1.0",
         "psr/simple-cache": "^1.0"
     },
     "provide": {
+        "psr/cache-implementation": "1.0",
         "psr/simple-cache-implementation": "1.0"
     },
     "autoload": {
@@ -32,6 +34,7 @@
         ]
     },
     "suggest": {
+        "psr/cache": "to use the PSR-6 cache component (^1.0)",
         "psr/simple-cache": "to use the PSR-16 simple cache component (^1.0)"
     },
     "extra": {

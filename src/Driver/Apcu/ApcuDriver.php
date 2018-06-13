@@ -8,6 +8,7 @@ use Kuria\Cache\Driver\Feature\FilterableInterface;
 use Kuria\Cache\Driver\Feature\MultiDeleteInterface;
 use Kuria\Cache\Driver\Feature\MultiReadInterface;
 use Kuria\Cache\Driver\Feature\MultiWriteInterface;
+use Kuria\Cache\Driver\Helper\TtlHelper;
 use Kuria\Cache\Helper\IterableHelper;
 
 class ApcuDriver implements DriverInterface, MultiReadInterface, MultiWriteInterface, MultiDeleteInterface, FilterableInterface
@@ -17,15 +18,15 @@ class ApcuDriver implements DriverInterface, MultiReadInterface, MultiWriteInter
         return apcu_exists($key);
     }
 
-    function read(string $key)
+    function read(string $key, &$exists = null)
     {
         try {
-            $value = apcu_fetch($key, $success);
+            $value = apcu_fetch($key, $exists);
         } catch (\Throwable $e) {
             throw new DriverException('An exception was thrown when reading the entry', 0, $e);
         }
 
-        if (!$success) {
+        if (!$exists) {
             return null;
         }
 
@@ -50,9 +51,9 @@ class ApcuDriver implements DriverInterface, MultiReadInterface, MultiWriteInter
     function write(string $key, $value, ?int $ttl = null, bool $overwrite = false): void
     {
         if ($overwrite) {
-            $success = apcu_store($key, $value, $ttl ?? 0);
+            $success = apcu_store($key, $value, TtlHelper::normalize($ttl));
         } else {
-            $success = apcu_add($key, $value, $ttl ?? 0);
+            $success = apcu_add($key, $value, TtlHelper::normalize($ttl));
         }
 
         if (!$success) {
@@ -63,9 +64,9 @@ class ApcuDriver implements DriverInterface, MultiReadInterface, MultiWriteInter
     function writeMultiple(iterable $values, ?int $ttl = null, bool $overwrite = false): void
     {
         if ($overwrite) {
-            $failedKeys = apcu_store(IterableHelper::toArray($values), null, $ttl ?? 0);
+            $failedKeys = apcu_store(IterableHelper::toArray($values), null, TtlHelper::normalize($ttl));
         } else {
-            $failedKeys = apcu_add(IterableHelper::toArray($values), null, $ttl ?? 0);
+            $failedKeys = apcu_add(IterableHelper::toArray($values), null, TtlHelper::normalize($ttl));
         }
 
         if ($failedKeys) {

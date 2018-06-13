@@ -7,6 +7,7 @@ use Kuria\Cache\Driver\Exception\DriverException;
 use Kuria\Cache\Driver\Feature\MultiDeleteInterface;
 use Kuria\Cache\Driver\Feature\MultiReadInterface;
 use Kuria\Cache\Driver\Feature\MultiWriteInterface;
+use Kuria\Cache\Driver\Helper\TtlHelper;
 use Kuria\Cache\Helper\IterableHelper;
 
 /**
@@ -36,7 +37,7 @@ class MemcachedDriver implements DriverInterface, MultiReadInterface, MultiWrite
         return $resultCode === \Memcached::RES_SUCCESS || $resultCode === \Memcached::RES_PAYLOAD_FAILURE;
     }
 
-    function read(string $key)
+    function read(string $key, &$exists = null)
     {
         try {
             $value = $this->memcached->get($key);
@@ -44,7 +45,7 @@ class MemcachedDriver implements DriverInterface, MultiReadInterface, MultiWrite
             throw new DriverException('An exception was thrown when reading the entry', 0, $e);
         }
 
-        if ($this->memcached->getResultCode() !== \Memcached::RES_SUCCESS) {
+        if (!($exists = $this->memcached->getResultCode() === \Memcached::RES_SUCCESS)) {
             return null;
         }
 
@@ -68,12 +69,10 @@ class MemcachedDriver implements DriverInterface, MultiReadInterface, MultiWrite
 
     function write(string $key, $value, ?int $ttl = null, bool $overwrite = false): void
     {
-        $expire = $ttl > 0 ? time() + $ttl : 0;
-
         if ($overwrite) {
-            $success = $this->memcached->set($key, $value, $expire);
+            $success = $this->memcached->set($key, $value, TtlHelper::toExpirationTime($ttl));
         } else {
-            $success = $this->memcached->add($key, $value, $expire);
+            $success = $this->memcached->add($key, $value, TtlHelper::toExpirationTime($ttl));
         }
 
         if (!$success) {
@@ -83,7 +82,7 @@ class MemcachedDriver implements DriverInterface, MultiReadInterface, MultiWrite
 
     function writeMultiple(iterable $values, ?int $ttl = null, bool $overwrite = false): void
     {
-        $expire = $ttl > 0 ? time() + $ttl : 0;
+        $expire = TtlHelper::toExpirationTime($ttl);
 
         if ($overwrite) {
             $success = $this->memcached->setMulti(IterableHelper::toArray($values), $expire);

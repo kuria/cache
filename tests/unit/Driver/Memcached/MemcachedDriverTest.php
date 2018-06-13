@@ -68,7 +68,8 @@ class MemcachedDriverTest extends TestCase
 
         $this->prepareResultCode(\Memcached::RES_SUCCESS);
 
-        $this->assertSame('value', $this->driver->read('key'));
+        $this->assertSame('value', $this->driver->read('key', $exists));
+        $this->assertTrue($exists);
     }
 
     function testReadFailure()
@@ -79,7 +80,8 @@ class MemcachedDriverTest extends TestCase
 
         $this->prepareResultCode(\Memcached::RES_NOTFOUND);
 
-        $this->assertNull($this->driver->read('key'));
+        $this->assertNull($this->driver->read('key', $exists));
+        $this->assertFalse($exists);
     }
 
     function testReadWithException()
@@ -92,7 +94,13 @@ class MemcachedDriverTest extends TestCase
         $this->expectException(DriverExceptionInterface::class);
         $this->expectExceptionMessage('An exception was thrown when reading the entry');
 
-        $this->driver->read('key');
+        $exists = 'initial';
+
+        try {
+            $this->driver->read('key', $exists);
+        } finally {
+            $this->assertSame('initial', $exists);
+        }
     }
 
     function testReadMultiple()
@@ -139,15 +147,18 @@ class MemcachedDriverTest extends TestCase
         $this->driver->write('key', 'value');
     }
 
-    function testWriteWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::freezeTime([__NAMESPACE__], function (int $time) {
+        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
                 ->method('add')
-                ->with('key', 'value', $time + 60)
+                ->with('key', 'value', $expectedTtlValue)
                 ->willReturn(true);
 
-            $this->driver->write('key', 'value', 60);
+            $this->driver->write('key', 'value', $ttl);
         });
     }
 
@@ -173,15 +184,18 @@ class MemcachedDriverTest extends TestCase
         $this->driver->write('key', 'value', null, true);
     }
 
-    function testOverwriteWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testOverwriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::freezeTime([__NAMESPACE__], function (int $time) {
+        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
                 ->method('set')
-                ->with('key', 'value', $time + 60)
+                ->with('key', 'value', $expectedTtlValue)
                 ->willReturn(true);
 
-            $this->driver->write('key', 'value', 60, true);
+            $this->driver->write('key', 'value', $ttl, true);
         });
     }
 
@@ -210,18 +224,21 @@ class MemcachedDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
     }
 
-    function testWriteMultipleWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::freezeTime([__NAMESPACE__], function (int $time) {
+        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->exactly(2))
                 ->method('add')
                 ->withConsecutive(
-                    ['foo', 'bar', $time + 60],
-                    ['baz', 'qux', $time + 60]
+                    ['foo', 'bar', $expectedTtlValue],
+                    ['baz', 'qux', $expectedTtlValue]
                 )
                 ->willReturn(true);
 
-            $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], 60);
+            $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl);
         });
     }
 
@@ -247,15 +264,18 @@ class MemcachedDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], null, true);
     }
 
-    function testOverwriteMultipleWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testOverwriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::freezeTime([__NAMESPACE__], function (int $time) {
+        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
                 ->method('setMulti')
-                ->with(['foo' => 'bar', 'baz' => 'qux'], $time + 60)
+                ->with(['foo' => 'bar', 'baz' => 'qux'], $expectedTtlValue)
                 ->willReturn(true);
 
-            $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], 60, true);
+            $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl, true);
         });
     }
 
@@ -269,6 +289,18 @@ class MemcachedDriverTest extends TestCase
         $this->expectExceptionMessage('Failed to write multiple entries');
 
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], null, true);
+    }
+
+    function provideTtl(): array
+    {
+        return [
+            // ttl, now, expectedExpirationTime
+            [1, 123, 124],
+            [60, 1000, 1060],
+            [null, 123, 0],
+            [0, 123, 0],
+            [-1, 123, 0],
+        ];
     }
 
     function testDelete()

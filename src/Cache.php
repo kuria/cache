@@ -52,29 +52,36 @@ class Cache extends Observable implements CacheInterface
         }
     }
 
-    function get(string $key)
+    function get(string $key, &$exists = null)
     {
         try {
-            $event = new CacheEvent($key, $this->driver->read($this->applyPrefix($key)));
+            $value = $this->driver->read($this->applyPrefix($key), $exists);
         } catch (DriverExceptionInterface $e) {
+            $exists = false;
             $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
 
             return null;
         }
 
-        $this->emit(CacheEvents::READ, $event);
+        if ($exists) {
+            $this->emit(CacheEvents::HIT, $key, $value);
+        } else {
+            $this->emit(CacheEvents::MISS, $key);
+        }
 
-        return $event->value;
+        return $value;
     }
 
-    function getMultiple(iterable $keys): array
+    function getMultiple(iterable $keys, &$failedKeys = null): array
     {
+        $failedKeys = [];
+
         return $this->driver instanceof MultiReadInterface
-            ? $this->getMultipleNative($keys)
-            : $this->getMultipleEmulated($keys);
+            ? $this->getMultipleNative($keys, $failedKeys)
+            : $this->getMultipleEmulated($keys, $failedKeys);
     }
 
-    private function getMultipleNative(iterable $keys): array
+    private function getMultipleNative(iterable $keys, array &$failedKeys): array
     {
         $keys = IterableHelper::toArray($keys);
 
@@ -83,29 +90,44 @@ class Cache extends Observable implements CacheInterface
         }
 
         $values = array_fill_keys($keys, null);
+        $failedKeyMap = array_fill_keys($keys, true);
 
+        // fetch values
         try {
             foreach ($this->driver->readMultiple($this->applyPrefixToValues($keys)) as $prefixedKey => $value) {
                 $key = $this->stripPrefix($prefixedKey);
+                unset($failedKeyMap[$key]);
 
-                $event = new CacheEvent($key, $value);
-                $this->emit(CacheEvents::READ, $event);
+                $this->emit(CacheEvents::HIT, $key, $value);
 
-                $values[$key] = $event->value;
+                $values[$key] = $value;
             }
         } catch (DriverExceptionInterface $e) {
             $this->emit(CacheEvents::DRIVER_EXCEPTION, $e);
         }
 
+        // handle failed keys
+        if ($failedKeyMap) {
+            $failedKeys = array_keys($failedKeyMap);
+
+            foreach ($failedKeys as $failedKey) {
+                $this->emit(CacheEvents::MISS, $failedKey);
+            }
+        }
+
         return $values;
     }
 
-    private function getMultipleEmulated(iterable $keys): array
+    private function getMultipleEmulated(iterable $keys, array &$failedKeys): array
     {
         $values = [];
 
         foreach ($keys as $key) {
-            $values[$key] = $this->get($key);
+            $values[$key] = $this->get($key, $exists);
+
+            if (!$exists) {
+                $failedKeys[] = $key;
+            }
         }
 
         return $values;
@@ -152,17 +174,15 @@ class Cache extends Observable implements CacheInterface
 
     function cached(string $key, ?int $ttl, callable $callback, bool $overwrite = false)
     {
-        $value = $this->get($key);
+        $value = $this->get($key, $exists);
 
-        if ($value === null) {
+        if (!$exists) {
             $value = $callback();
 
-            if ($value !== null) {
-                if ($overwrite) {
-                    $this->set($key, $value, $ttl);
-                } else {
-                    $this->add($key, $value, $ttl);
-                }
+            if ($overwrite) {
+                $this->set($key, $value, $ttl);
+            } else {
+                $this->add($key, $value, $ttl);
             }
         }
 
@@ -171,11 +191,10 @@ class Cache extends Observable implements CacheInterface
 
     private function write(string $key, $value, ?int $ttl, bool $overwrite): bool
     {
-        $event = new CacheEvent($key, $value);
-        $this->emit(CacheEvents::WRITE, $event);
+        $this->emit(CacheEvents::WRITE, $key, $value, $ttl, $overwrite);
 
         try {
-            $this->driver->write($this->applyPrefix($key), $event->value, $ttl, $overwrite);
+            $this->driver->write($this->applyPrefix($key), $value, $ttl, $overwrite);
 
             return true;
         } catch (DriverExceptionInterface $e) {
@@ -188,7 +207,11 @@ class Cache extends Observable implements CacheInterface
     private function writeMultipleNative(iterable $values, ?int $ttl, bool $overwrite): bool
     {
         try {
-            $this->driver->writeMultiple($this->filterValuesBeforeWrite($values), $ttl, $overwrite);
+            $this->driver->writeMultiple(
+                $this->processMultipleValuesToWrite($values, $ttl, $overwrite),
+                $ttl,
+                $overwrite
+            );
 
             return true;
         } catch (DriverExceptionInterface $e) {
@@ -198,13 +221,12 @@ class Cache extends Observable implements CacheInterface
         }
     }
 
-    private function filterValuesBeforeWrite(iterable $values): iterable
+    private function processMultipleValuesToWrite(iterable $values, ?int $ttl, bool $overwrite): iterable
     {
         foreach ($values as $key => $value) {
-            $event = new CacheEvent($key, $value);
-            $this->emit(CacheEvents::WRITE, $event);
+            $this->emit(CacheEvents::WRITE, $key, $value, $ttl, $overwrite);
 
-            yield $this->applyPrefix($key) => $event->value;
+            yield $this->applyPrefix($key) => $value;
         }
     }
 

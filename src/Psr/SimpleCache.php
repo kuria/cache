@@ -22,7 +22,7 @@ class SimpleCache implements \Psr\SimpleCache\CacheInterface
     function set($key, $value, $ttl = null)
     {
         if ($ttl instanceof \DateInterval) {
-            $ttl = $this->convertDateIntervalToTtl($ttl);
+            $ttl = PsrCacheHelper::convertDateIntervalToTtl($ttl);
         }
 
         return $this->cache->set($key, $value, $ttl);
@@ -52,7 +52,7 @@ class SimpleCache implements \Psr\SimpleCache\CacheInterface
     function setMultiple($values, $ttl = null)
     {
         if ($ttl instanceof \DateInterval) {
-            $ttl = $this->convertDateIntervalToTtl($ttl);
+            $ttl = PsrCacheHelper::convertDateIntervalToTtl($ttl);
         }
 
         return $this->cache->setMultiple($values, $ttl);
@@ -66,14 +66,5 @@ class SimpleCache implements \Psr\SimpleCache\CacheInterface
     function has($key)
     {
         return $this->cache->has($key);
-    }
-
-    private function convertDateIntervalToTtl(\DateInterval $interval): int
-    {
-        if ($interval->invert) {
-            return 0;
-        }
-
-        return $interval->days * 86400 + $interval->h * 3600 + $interval->i * 60 + $interval->s;
     }
 }

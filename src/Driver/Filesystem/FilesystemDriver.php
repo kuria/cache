@@ -9,6 +9,7 @@ use Kuria\Cache\Driver\Filesystem\Entry\EntryFactory;
 use Kuria\Cache\Driver\Filesystem\Entry\EntryFactoryInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\EntryInterface;
 use Kuria\Cache\Driver\Helper\SerializationHelper;
+use Kuria\Cache\Driver\Helper\TtlHelper;
 
 class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableInterface
 {
@@ -28,11 +29,11 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
         return $this->getEntryForKey($key)->validate();
     }
 
-    function read(string $key)
+    function read(string $key, &$exists = null)
     {
         $entry = $this->getEntryForKey($key);
 
-        if (!$entry->validate()) {
+        if (!($exists = $entry->validate())) {
             return null;
         }
 
@@ -47,7 +48,7 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
         $this->getEntryForKey($key)->write(
             $key,
             serialize($value),
-            $ttl === null ? 0 : time() + $ttl,
+            TtlHelper::toExpirationTime($ttl),
             $overwrite
         );
     }

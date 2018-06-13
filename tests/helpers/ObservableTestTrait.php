@@ -45,6 +45,11 @@ trait ObservableTestTrait
 
         $observable->on($event, $listener);
     }
+
+    protected function expectNoEvents(ObservableInterface $observable): void
+    {
+        $this->expectNoEvent($observable, ObservableInterface::ANY_EVENT);
+    }
 }
 
 /**

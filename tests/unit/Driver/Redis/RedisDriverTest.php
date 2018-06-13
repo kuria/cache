@@ -42,7 +42,8 @@ class RedisDriverTest extends TestCase
             ->with('key')
             ->willReturn(serialize('value'));
 
-        $this->assertSame('value', $this->driver->read('key'));
+        $this->assertSame('value', $this->driver->read('key', $exists));
+        $this->assertTrue($exists);
     }
 
     function testReadFailure()
@@ -52,7 +53,8 @@ class RedisDriverTest extends TestCase
             ->with('key')
             ->willReturn(false);
 
-        $this->assertNull($this->driver->read('key'));
+        $this->assertNull($this->driver->read('key', $exists));
+        $this->assertFalse($exists);
     }
 
     function testReadMultiple()
@@ -78,14 +80,17 @@ class RedisDriverTest extends TestCase
         $this->driver->write('key', 'value');
     }
 
-    function testWriteWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWriteWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('set')
-            ->with('key', serialize('value'), ['ex' => 123, 'nx'])
+            ->with('key', serialize('value'), $expectedTtlOptions + ['nx'])
             ->willReturn(true);
 
-        $this->driver->write('key', 'value', 123);
+        $this->driver->write('key', 'value', $ttl);
     }
 
     function testWriteFailure()
@@ -110,14 +115,17 @@ class RedisDriverTest extends TestCase
         $this->driver->write('key', 'value', null, true);
     }
 
-    function testOverwriteWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testOverwriteWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('set')
-            ->with('key', serialize('value'), ['ex' => 123])
+            ->with('key', serialize('value'), $expectedTtlOptions)
             ->willReturn(true);
 
-        $this->driver->write('key', 'value', 123, true);
+        $this->driver->write('key', 'value', $ttl, true);
     }
 
     function testWriteMultiple()
@@ -141,7 +149,10 @@ class RedisDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
     }
 
-    function testWriteMultipleWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWriteMultipleWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -150,8 +161,8 @@ class RedisDriverTest extends TestCase
         $this->redisMock->expects($this->exactly(2))
             ->method('set')
             ->withConsecutive(
-                ['foo', serialize('bar'), ['ex' => 123, 'nx']],
-                ['baz', serialize('qux'), ['ex' => 123, 'nx']]
+                ['foo', serialize('bar'), $expectedTtlOptions + ['nx']],
+                ['baz', serialize('qux'), $expectedTtlOptions + ['nx']]
             )
             ->willReturnSelf();
 
@@ -159,7 +170,7 @@ class RedisDriverTest extends TestCase
             ->method('exec')
             ->willReturn([true, true]);
 
-        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], 123);
+        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl);
     }
 
     function testOverwriteMultiple()
@@ -183,7 +194,10 @@ class RedisDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], null, true);
     }
 
-    function testOverwriteMultipleWithTtl()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testOverwriteMultipleWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -192,8 +206,8 @@ class RedisDriverTest extends TestCase
         $this->redisMock->expects($this->exactly(2))
             ->method('set')
             ->withConsecutive(
-                ['foo', serialize('bar'), ['ex' => 123]],
-                ['baz', serialize('qux'), ['ex' => 123]]
+                ['foo', serialize('bar'), $expectedTtlOptions],
+                ['baz', serialize('qux'), $expectedTtlOptions]
             )
             ->willReturnSelf();
 
@@ -201,7 +215,7 @@ class RedisDriverTest extends TestCase
             ->method('exec')
             ->willReturn([true, true]);
 
-        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], 123, true);
+        $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl, true);
     }
 
     function testWriteMultipleFailure()
@@ -245,6 +259,18 @@ class RedisDriverTest extends TestCase
         $this->expectExceptionMessage('Dummy exception');
 
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
+    }
+
+    function provideTtl(): array
+    {
+        return [
+            // ttl, expectedTtlOptions
+            [123, ['ex' => 123]],
+            [1, ['ex' => 1]],
+            [0, []],
+            [-1, []],
+            [null, []],
+        ];
     }
 
     function testDelete()

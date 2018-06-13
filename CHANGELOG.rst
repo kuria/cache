@@ -1,6 +1,18 @@
 Changelog
 #########
 
+4.0.0
+*****
+
+- added PSR-6 cache adapter
+- added black hole driver
+- added ``&$exists`` argument to ``Cache::get()``
+- added ``&$failedKeys`` argument to ``Cache::getMultiple()``
+- simplified cache events
+- normalized TTL handling
+- ``Cache::cached()`` now caches ``NULL`` values as well
+
+
 3.0.0
 *****
 

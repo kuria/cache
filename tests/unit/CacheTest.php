@@ -84,30 +84,29 @@ class CacheTest extends TestCase
 
     function testGet()
     {
-        $this->driverMock->expects($this->once())
-            ->method('read')
-            ->with('prefix_key')
-            ->willReturn('result');
+        $this->prepareDriverRead('prefix_key', 'result');
+        $this->expectEvent($this->cache, CacheEvents::HIT, 'key', 'result');
 
-        $this->expectEvent($this->cache, CacheEvents::READ, new CacheEvent('key', 'result'));
-
-        $this->assertSame('result', $this->cache->get('key'));
+        $this->assertSame('result', $this->cache->get('key', $exists));
+        $this->assertTrue($exists);
     }
 
-    function testGetValueOverrideThroughEvent()
+    function testGetNull()
     {
-        $this->driverMock->expects($this->once())
-            ->method('read')
-            ->with('prefix_key')
-            ->willReturn('result');
+        $this->prepareDriverRead('prefix_key', null, true);
+        $this->expectEvent($this->cache, CacheEvents::HIT, 'key', null);
 
-        $this->cache->on(CacheEvents::READ, function (CacheEvent $e) {
-            $this->assertSame('result', $e->value);
+        $this->assertNull($this->cache->get('key', $exists));
+        $this->assertTrue($exists);
+    }
 
-            $e->value = 'new-value';
-        });
+    function testGetNonexistent()
+    {
+        $this->prepareDriverRead('prefix_key', null);
+        $this->expectEvent($this->cache, CacheEvents::MISS, 'key');
 
-        $this->assertSame('new-value', $this->cache->get('key'));
+        $this->assertNull($this->cache->get('key', $exists));
+        $this->assertFalse($exists);
     }
 
     function testGetFailure()
@@ -118,9 +117,12 @@ class CacheTest extends TestCase
             ->method('read')
             ->willThrowException($driverException);
 
-        $this->expectNoEvent($this->cache, CacheEvents::READ);
+        $this->expectNoEvent($this->cache, CacheEvents::HIT);
+        $this->expectNoEvent($this->cache, CacheEvents::MISS);
+        $this->expectEvent($this->cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));
 
-        $this->assertNull($this->cache->get('key'));
+        $this->assertNull($this->cache->get('key', $exists));
+        $this->assertFalse($exists);
     }
 
     function testGetMultiple()
@@ -128,34 +130,54 @@ class CacheTest extends TestCase
         $this->driverMock->expects($this->exactly(3))
             ->method('read')
             ->withConsecutive(
-                ['prefix_foo'],
-                ['prefix_bar'],
-                ['prefix_baz']
+                ['prefix_value'],
+                ['prefix_nonexistent'],
+                ['prefix_null']
             )
-            ->willReturnOnConsecutiveCalls(
-                1,
-                null,
-                2
-            );
+            ->willReturnCallback(function ($key, &$exists) {
+                switch ($key) {
+                    case 'prefix_value':
+                        $exists = true;
+
+                        return 'some-value';
+
+                    case 'prefix_baz':
+                        $exists = true;
+
+                        return 2;
+
+                    case 'prefix_null':
+                        $exists = true;
+
+                        return null;
+
+                    default:
+                        $exists = false;
+
+                        return null;
+                }
+            });
 
         $this->expectConsecutiveEvents(
             $this->cache,
-            CacheEvents::READ,
-            [new CacheEvent('foo', 1)],
-            [new CacheEvent('bar', null)],
-            [new CacheEvent('baz', 2)]
+            CacheEvents::HIT,
+            ['value', 'some-value'],
+            ['null', null]
         );
 
+        $this->expectEvent($this->cache, CacheEvents::MISS, 'nonexistent');
+
         $this->assertSame(
-            ['foo' => 1, 'bar' => null, 'baz' => 2],
-            $this->cache->getMultiple(['foo', 'bar', 'baz'])
+            ['value' => 'some-value', 'nonexistent' => null, 'null' => null],
+            $this->cache->getMultiple(['value', 'nonexistent', 'null'], $failedKeys)
         );
+
+        $this->assertSame(['nonexistent'], $failedKeys);
     }
 
     function testGetMultipleWithNoKeys()
     {
-        $this->expectNoEvent($this->cache, CacheEvents::READ);
-        $this->expectNoEvent($this->cache, CacheEvents::DRIVER_EXCEPTION);
+        $this->expectNoEvents($this->cache);
 
         $this->assertSameIterable([], $this->cache->getMultiple([]));
     }
@@ -178,7 +200,7 @@ class CacheTest extends TestCase
             ->method('write')
             ->with('prefix_foo', 123, null, false);
 
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('foo', 123));
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'foo', 123, null, false);
 
         $this->assertTrue($this->cache->add('foo', 123));
     }
@@ -189,22 +211,9 @@ class CacheTest extends TestCase
             ->method('write')
             ->with('prefix_foo', 123, 60, false);
 
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('foo', 123));
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'foo', 123, 60, false);
 
         $this->assertTrue($this->cache->add('foo', 123, 60));
-    }
-
-    function testAddValueOverrideThroughEvent()
-    {
-        $this->driverMock->expects($this->once())
-            ->method('write')
-            ->with('prefix_foo', 'new-value', null, false);
-
-        $this->cache->on(CacheEvents::WRITE, function (CacheEvent $e) {
-            $e->value = 'new-value';
-        });
-
-        $this->assertTrue($this->cache->add('foo', 123));
     }
 
     function testAddFailure()
@@ -215,7 +224,7 @@ class CacheTest extends TestCase
             ->method('write')
             ->willThrowException($driverException);
 
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('foo', 123));
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'foo', 123, null, false);
         $this->expectEvent($this->cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));
 
         $this->assertFalse($this->cache->add('foo', 123));
@@ -234,9 +243,9 @@ class CacheTest extends TestCase
         $this->expectConsecutiveEvents(
             $this->cache,
             CacheEvents::WRITE,
-            [new CacheEvent('foo', 1)],
-            [new CacheEvent('bar', 2)],
-            [new CacheEvent('baz', 3)]
+            ['foo', 1, 60, false],
+            ['bar', 2, 60, false],
+            ['baz', 3, 60, false]
         );
 
         $this->assertTrue($this->cache->addMultiple(['foo' => 1, 'bar' => 2, 'baz' => 3], 60));
@@ -262,8 +271,7 @@ class CacheTest extends TestCase
 
     function testAddMultipleWithEmptyIterable()
     {
-        $this->expectNoEvent($this->cache, CacheEvents::WRITE);
-        $this->expectNoEvent($this->cache, CacheEvents::DRIVER_EXCEPTION);
+        $this->expectNoEvents($this->cache);
 
         $this->assertTrue($this->cache->addMultiple([]));
     }
@@ -274,7 +282,7 @@ class CacheTest extends TestCase
             ->method('write')
             ->with('prefix_foo', 123, null, true);
 
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('foo', 123));
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'foo', 123, null, true);
 
         $this->assertTrue($this->cache->set('foo', 123));
     }
@@ -285,22 +293,9 @@ class CacheTest extends TestCase
             ->method('write')
             ->with('prefix_foo', 123, 60, true);
 
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('foo', 123));
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'foo', 123, 60, true);
 
         $this->assertTrue($this->cache->set('foo', 123, 60));
-    }
-
-    function testSetValueOverrideThroughEvent()
-    {
-        $this->driverMock->expects($this->once())
-            ->method('write')
-            ->with('prefix_foo', 'new-value', null, true);
-
-        $this->cache->on(CacheEvents::WRITE, function (CacheEvent $e) {
-            $e->value = 'new-value';
-        });
-
-        $this->assertTrue($this->cache->set('foo', 123));
     }
 
     function testSetFailure()
@@ -311,7 +306,7 @@ class CacheTest extends TestCase
             ->method('write')
             ->willThrowException($driverException);
 
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('foo', 123));
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'foo', 123, null, true);
         $this->expectEvent($this->cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));
 
         $this->assertFalse($this->cache->set('foo', 123));
@@ -330,9 +325,9 @@ class CacheTest extends TestCase
         $this->expectConsecutiveEvents(
             $this->cache,
             CacheEvents::WRITE,
-            [new CacheEvent('foo', 1)],
-            [new CacheEvent('bar', 2)],
-            [new CacheEvent('baz', 3)]
+            ['foo', 1, 60, true],
+            ['bar', 2, 60, true],
+            ['baz', 3, 60, true]
         );
 
         $this->assertTrue($this->cache->setMultiple(['foo' => 1, 'bar' => 2, 'baz' => 3], 60));
@@ -358,8 +353,7 @@ class CacheTest extends TestCase
 
     function testSetMultipleWithEmptyIterable()
     {
-        $this->expectNoEvent($this->cache, CacheEvents::WRITE);
-        $this->expectNoEvent($this->cache, CacheEvents::DRIVER_EXCEPTION);
+        $this->expectNoEvents($this->cache);
 
         $this->assertTrue($this->cache->setMultiple([]));
     }
@@ -370,18 +364,32 @@ class CacheTest extends TestCase
             return 'fresh_value';
         };
 
-        $this->driverMock->expects($this->once())
-            ->method('read')
-            ->with('prefix_key')
-            ->willReturn('cached_value');
+        $this->prepareDriverRead('prefix_key', 'cached_value');
 
         $this->driverMock->expects($this->never())
             ->method('write');
 
-        $this->expectEvent($this->cache, CacheEvents::READ, new CacheEvent('key', 'cached_value'));
+        $this->expectEvent($this->cache, CacheEvents::HIT, 'key', 'cached_value');
         $this->expectNoEvent($this->cache, CacheEvents::WRITE);
 
         $this->assertSame('cached_value', $this->cache->cached('key', null, $callback));
+    }
+
+    function testCachedReadNull()
+    {
+        $callback = function () {
+            return 'fresh_value';
+        };
+
+        $this->prepareDriverRead('prefix_key', null, true);
+
+        $this->driverMock->expects($this->never())
+            ->method('write');
+
+        $this->expectEvent($this->cache, CacheEvents::HIT, 'key', null);
+        $this->expectNoEvent($this->cache, CacheEvents::WRITE);
+
+        $this->assertNull($this->cache->cached('key', null, $callback));
     }
 
     function testCachedWrite()
@@ -390,17 +398,14 @@ class CacheTest extends TestCase
             return 'value';
         };
 
-        $this->driverMock->expects($this->once())
-            ->method('read')
-            ->with('prefix_key')
-            ->willReturn(null);
+        $this->prepareDriverRead('prefix_key', null);
 
         $this->driverMock->expects($this->once())
             ->method('write')
             ->with('prefix_key', 'value', null, false);
 
-        $this->expectEvent($this->cache, CacheEvents::READ, new CacheEvent('key', null));
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('key', 'value'));
+        $this->expectEvent($this->cache, CacheEvents::MISS, 'key');
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'key', 'value', null, false);
 
         $this->assertSame('value', $this->cache->cached('key', null, $callback));
     }
@@ -411,37 +416,32 @@ class CacheTest extends TestCase
             return 'value';
         };
 
-        $this->driverMock->expects($this->once())
-            ->method('read')
-            ->with('prefix_key')
-            ->willReturn(null);
+        $this->prepareDriverRead('prefix_key', null);
 
         $this->driverMock->expects($this->once())
             ->method('write')
             ->with('prefix_key', 'value', 123, true);
 
-        $this->expectEvent($this->cache, CacheEvents::READ, new CacheEvent('key', null));
-        $this->expectEvent($this->cache, CacheEvents::WRITE, new CacheEvent('key', 'value'));
+        $this->expectEvent($this->cache, CacheEvents::MISS, 'key');
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'key', 'value', 123, true);
 
         $this->assertSame('value', $this->cache->cached('key', 123, $callback, true));
     }
 
-    function testCachedShouldNotWriteNull()
+    function testCachedShouldWriteNull()
     {
         $callback = function () {
             return null;
         };
 
+        $this->prepareDriverRead('prefix_key', null);
+
         $this->driverMock->expects($this->once())
-            ->method('read')
-            ->with('prefix_key')
-            ->willReturn(null);
+            ->method('write')
+            ->with('prefix_key', null, null, false);
 
-        $this->driverMock->expects($this->never())
-            ->method('write');
-
-        $this->expectEvent($this->cache, CacheEvents::READ, new CacheEvent('key', null));
-        $this->expectNoEvent($this->cache, CacheEvents::WRITE);
+        $this->expectEvent($this->cache, CacheEvents::MISS, 'key');
+        $this->expectEvent($this->cache, CacheEvents::WRITE, 'key', null, null, false);
 
         $this->assertNull($this->cache->cached('key', null, $callback));
     }
@@ -500,7 +500,7 @@ class CacheTest extends TestCase
 
     function testDeleteMultipleWithNoKeys()
     {
-        $this->expectNoEvent($this->cache, CacheEvents::DRIVER_EXCEPTION);
+        $this->expectNoEvents($this->cache);
 
         $this->assertTrue($this->cache->deleteMultiple([]));
     }
@@ -552,5 +552,17 @@ class CacheTest extends TestCase
         $this->expectExceptionMessageRegExp('{Cannot list keys - the ".+" driver is not filterable}');
 
         iterator_to_array($this->cache);
+    }
+
+    private function prepareDriverRead(string $expectedKey, $result, ?bool $exists = null): void
+    {
+        $this->driverMock->expects($this->once())
+            ->method('read')
+            ->with($expectedKey)
+            ->willReturnCallback(function ($key, &$existsRef) use ($result, $exists) {
+                $existsRef = $exists ?? ($result !== null);
+
+                return $result;
+            });
     }
 }

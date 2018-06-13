@@ -14,17 +14,20 @@ interface CacheInterface extends \IteratorAggregate
     /**
      * Get a value
      *
+     * The $exists parameter will be set to TRUE or FALSE, depending on whether the entry was found or not.
+     *
      * Returns NULL if the value is not found.
      */
-    function get(string $key);
+    function get(string $key, &$exists = null);
 
     /**
      * Get multiple values
      *
      * - returns an associative array with the retrieved values
      * - nonexistent keys will have NULL value
+     * - the $failedKeys parameter will be set to an array of keys that were not found
      */
-    function getMultiple(iterable $keys): array;
+    function getMultiple(iterable $keys, &$failedKeys = null): array;
 
     /**
      * List keys, optionally filtered by a prefix
@@ -51,6 +54,7 @@ interface CacheInterface extends \IteratorAggregate
      *
      * - if the key already exists, it will NOT be overwritten and FALSE will be returned
      * - TTL is time-to-live in seconds
+     * - TTL = null or TTL <= 0 means no expiration
      */
     function add(string $key, $value, ?int $ttl = null): bool;
 
@@ -66,6 +70,7 @@ interface CacheInterface extends \IteratorAggregate
      *
      * - if the key already exists, it will be overwritten.
      * - TTL is time-to-live in seconds
+     * - TTL = null or TTL <= 0 means no expiration
      */
     function set(string $key, $value, ?int $ttl = null): bool;
 
@@ -80,8 +85,7 @@ interface CacheInterface extends \IteratorAggregate
      * Try to get a cached value. If it doesn't exist, invoke the given callback,
      * store its result in the cache and return it.
      *
-     * - uses add() if $overwrite is FALSE, set() otherwise
-     * - if the callback returns NULL it will not be stored in the cache
+     * Uses add() if $overwrite is FALSE, set() otherwise.
      *
      * @see CacheInterface::add()
      * @see CacheInterface::set()

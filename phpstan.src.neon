@@ -3,5 +3,6 @@ includes:
 
 parameters:
     ignoreErrors:
-        - '#.*Redis::.*#'
+        - '{.*Redis::.*}'
+        - '{Method Kuria\\Cache\\Driver\\Helper\\TtlHelper::normalize}A'
     reportUnmatchedIgnoredErrors: false

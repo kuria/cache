@@ -21,12 +21,17 @@ interface DriverInterface
     /**
      * Read an entry
      *
-     * Returns NULL for nonexistent entries.
+     * - returns NULL for nonexistent entries
+     * - the $exists parameter will be set to TRUE or FALSE, depending on whether the entry was found or not
+     * - in case of an exception during reading, the $exists parameter will not be changed
      */
-    function read(string $key);
+    function read(string $key, &$exists = null);
 
     /**
      * Write an entry
+     *
+     * - $ttl specifies expiration as a number of seconds from now
+     * - $ttl = NULL or $ttl <= 0 means no expiration
      */
     function write(string $key, $value, ?int $ttl = null, bool $overwrite = false): void;
 

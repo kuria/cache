@@ -53,9 +53,29 @@ class NamespacedCacheTest extends TestCase
         $this->wrappedCacheMock->expects($this->once())
             ->method('get')
             ->with('prefix_key')
-            ->willReturn(123);
+            ->willReturnCallback(function ($key, &$exists) {
+                $exists = true;
 
-        $this->assertSame(123, $this->namespacedCache->get('key'));
+                return 123;
+            });
+
+        $this->assertSame(123, $this->namespacedCache->get('key', $exists));
+        $this->assertTrue($exists);
+    }
+
+    function testGetNonexistent()
+    {
+        $this->wrappedCacheMock->expects($this->once())
+            ->method('get')
+            ->with('prefix_key')
+            ->willReturnCallback(function ($key, &$exists) {
+                $exists = false;
+
+                return null;
+            });
+
+        $this->assertNull($this->namespacedCache->get('key', $exists));
+        $this->assertFalse($exists);
     }
 
     function testGetMultiple()
@@ -63,9 +83,18 @@ class NamespacedCacheTest extends TestCase
         $this->wrappedCacheMock->expects($this->once())
             ->method('getMultiple')
             ->with($this->isSameIterable(['prefix_foo', 'prefix_bar', 'prefix_baz']))
-            ->willReturn(['prefix_foo' => 1, 'prefix_bar' => null, 'prefix_baz' => 3]);
+            ->willReturnCallback(function ($keys, &$failedKeys) {
+                $failedKeys = ['prefix_bar'];
 
-        $this->assertSame(['foo' => 1, 'bar' => null, 'baz' => 3], $this->namespacedCache->getMultiple(['foo', 'bar', 'baz']));
+                return ['prefix_foo' => 1, 'prefix_bar' => null, 'prefix_baz' => 3];
+            });
+
+        $this->assertSame(
+            ['foo' => 1, 'bar' => null, 'baz' => 3],
+            $this->namespacedCache->getMultiple(['foo', 'bar', 'baz'], $failedKeys)
+        );
+
+        $this->assertSame(['bar'], $failedKeys);
     }
 
     function testListKeys()

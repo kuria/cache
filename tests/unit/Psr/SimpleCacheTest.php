@@ -49,30 +49,20 @@ class SimpleCacheTest extends TestCase
     {
         $this->cacheMock->expects($this->once())
             ->method('set')
-            ->with('key', 'value', 60)
+            ->with('key', 'value', null)
             ->willReturn(true);
 
-        $this->assertTrue($this->simpleCache->set('key', 'value', 60));
+        $this->assertTrue($this->simpleCache->set('key', 'value'));
     }
 
-    function testSetWithDateInterval()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testSetWithTtl($ttl, ?int $expectedTtlValue)
     {
         $this->cacheMock->expects($this->once())
             ->method('set')
-            ->with('key', 'value', 10)
-            ->willReturn(true);
-
-        $this->assertTrue($this->simpleCache->set('key', 'value', new \DateInterval('PT10S')));
-    }
-
-    function testSetWithNegativeDateInterval()
-    {
-        $ttl = new \DateInterval('PT10S');
-        $ttl->invert = 1;
-
-        $this->cacheMock->expects($this->once())
-            ->method('set')
-            ->with('key', 'value', 0)
+            ->with('key', 'value', $expectedTtlValue)
             ->willReturn(true);
 
         $this->assertTrue($this->simpleCache->set('key', 'value', $ttl));
@@ -127,30 +117,20 @@ class SimpleCacheTest extends TestCase
     {
         $this->cacheMock->expects($this->once())
             ->method('setMultiple')
-            ->with(['foo' => 1, 'bar' => 2], 60)
+            ->with(['foo' => 1, 'bar' => 2], null)
             ->willReturn(true);
 
-        $this->assertTrue($this->simpleCache->setMultiple(['foo' => 1, 'bar' => 2], 60));
+        $this->assertTrue($this->simpleCache->setMultiple(['foo' => 1, 'bar' => 2]));
     }
 
-    function testSetMultipleWithDateInterval()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testSetMultipleWithTtl($ttl, ?int $expectedTtlValue)
     {
         $this->cacheMock->expects($this->once())
             ->method('setMultiple')
-            ->with(['foo' => 1, 'bar' => 2], 30)
-            ->willReturn(true);
-
-        $this->assertTrue($this->simpleCache->setMultiple(['foo' => 1, 'bar' => 2], new \DateInterval('PT30S')));
-    }
-
-    function testSetMultipleWithNegativeDateInterval()
-    {
-        $ttl = new \DateInterval('PT30S');
-        $ttl->invert = 1;
-
-        $this->cacheMock->expects($this->once())
-            ->method('setMultiple')
-            ->with(['foo' => 1, 'bar' => 2], 0)
+            ->with(['foo' => 1, 'bar' => 2], $expectedTtlValue)
             ->willReturn(true);
 
         $this->assertTrue($this->simpleCache->setMultiple(['foo' => 1, 'bar' => 2], $ttl));
@@ -174,5 +154,23 @@ class SimpleCacheTest extends TestCase
             ->willReturn(true);
 
         $this->assertTrue($this->simpleCache->has('key'));
+    }
+
+    function provideTtl(): array
+    {
+        $negativeInterval = new \DateInterval('PT60S');
+        $negativeInterval->invert = 1;
+
+        return [
+            // ttl, expectedTtlValue
+            [60, 60],
+            [123, 123],
+            [0, 0],
+            [-1, -1],
+            [null, null],
+            [new \DateInterval('PT60S'), 60],
+            [new \DateInterval('PT1M5S'), 65],
+            [$negativeInterval, null],
+        ];
     }
 }

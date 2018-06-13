@@ -10,16 +10,27 @@ use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
 abstract class CacheEvents
 {
     /**
-     * Emitted when a value has been read
+     * Emitted when an entry has been read
      *
-     * @param CacheEvent $event
+     * @param string $key
+     * @param mixed $value
      */
-    const READ = 'read';
+    const HIT = 'hit';
 
     /**
-     * Emitted before a value is written
+     * Emitted when an entry has not been found
      *
-     * @param CacheEvent $event
+     * @param string $key
+     */
+    const MISS = 'miss';
+
+    /**
+     * Emitted when an entry is about to be written
+     *
+     * @param string $key
+     * @param mixed $value
+     * @param int|null $ttl
+     * @param bool $overwrite
      */
     const WRITE = 'write';
 

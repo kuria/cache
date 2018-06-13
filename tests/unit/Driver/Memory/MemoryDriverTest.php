@@ -24,33 +24,98 @@ class MemoryDriverTest extends TestCase
 
     function testExists()
     {
-        $this->driver->write('key', 'value');
-        $this->driver->write('expired_key', 'value', -1);
+        $this->callNowAndAfter(
+            function () {
+                $this->driver->write('key', 'value');
+                $this->driver->write('expires', 'value', 10);
 
-        $this->assertTrue($this->driver->exists('key'));
-        $this->assertFalse($this->driver->exists('expired_key'));
-        $this->assertFalse($this->driver->exists('nonexistent'));
+                $this->assertTrue($this->driver->exists('key'));
+                $this->assertTrue($this->driver->exists('expires'));
+                $this->assertFalse($this->driver->exists('nonexistent'));
+            },
+            function () {
+                $this->assertTrue($this->driver->exists('key'));
+                $this->assertFalse($this->driver->exists('expires'));
+                $this->assertFalse($this->driver->exists('nonexistent'));
+            }
+        );
     }
 
     function testRead()
     {
-        $this->driver->write('key', 'value');
-        $this->driver->write('expired_key', 'value', -1);
+        $this->callNowAndAfter(
+            function () {
+                $this->driver->write('key', 'value');
+                $this->driver->write('expires', 123, 60);
 
-        $this->assertSame('value', $this->driver->read('key'));
-        $this->assertNull($this->driver->read('expired_key'));
-        $this->assertNull($this->driver->read('nonexistent'));
+                $this->assertSame('value', $this->driver->read('key', $exists));
+                $this->assertTrue($exists);
+                unset($exists);
+
+                $this->assertSame(123, $this->driver->read('expires', $exists));
+                $this->assertTrue($exists);
+                unset($exists);
+
+                $this->assertNull($this->driver->read('nonexistent', $exists));
+                $this->assertFalse($exists);
+                unset($exists);
+            },
+            function () {
+                $this->assertSame('value', $this->driver->read('key', $exists));
+                $this->assertTrue($exists);
+                unset($exists);
+
+                $this->assertNull($this->driver->read('expires', $exists));
+                $this->assertFalse($exists);
+                unset($exists);
+
+                $this->assertNull($this->driver->read('nonexistent', $exists));
+                $this->assertFalse($exists);
+                unset($exists);
+            }
+        );
     }
 
-    function testWrite()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWrite(?int $ttl, int $offset, bool $shouldExpire)
     {
-        TimeMachine::freezeTime([__NAMESPACE__], function () {
-            $this->driver->write('foo', 'bar');
-            $this->driver->write('baz', 'qux', 10);
+        $this->callNowAndAfter(
+            function () use ($ttl) {
+                $this->driver->write('key', 'value');
+                $this->driver->write('with_ttl', 123, $ttl);
 
-            $this->assertSame('bar', $this->driver->read('foo'));
-            $this->assertSame('qux', $this->driver->read('baz'));
-        });
+                $this->assertSame('value', $this->driver->read('key'));
+                $this->assertSame(123, $this->driver->read('with_ttl'));
+            },
+            function () use ($shouldExpire) {
+                $this->assertSame('value', $this->driver->read('key'));
+
+                if ($shouldExpire) {
+                    $this->assertNull($this->driver->read('with_ttl'));
+                    $this->assertFalse($this->driver->exists('with_ttl'));
+                } else {
+                    $this->assertSame(123, $this->driver->read('with_ttl'));
+                }
+            },
+            $offset
+        );
+    }
+
+    function provideTtl(): array
+    {
+        return [
+            // ttl, offset, shouldExpire
+            [60, 59, false],
+            [60, 60, true],
+            [1, 0, false],
+            [1, 1, true],
+            [30, 150, true],
+            [0, 60, false],
+            [null, 10, false],
+            [-1, 5, false],
+        ];
     }
 
     function testDisabledOverwrite()
@@ -94,12 +159,17 @@ class MemoryDriverTest extends TestCase
 
     function testDeletingExpiredEntry()
     {
-        $this->driver->write('key', 'value', -1);
+        $this->callNowAndAfter(
+            function () {
+                $this->driver->write('key', 'value', 10);
+            },
+            function () {
+                $this->expectException(DriverExceptionInterface::class);
+                $this->expectExceptionMessage('Failed to delete entry');
 
-        $this->expectException(DriverExceptionInterface::class);
-        $this->expectExceptionMessage('Failed to delete entry');
-
-        $this->driver->delete('key');
+                $this->driver->delete('key');
+            }
+        );
     }
 
     function testClear()
@@ -118,16 +188,26 @@ class MemoryDriverTest extends TestCase
 
     function testCleanup()
     {
-        $this->driver->write('foo', 'bar');
-        $this->driver->write('baz', 'qux', -1);
-        $this->driver->write('mlem', 'boop');
+        $this->callNowAndAfter(
+            function () {
+                $this->driver->write('foo', 'bar');
+                $this->driver->write('baz', 'qux', 60);
+                $this->driver->write('mlem', 'boop');
 
-        $this->assertCount(3, $this->driver);
+                $this->assertCount(3, $this->driver);
 
-        $this->driver->cleanup();
+                $this->driver->cleanup();
 
-        $this->assertCount(2, $this->driver);
-        $this->assertSameIterable(['foo', 'mlem'], $this->driver->listKeys());
+                $this->assertCount(3, $this->driver);
+                $this->assertSameIterable(['foo', 'baz', 'mlem'], $this->driver->listKeys());
+            },
+            function () {
+                $this->driver->cleanup();
+
+                $this->assertCount(2, $this->driver);
+                $this->assertSameIterable(['foo', 'mlem'], $this->driver->listKeys());
+            }
+        );
     }
 
     function testFilter()
@@ -149,24 +229,52 @@ class MemoryDriverTest extends TestCase
 
     function testListKeys()
     {
-        $this->driver->write('foo', 'bar');
-        $this->driver->write('baz', 'qux', -1);
-        $this->driver->write('mlem', 'boop');
+        $this->callNowAndAfter(
+            function () {
+                $this->driver->write('foo', 'bar');
+                $this->driver->write('baz', 'qux', 30);
+                $this->driver->write('mlem', 'boop');
 
-        $this->assertSameIterable(['foo', 'mlem'], $this->driver->listKeys());
-        $this->assertSameIterable(['foo'], $this->driver->listKeys('f'));
+                $this->assertSameIterable(['foo', 'baz', 'mlem'], $this->driver->listKeys());
+                $this->assertSameIterable(['foo'], $this->driver->listKeys('f'));
+                $this->assertSameIterable(['baz'], $this->driver->listKeys('b'));
+            },
+            function () {
+                $this->assertSameIterable(['foo', 'mlem'], $this->driver->listKeys());
+                $this->assertSameIterable(['foo'], $this->driver->listKeys('f'));
+                $this->assertSameIterable([], $this->driver->listKeys('b'));
+            }
+        );
     }
 
     function testCount()
     {
-        $this->assertCount(0, $this->driver);
-        $this->driver->write('foo', 'bar');
-        $this->assertCount(1, $this->driver);
-        $this->driver->write('baz', 'qux', -1);
-        $this->assertCount(2, $this->driver);
-        $this->driver->write('mlem', 'boop');
-        $this->assertCount(3, $this->driver);
-        $this->driver->clear();
-        $this->assertCount(0, $this->driver);
+        $this->callNowAndAfter(
+            function () {
+                $this->assertCount(0, $this->driver);
+                $this->driver->write('foo', 'bar');
+                $this->assertCount(1, $this->driver);
+                $this->driver->write('baz', 'qux', 20);
+                $this->assertCount(2, $this->driver);
+                $this->driver->write('mlem', 'boop');
+                $this->assertCount(3, $this->driver);
+            },
+            function () {
+                $this->assertCount(3, $this->driver); // expired entries should still be in the cache
+
+                $this->driver->clear();
+
+                $this->assertCount(0, $this->driver);
+            }
+        );
+    }
+
+    private function callNowAndAfter(callable $now, callable $after, int $offset = 60): void
+    {
+        $time = 1000;
+        $timeMockNs = ['Kuria\\Cache\\Driver\\Helper', __NAMESPACE__];
+
+        TimeMachine::setTime($timeMockNs, $time, $now);
+        TimeMachine::setTime($timeMockNs, $time + $offset, $after);
     }
 }

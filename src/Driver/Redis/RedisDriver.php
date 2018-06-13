@@ -9,6 +9,7 @@ use Kuria\Cache\Driver\Feature\MultiDeleteInterface;
 use Kuria\Cache\Driver\Feature\MultiReadInterface;
 use Kuria\Cache\Driver\Feature\MultiWriteInterface;
 use Kuria\Cache\Driver\Helper\SerializationHelper;
+use Kuria\Cache\Driver\Helper\TtlHelper;
 use Kuria\Cache\Helper\IterableHelper;
 
 class RedisDriver implements DriverInterface, MultiReadInterface, MultiWriteInterface, MultiDeleteInterface, FilterableInterface
@@ -29,11 +30,11 @@ class RedisDriver implements DriverInterface, MultiReadInterface, MultiWriteInte
         return (bool) $this->redis->exists($key);
     }
 
-    function read(string $key)
+    function read(string $key, &$exists = null)
     {
         $value = $this->redis->get($key);
 
-        if ($value === false) {
+        if (!($exists = $value !== false)) {
             return null;
         }
 
@@ -127,7 +128,7 @@ class RedisDriver implements DriverInterface, MultiReadInterface, MultiWriteInte
     {
         $options = [];
 
-        if ($ttl) {
+        if (TtlHelper::shouldExpire($ttl)) {
             $options['ex'] = $ttl;
         }
 

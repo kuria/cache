@@ -60,14 +60,16 @@ class FilesystemDriverTest extends TestCase
     {
         $this->prepareEntry('key', true, serialize('value'));
 
-        $this->assertSame('value', $this->driver->read('key'));
+        $this->assertSame('value', $this->driver->read('key', $exists));
+        $this->assertTrue($exists);
     }
 
     function testReadInvalid()
     {
         $this->prepareEntry('key', false);
 
-        $this->assertNull($this->driver->read('key'));
+        $this->assertNull($this->driver->read('key', $exists));
+        $this->assertFalse($exists);
     }
 
     function testWrite()
@@ -81,17 +83,32 @@ class FilesystemDriverTest extends TestCase
         $this->driver->write('key', 'value');
     }
 
-    function testWriteWithTtlAndOverwrite()
+    /**
+     * @dataProvider provideTtl
+     */
+    function testWriteWithTtlAndOverwrite(?int $ttl, int $now, int $expectedExpirationTime)
     {
-        TimeMachine::freezeTime([__NAMESPACE__], function (int $time) {
+        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedExpirationTime) {
             $entry = $this->prepareEntry('key', false);
 
             $entry->expects($this->once())
                 ->method('write')
-                ->with('key', serialize('value'), $time + 60, true);
+                ->with('key', serialize('value'), $expectedExpirationTime, true);
 
-            $this->driver->write('key', 'value', 60, true);
+            $this->driver->write('key', 'value', $ttl, true);
         });
+    }
+
+    function provideTtl(): array
+    {
+        return [
+            // ttl, now, expectedExpirationTime
+            [1, 123, 124],
+            [60, 1000, 1060],
+            [null, 123, 0],
+            [0, 123, 0],
+            [-1, 123, 0],
+        ];
     }
 
     function testDelete()

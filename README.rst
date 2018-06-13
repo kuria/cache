@@ -16,8 +16,9 @@ Features
 - multiple-entry operations: getting, setting, adding, deleting
 - listing, filtering, cleanup (requires driver support)
 - TTL expiration
-- key prefixing
+- key prefixing / namespacing
 - stored and retrieved values can be manipulated via events
+- `PSR-6 <http://www.php-fig.org/psr/psr-6/>`_ cache adapter
 - `PSR-16 <http://www.php-fig.org/psr/psr-16/>`_ simple cache wrapper
 - multiple built-in driver implementations
 
@@ -39,6 +40,7 @@ Driver               Multi-read Multi-write Multi-delete Filterable Manual clean
 ``MemcachedDriver``  yes        partial     yes          no         no             `Memcached <http://php.net/manual/en/book.memcached.php>`_
 ``RedisDriver``      yes        yes         yes          yes        no             `PhpRedis <https://github.com/phpredis/phpredis>`_
 ``MemoryDriver``     yes        yes         yes          yes        yes            none
+``BlackHoleDriver``  no         no          no           yes        no             none
 ==================== ========== =========== ============ ========== ============== ==========================================================
 
 .. NOTE::
@@ -119,7 +121,8 @@ entry exists or not.
 
    Beware of a possible race-condition between calls to ``has()`` and ``get()``.
 
-   If possible, only call ``get()`` and check for a ``NULL`` result.
+   If possible, only call ``get()`` and check for a ``NULL`` result or use its
+   ``$exists`` argument.
 
 
 ``get()`` - read a single entry
@@ -133,6 +136,22 @@ The ``get()`` method returns the stored value or ``NULL`` if the entry does not 
 
    $value = $cache->get('key');
 
+If you need to distinguish between a ``NULL`` value and a nonexistent entry, use
+the ``$exists`` argument:
+
+.. code:: php
+
+   <?php
+
+   $value = $cache->get('key', $exists);
+
+   if ($exists) {
+       // entry was found
+       // $value might be NULL if NULL was stored
+   } else {
+       // entry was not found
+   }
+
 
 ``getMultiple()`` - read multiple entries
 =========================================
@@ -145,6 +164,17 @@ a ``NULL`` value.
    <?php
 
    $values = $cache->getMultiple(['foo', 'bar', 'baz']);
+
+If you need to distinguish between ``NULL`` values and a nonexistent entries, use
+the ``$failedKeys`` argument:
+
+.. code:: php
+
+   <?php
+
+   $values = $cache->getMultiple(['foo', 'bar', 'baz'], $failedKeys);
+
+   // $failedKeys will contain a list of keys that were not found
 
 
 ``listKeys()`` - list keys in the cache
@@ -212,6 +242,8 @@ The ``add()`` and ``set()`` methods both create an entry in the cache.
 
 The ``set()`` method will overwrite an existing entry, but ``add()`` will not.
 
+See `Allowed value types`_.
+
 .. code:: php
 
    <?php
@@ -230,7 +262,7 @@ TTL (time-to-live in seconds) can be specified using the third argument:
 
    $cache->add('bar', 'bar-value', 120);
 
-See `Allowed value types`_.
+If TTL is ``NULL``, ``0`` or negative, the entry will not have an expiration time.
 
 
 ``addMultiple()`` / ``setMultiple()`` - create multiple entries
@@ -241,6 +273,8 @@ in the cache.
 
 The ``setMultiple()`` method will overwrite any existing entries with the same keys,
 but ``addMultiple()`` will not.
+
+See `Allowed value types`_.
 
 .. code:: php
 
@@ -260,14 +294,14 @@ TTL (time-to-live in seconds) can be specified using the second argument:
 
    $cache->setMultiple(['foo' => 'foo-value', 'bar' => 'bar-value'], 120);
 
-See `Allowed value types`_.
+If TTL is ``NULL``, ``0`` or negative, the entries will not have expiration times.
 
 
 ``cached()`` - cache the result of a callback
 =============================================
 
 The ``cached()`` method tries to read a value from the cache. If it does not exist,
-it invokes the given callback and caches its result.
+it invokes the given callback and caches its return value (even if it is ``NULL``).
 
 .. code:: php
 
@@ -367,30 +401,47 @@ Allowed value types
 All types except for the resource type can be stored in the cache. Most drivers
 use standard `object serialization <http://php.net/manual/en/language.oop5.serialization.php>`_.
 
-It is not recommended to store ``NULL`` if you want to be able distinguish between
-a nonexistent entry and a ``NULL`` value.
-
 
 Cache events
 ************
 
-``CacheEvents::READ``
+``CacheEvents::HIT``
 =====================
 
 Emitted when an entry has been read.
 
-The listener is passed a single ``CacheEvent`` instance. Its ``value`` property can be
-manipulated.
+The listener is passed the key and value.
 
 .. code:: php
 
    <?php
 
-   use Kuria\Cache\CacheEvent;
    use Kuria\Cache\CacheEvents;
 
-   $cache->on(CacheEvents::READ, function (CacheEvent $e) {
-       echo "Reading {$e->key}\n";
+   $cache->on(CacheEvents::HIT, function (string $key, $value) {
+       printf(
+           "Read key %s from the cache, the value is %s\n",
+           $key,
+           var_export($value, true)
+       );
+   });
+
+
+``CacheEvents::MISS``
+=====================
+
+Emitted when an entry has not been found.
+
+The listener is passed the key.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\CacheEvents;
+
+   $cache->on(CacheEvents::MISS, function (string $key) {
+       echo "The key {$key} was not found in the cache\n";
    });
 
 
@@ -399,18 +450,22 @@ manipulated.
 
 Emitted when an entry is about to be written.
 
-The listener is passed a single ``CacheEvent`` instance. Its ``value`` property can be
-manipulated.
+The listener is passed the key, value, TTL and overwrite flag.
 
 .. code:: php
 
    <?php
 
-   use Kuria\Cache\CacheEvent;
    use Kuria\Cache\CacheEvents;
 
-   $cache->on(CacheEvents::WRITE, function (CacheEvent $e) {
-       echo "Writing {$e->key}\n";
+   $cache->on(CacheEvents::WRITE, function (string $key, $value, ?int $ttl, bool $overwrite) {
+       printf(
+           "Writing key %s to the cache, with TTL = %s, overwrite = %s and value = %s\n",
+           $key,
+           var_export($ttl, true),
+           var_export($overwrite, true),
+           var_export($value, true)
+       );
    });
 
 
@@ -419,14 +474,13 @@ manipulated.
 
 Emitted when the underlying driver implementation throws an exception.
 
-The listener is passed the exception object. This is useful for debugging / logging
+The listener is passed the exception object. This can be used for debugging or logging
 purposes.
 
 .. code:: php
 
    <?php
 
-   use Kuria\Cache\CacheEvent;
    use Kuria\Cache\CacheEvents;
 
    $cache->on(CacheEvents::DRIVER_EXCEPTION, function (\Throwable $e) {
@@ -434,14 +488,38 @@ purposes.
    });
 
 
+PSR-6: Cache adapter
+********************
+
+The ``CacheItemPool`` class is an adapter implementing the ``Psr\Cache\CacheItemPoolInterface``.
+
+To use it, you need to have ``psr/cache`` (``^1.0``) installed.
+
+See http://www.php-fig.org/psr/psr-6/ for more information.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Psr\CacheItemPool;
+
+   $pool = new CacheItemPool($cache);
+
+Also see `Creating a cache instance`_.
+
+.. TIP::
+
+   Count-based auto-commit is supported. Use ``setAutoCommitCount()`` to enable it.
+
+
 PSR-16: Simple cache wrapper
 ****************************
 
-The ``SimpleCache`` class is a wrapper implementing ``Psr\SimpleCache\CacheInterface``.
+The ``SimpleCache`` class is a wrapper implementing the ``Psr\SimpleCache\CacheInterface``.
 
 To use it, you need to have ``psr/simple-cache`` (``^1.0``) installed.
 
-See http://www.php-fig.org/psr/psr-16/
+See http://www.php-fig.org/psr/psr-16/ for more information.
 
 .. code:: php
 
@@ -450,3 +528,5 @@ See http://www.php-fig.org/psr/psr-16/
    use Kuria\Cache\Psr\SimpleCache;
 
    $simpleCache = new SimpleCache($cache);
+
+Also see `Creating a cache instance`_.

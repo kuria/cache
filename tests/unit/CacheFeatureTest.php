@@ -29,34 +29,40 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('readMultiple')
-            ->with($this->isSameIterable(['prefix_foo', 'prefix_bar', 'prefix_baz']))
-            ->willReturn(['prefix_foo' => 1, 'prefix_bar' => 2, 'prefix_baz' => 3]);
+            ->with($this->isSameIterable([
+                'prefix_foo',
+                'prefix_bar',
+                'prefix_null',
+                'prefix_nonexistent',
+                'prefix_nonexistent2',
+            ]))
+            ->willReturn([
+                'prefix_foo' => 1,
+                'prefix_bar' => 2,
+                'prefix_null' => null,
+            ]);
 
         $this->expectConsecutiveEvents(
             $cache,
-            CacheEvents::READ,
-            [new CacheEvent('foo', 1)],
-            [new CacheEvent('bar', 2)],
-            [new CacheEvent('baz', 3)]
+            CacheEvents::HIT,
+            ['foo', 1],
+            ['bar', 2],
+            ['null', null]
         );
 
-        // test value override through event
-        $cache->on(
-            CacheEvents::READ,
-            function (CacheEvent $e) {
-                if ($e->key === 'foo') {
-                    $e->value = 'new-value';
-                } elseif ($e->key === 'baz') {
-                    $e->value = null;
-                }
-            },
-            -1
+        $this->expectConsecutiveEvents(
+            $cache,
+            CacheEvents::MISS,
+            ['nonexistent'],
+            ['nonexistent2']
         );
 
         $this->assertSameIterable(
-            ['foo' => 'new-value', 'bar' => 2, 'baz' => null],
-            $cache->getMultiple(['foo', 'bar', 'baz'])
+            ['foo' => 1, 'bar' => 2, 'null' => null, 'nonexistent' => null, 'nonexistent2' => null],
+            $cache->getMultiple(['foo', 'bar', 'null', 'nonexistent', 'nonexistent2'], $failedKeys)
         );
+
+        $this->assertSame(['nonexistent', 'nonexistent2'], $failedKeys);
     }
 
     function testGetMultipleWithNokeys()
@@ -80,13 +86,43 @@ class CacheFeatureTest extends TestCase
             ->method('readMultiple')
             ->willThrowException($driverException);
 
-        $this->expectNoEvent($cache, CacheEvents::READ);
+        $this->expectNoEvent($cache, CacheEvents::HIT);
+        $this->expectConsecutiveEvents($cache, CacheEvents::MISS, ['foo'], ['bar'], ['baz']);
         $this->expectEvent($cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));
 
         $this->assertSameIterable(
             ['foo' => null, 'bar' => null, 'baz' => null],
-            $cache->getMultiple(['foo', 'bar', 'baz'])
+            $cache->getMultiple(['foo', 'bar', 'baz'], $failedKeys)
         );
+
+        $this->assertSame(['foo', 'bar', 'baz'], $failedKeys);
+    }
+
+    function testGetMultiplePartialFailure()
+    {
+        $driver = $this->createDriver([MultiReadInterface::class]);
+        $cache = $this->createCache($driver);
+        $driverException = new DriverException();
+
+        $driver->expects($this->once())
+            ->method('readMultiple')
+            ->willReturnCallback(function () use ($driverException) {
+                yield 'prefix_foo' => 1;
+                yield 'prefix_bar' => 2;
+
+                throw $driverException;
+            });
+
+        $this->expectConsecutiveEvents($cache, CacheEvents::HIT, ['foo', 1], ['bar', 2]);
+        $this->expectEvent($cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));
+        $this->expectEvent($cache, CacheEvents::MISS, 'baz');
+
+        $this->assertSameIterable(
+            ['foo' => 1, 'bar' => 2, 'baz' => null],
+            $cache->getMultiple(['foo', 'bar', 'baz'], $failedKeys)
+        );
+
+        $this->assertSame(['baz'], $failedKeys);
     }
 
     function testListKeys()
@@ -142,18 +178,13 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('writeMultiple')
-            ->with($this->isSameIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'overriden-bar-value']), 60, false);
+            ->with($this->isSameIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'bar-value']), 60, false);
 
-        $this->expectConsecutiveEvents($cache, CacheEvents::WRITE, [new CacheEvent('foo', 'foo-value')], [new CacheEvent('bar', 'bar-value')]);
-
-        $cache->on(
+        $this->expectConsecutiveEvents(
+            $cache,
             CacheEvents::WRITE,
-            function (CacheEvent $e) {
-                if ($e->key === 'bar') {
-                    $e->value = 'overriden-bar-value';
-                }
-            },
-            -1
+            ['foo', 'foo-value', 60, false],
+            ['bar', 'bar-value', 60, false]
         );
 
         $this->assertTrue($cache->addMultiple(['foo' => 'foo-value', 'bar' => 'bar-value'], 60));
@@ -182,18 +213,13 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('writeMultiple')
-            ->with($this->isSameIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'overriden-bar-value']), 60, true);
+            ->with($this->isSameIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'bar-value']), 60, true);
 
-        $this->expectConsecutiveEvents($cache, CacheEvents::WRITE, [new CacheEvent('foo', 'foo-value')], [new CacheEvent('bar', 'bar-value')]);
-
-        $cache->on(
+        $this->expectConsecutiveEvents(
+            $cache,
             CacheEvents::WRITE,
-            function (CacheEvent $e) {
-                if ($e->key === 'bar') {
-                    $e->value = 'overriden-bar-value';
-                }
-            },
-            -1
+            ['foo', 'foo-value', 60, true],
+            ['bar', 'bar-value', 60, true]
         );
 
         $this->assertTrue($cache->setMultiple(['foo' => 'foo-value', 'bar' => 'bar-value'], 60));
