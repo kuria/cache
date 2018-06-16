@@ -2,6 +2,7 @@
 
 namespace Kuria\Cache\Driver\Filesystem\PathResolver;
 
+use Kuria\Cache\Driver\Exception\DriverException;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
 
 class HashedPathResolver implements PathResolverInterface
@@ -12,6 +13,13 @@ class HashedPathResolver implements PathResolverInterface
     private $pathSegmentCount = 1;
     /** @var int */
     private $pathSegmentLength = 2;
+
+    function __construct()
+    {
+        if (!extension_loaded('hash')) {
+            throw new DriverException('Hashed path resolver requires the hash extension');
+        }
+    }
 
     function setHashAlgo(string $hashAlgo): void
     {

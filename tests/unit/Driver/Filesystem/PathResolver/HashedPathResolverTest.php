@@ -2,7 +2,9 @@
 
 namespace Kuria\Cache\Driver\Filesystem\PathResolver;
 
+use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
+use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -10,6 +12,8 @@ use PHPUnit\Framework\TestCase;
  */
 class HashedPathResolverTest extends TestCase
 {
+    use PHPMock;
+
     /** @var HashedPathResolver */
     private $resolver;
     /** @var FileFormatInterface */
@@ -21,6 +25,19 @@ class HashedPathResolverTest extends TestCase
         $this->fileFormat = $this->createConfiguredMock(FileFormatInterface::class, [
             'getFilenameSuffix' => '.suffix',
         ]);
+    }
+
+    function testShouldThrowExceptionIfHashExtensionIsNotLoaded()
+    {
+        $this->expectException(DriverExceptionInterface::class);
+        $this->expectExceptionMessage('Hashed path resolver requires the hash extension');
+
+        $this->getFunctionMock(__NAMESPACE__, 'extension_loaded')
+            ->expects($this->once())
+            ->with('hash')
+            ->willReturn(false);
+
+        new HashedPathResolver();
     }
 
     function testDefaultSettings()

@@ -10,6 +10,7 @@ $namespaceToMockedFunctions = [
     'Kuria\\Cache\\Driver\\Filesystem' => ['time'],
     'Kuria\\Cache\\Driver\\Filesystem\\Entry' => ['time', 'unlink'],
     'Kuria\\Cache\\Driver\\Filesystem\\Entry\\File' => ['flock'],
+    'Kuria\\Cache\\Driver\\Filesystem\\PathResolver' => ['extension_loaded'],
     'Kuria\\Cache\\Driver\\Memcached' => ['time'],
     'Kuria\\Cache\\Driver\\Memory' => ['time'],
     'Kuria\\Cache\\Driver\\Apcu' => [
