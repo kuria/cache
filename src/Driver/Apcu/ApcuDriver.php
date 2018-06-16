@@ -13,6 +13,13 @@ use Kuria\Cache\Helper\IterableHelper;
 
 class ApcuDriver implements DriverInterface, MultiReadInterface, MultiWriteInterface, MultiDeleteInterface, FilterableInterface
 {
+    function __construct()
+    {
+        if (!extension_loaded('apcu')) {
+            throw new DriverException('The apcu extension is not available');
+        }
+    }
+
     function exists(string $key): bool
     {
         return apcu_exists($key);

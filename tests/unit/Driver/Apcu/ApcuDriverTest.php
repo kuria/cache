@@ -24,6 +24,19 @@ class ApcuDriverTest extends TestCase
         $this->driver = $this->createPartialMock(ApcuDriver::class, ['createApcuIterator']);
     }
 
+    function testShouldThrowExceptionIfApcuExtensionIsNotLoaded()
+    {
+        $this->expectException(DriverExceptionInterface::class);
+        $this->expectExceptionMessage('The apcu extension is not available');
+
+        $this->getFunctionMock(__NAMESPACE__, 'extension_loaded')
+            ->expects($this->once())
+            ->with('apcu')
+            ->willReturn(false);
+
+        new ApcuDriver();
+    }
+
     function testExists()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_exists')

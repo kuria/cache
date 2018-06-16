@@ -13,6 +13,7 @@ $namespaceToMockedFunctions = [
     'Kuria\\Cache\\Driver\\Memcached' => ['time'],
     'Kuria\\Cache\\Driver\\Memory' => ['time'],
     'Kuria\\Cache\\Driver\\Apcu' => [
+        'extension_loaded',
         'apcu_exists',
         'apcu_fetch',
         'apcu_store',
