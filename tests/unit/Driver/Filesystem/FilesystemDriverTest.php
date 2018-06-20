@@ -195,18 +195,18 @@ class FilesystemDriverTest extends TestCase
      */
     private function createEntryMock(bool $valid, ?string $key = null, ?string $data = null)
     {
-        $entry = $this->createMock(EntryInterface::class);
+        $entryMock = $this->createMock(EntryInterface::class);
 
-        $entry->method('validate')->willReturn($valid);
+        $entryMock->method('validate')->willReturn($valid);
 
         if ($key !== null) {
-            $entry->method('readKey')->willReturn($key);
+            $entryMock->method('readKey')->willReturn($key);
         }
 
         if ($data !== null) {
-            $entry->method('readData')->willReturn($data);
+            $entryMock->method('readData')->willReturn($data);
         }
 
-        return $entry;
+        return $entryMock;
     }
 }

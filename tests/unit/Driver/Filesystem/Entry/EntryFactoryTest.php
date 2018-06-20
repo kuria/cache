@@ -12,8 +12,8 @@ use PHPUnit\Framework\TestCase;
  */
 class EntryFactoryTest extends TestCase
 {
-    /** @var FileFormatInterface */
-    protected $fileFormat;
+    /** @var FileFormatInterface|MockObject */
+    protected $fileFormatMock;
     /** @var PathResolverInterface|MockObject */
     protected $pathResolverMock;
     /** @var EntryFactoryInterface */
@@ -21,14 +21,14 @@ class EntryFactoryTest extends TestCase
 
     protected function setUp()
     {
-        $this->fileFormat = $this->createMock(FileFormatInterface::class);
+        $this->fileFormatMock = $this->createMock(FileFormatInterface::class);
         $this->pathResolverMock = $this->createMock(PathResolverInterface::class);
         $this->factory = $this->createFactory();
     }
 
     protected function createFactory(): EntryFactoryInterface
     {
-        return new EntryFactory($this->fileFormat, $this->pathResolverMock);
+        return new EntryFactory($this->fileFormatMock, $this->pathResolverMock);
     }
 
     protected function getEntryImpl(): string
@@ -52,7 +52,7 @@ class EntryFactoryTest extends TestCase
 
         $this->pathResolverMock->expects($this->once())
             ->method('resolve')
-            ->with($this->identicalTo($this->fileFormat), 'foo.bar')
+            ->with($this->identicalTo($this->fileFormatMock), 'foo.bar')
             ->willReturn('/resolved-entry');
 
         $entry = $this->factory->fromKey($cachePath, 'foo.bar');

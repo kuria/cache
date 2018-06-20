@@ -5,6 +5,7 @@ namespace Kuria\Cache\Driver\Filesystem\PathResolver;
 use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,13 +17,13 @@ class HashedPathResolverTest extends TestCase
 
     /** @var HashedPathResolver */
     private $resolver;
-    /** @var FileFormatInterface */
-    private $fileFormat;
+    /** @var FileFormatInterface|MockObject */
+    private $fileFormatMock;
 
     protected function setUp()
     {
         $this->resolver = new HashedPathResolver();
-        $this->fileFormat = $this->createConfiguredMock(FileFormatInterface::class, [
+        $this->fileFormatMock = $this->createConfiguredMock(FileFormatInterface::class, [
             'getFilenameSuffix' => '.suffix',
         ]);
     }
@@ -42,8 +43,8 @@ class HashedPathResolverTest extends TestCase
 
     function testDefaultSettings()
     {
-        $this->assertSame('/a9/a93287ddf7050214.suffix', $this->resolver->resolve($this->fileFormat, 'foo.bar'));
-        $this->assertSame('/00/00392c1913393882.suffix', $this->resolver->resolve($this->fileFormat, 'baz'));
+        $this->assertSame('/a9/a93287ddf7050214.suffix', $this->resolver->resolve($this->fileFormatMock, 'foo.bar'));
+        $this->assertSame('/00/00392c1913393882.suffix', $this->resolver->resolve($this->fileFormatMock, 'baz'));
     }
 
     function testCustomSettings()
@@ -52,16 +53,16 @@ class HashedPathResolverTest extends TestCase
         $this->resolver->setPathSegmentCount(3);
         $this->resolver->setPathSegmentLength(3);
 
-        $this->assertSame('/04f/981/009/04f98100995b2f5633210e10f21ee022.suffix', $this->resolver->resolve($this->fileFormat, 'foo.bar'));
-        $this->assertSame('/73f/eff/a4b/73feffa4b7f6bb68e44cf984c85f6e88.suffix', $this->resolver->resolve($this->fileFormat, 'baz'));
+        $this->assertSame('/04f/981/009/04f98100995b2f5633210e10f21ee022.suffix', $this->resolver->resolve($this->fileFormatMock, 'foo.bar'));
+        $this->assertSame('/73f/eff/a4b/73feffa4b7f6bb68e44cf984c85f6e88.suffix', $this->resolver->resolve($this->fileFormatMock, 'baz'));
     }
 
     function testNoSegments()
     {
         $this->resolver->setPathSegmentCount(0);
 
-        $this->assertSame('/a93287ddf7050214.suffix', $this->resolver->resolve($this->fileFormat, 'foo.bar'));
-        $this->assertSame('/00392c1913393882.suffix', $this->resolver->resolve($this->fileFormat, 'baz'));
+        $this->assertSame('/a93287ddf7050214.suffix', $this->resolver->resolve($this->fileFormatMock, 'foo.bar'));
+        $this->assertSame('/00392c1913393882.suffix', $this->resolver->resolve($this->fileFormatMock, 'baz'));
     }
 
     function testExceptionOnInvalidSettings()
@@ -76,6 +77,6 @@ class HashedPathResolverTest extends TestCase
                 . ' because the hash is not long enough (need at least 50 bytes, got 32)'
         );
 
-        $this->resolver->resolve($this->fileFormat, 'foo.bar');
+        $this->resolver->resolve($this->fileFormatMock, 'foo.bar');
     }
 }

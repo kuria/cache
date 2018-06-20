@@ -24,7 +24,7 @@ class CacheFeatureTest extends TestCase
 
     function testGetMultiple()
     {
-        $driver = $this->createDriver([MultiReadInterface::class]);
+        $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -67,7 +67,7 @@ class CacheFeatureTest extends TestCase
 
     function testGetMultipleWithNokeys()
     {
-        $driver = $this->createDriver([MultiReadInterface::class]);
+        $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->never())
@@ -78,7 +78,7 @@ class CacheFeatureTest extends TestCase
 
     function testGetMultipleFailure()
     {
-        $driver = $this->createDriver([MultiReadInterface::class]);
+        $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -100,7 +100,7 @@ class CacheFeatureTest extends TestCase
 
     function testGetMultiplePartialFailure()
     {
-        $driver = $this->createDriver([MultiReadInterface::class]);
+        $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -127,7 +127,7 @@ class CacheFeatureTest extends TestCase
 
     function testListKeys()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -140,7 +140,7 @@ class CacheFeatureTest extends TestCase
 
     function testListKeysWithNoPrefix()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver, '');
 
         $driver->expects($this->once())
@@ -153,7 +153,7 @@ class CacheFeatureTest extends TestCase
 
     function testListKeysFailure()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -173,7 +173,7 @@ class CacheFeatureTest extends TestCase
 
     function testAddMultiple()
     {
-        $driver = $this->createDriver([MultiWriteInterface::class]);
+        $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -192,7 +192,7 @@ class CacheFeatureTest extends TestCase
 
     function testAddMultipleFailure()
     {
-        $driver = $this->createDriver([MultiWriteInterface::class]);
+        $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -208,7 +208,7 @@ class CacheFeatureTest extends TestCase
 
     function testSetMultiple()
     {
-        $driver = $this->createDriver([MultiWriteInterface::class]);
+        $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -227,7 +227,7 @@ class CacheFeatureTest extends TestCase
 
     function testSetMultipleFailure()
     {
-        $driver = $this->createDriver([MultiWriteInterface::class]);
+        $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -243,7 +243,7 @@ class CacheFeatureTest extends TestCase
 
     function testDeleteMultiple()
     {
-        $driver = $this->createDriver([MultiDeleteInterface::class]);
+        $driver = $this->createDriverMock([MultiDeleteInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -255,7 +255,7 @@ class CacheFeatureTest extends TestCase
 
     function testDeleteMultipleFailure()
     {
-        $driver = $this->createDriver([MultiDeleteInterface::class]);
+        $driver = $this->createDriverMock([MultiDeleteInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -271,7 +271,7 @@ class CacheFeatureTest extends TestCase
 
     function testFilter()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -283,7 +283,7 @@ class CacheFeatureTest extends TestCase
 
     function testFilterFailure()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -298,7 +298,7 @@ class CacheFeatureTest extends TestCase
 
     function testCleanup()
     {
-        $driver = $this->createDriver([CleanupInterface::class]);
+        $driver = $this->createDriverMock([CleanupInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -309,7 +309,7 @@ class CacheFeatureTest extends TestCase
 
     function testCleanupFailure()
     {
-        $driver = $this->createDriver([CleanupInterface::class]);
+        $driver = $this->createDriverMock([CleanupInterface::class]);
         $cache = $this->createCache($driver);
         $driverException = new DriverException();
 
@@ -324,12 +324,12 @@ class CacheFeatureTest extends TestCase
 
     function testClearShouldUseFilterIfAvailable()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
             ->method('filter')
-            ->with($this->identicalTo('prefix_'));
+            ->with('prefix_');
 
         $driver->expects($this->never())
             ->method('clear');
@@ -339,7 +339,7 @@ class CacheFeatureTest extends TestCase
 
     function testClearShouldNotUseFilterIfPrefixIsEmpty()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver, '');
 
         $driver->expects($this->never())
@@ -353,7 +353,7 @@ class CacheFeatureTest extends TestCase
 
     function testGetIterator()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -378,7 +378,7 @@ class CacheFeatureTest extends TestCase
 
     function testGetIteratorWithPrefix()
     {
-        $driver = $this->createDriver([FilterableInterface::class]);
+        $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
 
         $driver->expects($this->once())
@@ -405,7 +405,7 @@ class CacheFeatureTest extends TestCase
         return new Cache($driver, $prefix);
     }
 
-    private function createDriver(array $driverInterfaces): MockObject
+    private function createDriverMock(array $driverInterfaces): MockObject
     {
         return $this->createMock(array_merge([DriverInterface::class], $driverInterfaces));
     }

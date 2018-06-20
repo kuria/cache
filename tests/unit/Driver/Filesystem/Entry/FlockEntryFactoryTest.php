@@ -9,7 +9,7 @@ class FlockEntryFactoryTest extends EntryFactoryTest
 {
     protected function createFactory(): EntryFactoryInterface
     {
-        return new FlockEntryFactory($this->fileFormat, $this->pathResolverMock);
+        return new FlockEntryFactory($this->fileFormatMock, $this->pathResolverMock);
     }
 
     protected function getEntryImpl(): string
