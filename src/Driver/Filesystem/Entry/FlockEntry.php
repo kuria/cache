@@ -13,8 +13,10 @@ class FlockEntry implements EntryInterface
 {
     /** @var FileFormatInterface */
     private $format;
+
     /** @var string */
     private $path;
+
     /** @var FileHandle|null */
     private $handle;
 

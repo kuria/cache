@@ -12,8 +12,10 @@ class CacheItemPool implements CacheItemPoolInterface
 
     /** @var CacheInterface */
     private $cache;
+
     /** @var CacheItem[] key-indexed */
     private $deferred = [];
+
     /** @var int|null */
     private $autoCommitCount;
 

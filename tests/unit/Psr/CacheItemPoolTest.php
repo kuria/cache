@@ -13,6 +13,7 @@ class CacheItemPoolTest extends TestCase
 {
     /** @var CacheInterface|MockObject */
     private $cacheMock;
+
     /** @var CacheItemPool */
     private $pool;
 

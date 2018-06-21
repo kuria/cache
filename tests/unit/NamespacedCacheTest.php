@@ -15,6 +15,7 @@ class NamespacedCacheTest extends TestCase
 
     /** @var CacheInterface|MockObject */
     private $wrappedCacheMock;
+
     /** @var NamespacedCache */
     private $namespacedCache;
 

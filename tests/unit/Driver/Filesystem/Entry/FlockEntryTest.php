@@ -21,8 +21,10 @@ class FlockEntryTest extends TestCase
 
     /** @var FileFormatInterface|MockObject */
     private $fileFormatMock;
+
     /** @var FileHandle|MockObject|null */
     private $handleMock;
+
     /** @var FlockEntry */
     private $entry;
 

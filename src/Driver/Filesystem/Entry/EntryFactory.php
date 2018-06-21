@@ -11,8 +11,10 @@ class EntryFactory implements EntryFactoryInterface
 {
     /** @var FileFormatInterface */
     private $fileFormat;
+
     /** @var PathResolverInterface */
     private $pathResolver;
+
     /** @var string */
     private $temporaryDirPath;
 

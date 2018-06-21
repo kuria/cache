@@ -17,6 +17,7 @@ class HashedPathResolverTest extends TestCase
 
     /** @var HashedPathResolver */
     private $resolver;
+
     /** @var FileFormatInterface|MockObject */
     private $fileFormatMock;
 

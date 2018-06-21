@@ -11,6 +11,7 @@ class FlockEntryFactory implements EntryFactoryInterface
 {
     /** @var FileFormatInterface */
     private $fileFormat;
+
     /** @var PathResolverInterface */
     private $pathResolver;
 

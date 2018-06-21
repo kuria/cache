@@ -16,6 +16,7 @@ class RedisDriverTest extends TestCase
 
     /** @var \Redis|MockObject */
     private $redisMock;
+
     /** @var RedisDriver */
     private $driver;
 

@@ -9,6 +9,7 @@ trait CachePrefixTrait
 {
     /** @var string */
     private $prefix = '';
+
     /** @var int|null */
     private $prefixLength;
 

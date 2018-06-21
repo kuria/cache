@@ -16,6 +16,7 @@ class SimpleCacheTest extends TestCase
 
     /** @var CacheInterface|MockObject */
     private $cacheMock;
+
     /** @var SimpleCache */
     private $simpleCache;
 

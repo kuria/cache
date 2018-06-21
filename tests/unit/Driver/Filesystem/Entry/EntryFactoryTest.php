@@ -14,8 +14,10 @@ class EntryFactoryTest extends TestCase
 {
     /** @var FileFormatInterface|MockObject */
     protected $fileFormatMock;
+
     /** @var PathResolverInterface|MockObject */
     protected $pathResolverMock;
+
     /** @var EntryFactoryInterface */
     protected $factory;
 

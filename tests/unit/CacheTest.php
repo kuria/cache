@@ -20,6 +20,7 @@ class CacheTest extends TestCase
 
     /** @var Cache */
     private $cache;
+
     /** @var DriverInterface|MockObject */
     private $driverMock;
 

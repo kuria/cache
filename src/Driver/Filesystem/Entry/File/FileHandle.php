@@ -8,8 +8,10 @@ class FileHandle
 {
     /** @var resource */
     private $handle;
+
     /** @var bool */
     private $locked = false;
+
     /** @var bool */
     private $exclusiveLock = false;
 

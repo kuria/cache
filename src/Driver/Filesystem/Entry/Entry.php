@@ -19,10 +19,13 @@ class Entry implements EntryInterface
 {
     /** @var FileFormatInterface */
     private $format;
+
     /** @var string */
     private $path;
+
     /** @var string */
     private $temporaryDirPath;
+
     /** @var FileHandle|null */
     private $readHandle;
 

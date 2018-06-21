@@ -17,6 +17,7 @@ class MemcachedDriverTest extends TestCase
 
     /** @var \Memcached|MockObject */
     private $memcachedMock;
+
     /** @var MemcachedDriver */
     private $driver;
 

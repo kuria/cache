@@ -11,6 +11,7 @@ abstract class FileFormatTest extends TestCase
 {
     /** @var FileFormatInterface */
     protected $format;
+
     /** @var FileHandle */
     protected $handle;
 

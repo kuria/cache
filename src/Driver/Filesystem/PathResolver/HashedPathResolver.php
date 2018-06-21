@@ -9,8 +9,10 @@ class HashedPathResolver implements PathResolverInterface
 {
     /** @var string */
     private $hashAlgo = 'fnv1a64';
+
     /** @var int */
     private $pathSegmentCount = 1;
+
     /** @var int */
     private $pathSegmentLength = 2;
 

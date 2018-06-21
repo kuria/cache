@@ -8,10 +8,13 @@ class CacheItem implements CacheItemInterface
 {
     /** @var string */
     private $key;
+
     /** @var mixed */
     private $value;
+
     /** @var bool */
     private $isHit;
+
     /** @var \DateTimeInterface|\DateInterval|int|null */
     private $expiration;
 

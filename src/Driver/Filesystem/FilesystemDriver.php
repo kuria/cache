@@ -15,6 +15,7 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
 {
     /** @var string */
     private $cachePath;
+
     /** @var EntryFactoryInterface */
     private $entryFactory;
 

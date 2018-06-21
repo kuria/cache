@@ -18,10 +18,13 @@ class FilesystemDriverTest extends TestCase
 
     /** @var EntryFactoryInterface|MockObject */
     private $entryFactoryMock;
+
     /** @var EntryInterface[]|MockObject[] */
     private $listedEntryMocks;
+
     /** @var FilesystemDriver */
     private $driver;
+
     /** @var int */
     private $entryMockSeq = 0;
 
