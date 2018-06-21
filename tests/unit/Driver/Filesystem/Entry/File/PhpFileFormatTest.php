@@ -12,7 +12,7 @@ class PhpFileFormatTest extends FileFormatTest
         return new PhpFileFormat();
     }
 
-    function testWritePrependsDataWithPhpHaltCompiler()
+    function testWriteShouldPrependDataWithPhpHaltCompiler()
     {
         $this->format->write($this->handle, 'key', 'data', 123);
         $this->handle->goto(0);
@@ -20,7 +20,7 @@ class PhpFileFormatTest extends FileFormatTest
         $this->assertSame('<?php __halt_compiler();', $this->handle->readString(24));
     }
 
-    function testGetFilenameSuffix()
+    function testShouldGetFilenameSuffix()
     {
         $this->assertSame('.php', $this->format->getFilenameSuffix());
     }

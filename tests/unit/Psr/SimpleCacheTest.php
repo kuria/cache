@@ -25,7 +25,7 @@ class SimpleCacheTest extends TestCase
         $this->simpleCache = new SimpleCache($this->cacheMock);
     }
 
-    function testGet()
+    function testShouldGet()
     {
         $this->cacheMock->expects($this->once())
             ->method('get')
@@ -35,7 +35,7 @@ class SimpleCacheTest extends TestCase
         $this->assertSame('value', $this->simpleCache->get('key'));
     }
 
-    function testGetWithCustomDefault()
+    function testShouldGetValueWithCustomDefault()
     {
         $this->cacheMock->expects($this->once())
             ->method('get')
@@ -45,7 +45,7 @@ class SimpleCacheTest extends TestCase
         $this->assertSame('default', $this->simpleCache->get('key', 'default'));
     }
 
-    function testSet()
+    function testShouldSet()
     {
         $this->cacheMock->expects($this->once())
             ->method('set')
@@ -58,7 +58,7 @@ class SimpleCacheTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testSetWithTtl($ttl, ?int $expectedTtlValue)
+    function testShouldSetWithTtl($ttl, ?int $expectedTtlValue)
     {
         $this->cacheMock->expects($this->once())
             ->method('set')
@@ -68,7 +68,7 @@ class SimpleCacheTest extends TestCase
         $this->assertTrue($this->simpleCache->set('key', 'value', $ttl));
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $this->cacheMock->expects($this->once())
             ->method('delete')
@@ -78,7 +78,7 @@ class SimpleCacheTest extends TestCase
         $this->assertTrue($this->simpleCache->delete('key'));
     }
 
-    function testClear()
+    function testShouldClear()
     {
         $this->cacheMock->expects($this->once())
             ->method('clear')
@@ -87,7 +87,7 @@ class SimpleCacheTest extends TestCase
         $this->assertTrue($this->simpleCache->clear());
     }
 
-    function testGetMultiple()
+    function testShouldGetMultiple()
     {
         $this->cacheMock->expects($this->once())
             ->method('getMultiple')
@@ -100,7 +100,7 @@ class SimpleCacheTest extends TestCase
         );
     }
 
-    function testGetMultipleWithCustomDefault()
+    function testShouldGetMultipleWithCustomDefault()
     {
         $this->cacheMock->expects($this->once())
             ->method('getMultiple')
@@ -113,7 +113,7 @@ class SimpleCacheTest extends TestCase
         );
     }
 
-    function testSetMultiple()
+    function testShouldSetMultiple()
     {
         $this->cacheMock->expects($this->once())
             ->method('setMultiple')
@@ -126,7 +126,7 @@ class SimpleCacheTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testSetMultipleWithTtl($ttl, ?int $expectedTtlValue)
+    function testShouldSetMultipleWithTtl($ttl, ?int $expectedTtlValue)
     {
         $this->cacheMock->expects($this->once())
             ->method('setMultiple')
@@ -136,7 +136,7 @@ class SimpleCacheTest extends TestCase
         $this->assertTrue($this->simpleCache->setMultiple(['foo' => 1, 'bar' => 2], $ttl));
     }
 
-    function testDeleteMultiple()
+    function testShouldDeleteMultiple()
     {
         $this->cacheMock->expects($this->once())
             ->method('deleteMultiple')
@@ -146,7 +146,7 @@ class SimpleCacheTest extends TestCase
         $this->assertTrue($this->simpleCache->deleteMultiple(['foo', 'bar']));
     }
 
-    function testHas()
+    function testShouldCheckIfEntryExists()
     {
         $this->cacheMock->expects($this->once())
             ->method('has')

@@ -25,7 +25,7 @@ class RedisDriverTest extends TestCase
         $this->driver = new RedisDriver($this->redisMock);
     }
 
-    function testExists()
+    function testShouldCheckIfEntryExists()
     {
         $this->redisMock->expects($this->once())
             ->method('exists')
@@ -35,7 +35,7 @@ class RedisDriverTest extends TestCase
         $this->assertTrue($this->driver->exists('key'));
     }
 
-    function testRead()
+    function testShouldRead()
     {
         $this->redisMock->expects($this->once())
             ->method('get')
@@ -46,7 +46,7 @@ class RedisDriverTest extends TestCase
         $this->assertTrue($exists);
     }
 
-    function testReadFailure()
+    function testShouldHandleReadFailure()
     {
         $this->redisMock->expects($this->once())
             ->method('get')
@@ -57,7 +57,7 @@ class RedisDriverTest extends TestCase
         $this->assertFalse($exists);
     }
 
-    function testReadMultiple()
+    function testShouldReadMultiple()
     {
         $this->redisMock->expects($this->once())
             ->method('getMultiple')
@@ -70,7 +70,7 @@ class RedisDriverTest extends TestCase
         );
     }
 
-    function testWrite()
+    function testShouldWrite()
     {
         $this->redisMock->expects($this->once())
             ->method('set')
@@ -83,7 +83,7 @@ class RedisDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWriteWithTtl(?int $ttl, array $expectedTtlOptions)
+    function testShouldWriteWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('set')
@@ -93,7 +93,7 @@ class RedisDriverTest extends TestCase
         $this->driver->write('key', 'value', $ttl);
     }
 
-    function testWriteFailure()
+    function testShouldHandleWriteFailure()
     {
         $this->redisMock->expects($this->once())
             ->method('set')
@@ -105,7 +105,7 @@ class RedisDriverTest extends TestCase
         $this->driver->write('key', 'value');
     }
 
-    function testOverwrite()
+    function testShouldOverwrite()
     {
         $this->redisMock->expects($this->once())
             ->method('set')
@@ -118,7 +118,7 @@ class RedisDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testOverwriteWithTtl(?int $ttl, array $expectedTtlOptions)
+    function testShouldOverwriteWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('set')
@@ -128,7 +128,7 @@ class RedisDriverTest extends TestCase
         $this->driver->write('key', 'value', $ttl, true);
     }
 
-    function testWriteMultiple()
+    function testShouldWriteMultiple()
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -152,7 +152,7 @@ class RedisDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWriteMultipleWithTtl(?int $ttl, array $expectedTtlOptions)
+    function testShouldWriteMultipleWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -173,7 +173,7 @@ class RedisDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl);
     }
 
-    function testOverwriteMultiple()
+    function testShouldOverwriteMultiple()
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -197,7 +197,7 @@ class RedisDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testOverwriteMultipleWithTtl(?int $ttl, array $expectedTtlOptions)
+    function testShouldOverwriteMultipleWithTtl(?int $ttl, array $expectedTtlOptions)
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -218,7 +218,7 @@ class RedisDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl, true);
     }
 
-    function testWriteMultipleFailure()
+    function testShouldHandleWriteMultipleFailure()
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -242,7 +242,7 @@ class RedisDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
     }
 
-    function testWriteMultipleWithException()
+    function testShouldWriteMultipleWithException()
     {
         $this->redisMock->expects($this->once())
             ->method('multi')
@@ -273,7 +273,7 @@ class RedisDriverTest extends TestCase
         ];
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $this->redisMock->expects($this->once())
             ->method('del')
@@ -283,7 +283,7 @@ class RedisDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testDeleteFailure()
+    function testShouldHandleDeleteFailure()
     {
         $this->redisMock->expects($this->once())
             ->method('del')
@@ -296,7 +296,7 @@ class RedisDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testDeleteMultiple()
+    function testShouldHandleDeleteMultiple()
     {
         $this->redisMock->expects($this->once())
             ->method('del')
@@ -306,7 +306,7 @@ class RedisDriverTest extends TestCase
         $this->driver->deleteMultiple(['foo', 'bar', 'baz']);
     }
 
-    function testDeleteMultipleFailure()
+    function testShouldHandleDeleteMultipleFailure()
     {
         $this->redisMock->expects($this->once())
             ->method('del')
@@ -318,7 +318,7 @@ class RedisDriverTest extends TestCase
         $this->driver->deleteMultiple(['foo', 'bar', 'baz']);
     }
 
-    function testClear()
+    function testShouldClear()
     {
         $this->redisMock->expects($this->once())
             ->method('flushDB')
@@ -327,7 +327,7 @@ class RedisDriverTest extends TestCase
         $this->driver->clear();
     }
 
-    function testClearFailure()
+    function testShouldHandleClearFailure()
     {
         $this->redisMock->expects($this->once())
             ->method('flushDB')
@@ -339,7 +339,7 @@ class RedisDriverTest extends TestCase
         $this->driver->clear();
     }
 
-    function testFilter()
+    function testShouldFilter()
     {
         $this->redisMock->expects($this->once())
             ->method('keys')
@@ -354,7 +354,7 @@ class RedisDriverTest extends TestCase
         $this->driver->filter('prefix_');
     }
 
-    function testListKeys()
+    function testShouldListKeys()
     {
         $this->redisMock->expects($this->once())
             ->method('keys')

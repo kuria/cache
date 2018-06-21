@@ -32,7 +32,7 @@ abstract class CacheTest extends TestCase
         return true;
     }
 
-    function testBasicOperations()
+    function testShouldPerformBasicOperations()
     {
         $this->assertFalse($this->cache->has('foo'));
         $this->assertFalse($this->cache->has('bar'));
@@ -68,7 +68,7 @@ abstract class CacheTest extends TestCase
         $this->assertSame('qux', $this->cache->cached('baz', null, function () { return 'new_qux'; }));
     }
 
-    function testAddWithExistingNullEntry()
+    function testAddShouldNotOverwiteExistingEntry()
     {
         $this->cache->set('foo', null);
         $this->assertNull($this->cache->get('foo'));
@@ -79,7 +79,7 @@ abstract class CacheTest extends TestCase
         $this->assertNull($this->cache->get('foo'));
     }
 
-    function testClear()
+    function testShouldClearCache()
     {
         $this->assertTrue($this->cache->set('foo', 'foo_value'));
         $this->assertTrue($this->cache->set('bar', 'bar_value'));
@@ -96,7 +96,7 @@ abstract class CacheTest extends TestCase
         $this->assertNull($this->cache->get('bar'));
     }
 
-    function testMultiOperations()
+    function testShouldPerformMultiOperations()
     {
         $this->assertFalse($this->cache->has('foo'));
         $this->assertFalse($this->cache->has('bar'));
@@ -190,7 +190,7 @@ abstract class CacheTest extends TestCase
         );
     }
 
-    function testFilterable()
+    function testShouldFilterEntries()
     {
         if (!$this->cache->isFilterable()) {
             $this->addToAssertionCount(1);
@@ -234,7 +234,7 @@ abstract class CacheTest extends TestCase
     /**
      * @dataProvider provideValueTypes
      */
-    function testValueTypes($value, ?Constraint $constraint = null)
+    function testShouldStoreSupportedValueTypes($value, ?Constraint $constraint = null)
     {
         $this->assertFalse($this->cache->has('key'));
 
@@ -268,7 +268,7 @@ abstract class CacheTest extends TestCase
         ];
     }
 
-    function testGetSerializationErrorHandling()
+    function testGetShouldHandleSerializationErrors()
     {
         if (!$this->driverUsesSerialization()) {
             $this->addToAssertionCount(1);
@@ -282,7 +282,7 @@ abstract class CacheTest extends TestCase
         $this->assertNull($this->cache->get('foo'));
     }
 
-    function testGetMultipleSerializationErrorHandling()
+    function testGetMultipleShouldHandleSerializationErrors()
     {
         if (!$this->driverUsesSerialization()) {
             $this->addToAssertionCount(1);

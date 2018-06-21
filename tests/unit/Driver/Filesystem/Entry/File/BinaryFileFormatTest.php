@@ -12,7 +12,7 @@ class BinaryFileFormatTest extends FileFormatTest
         return new BinaryFileFormat();
     }
 
-    function testGetFilenameSuffix()
+    function testShouldGetFilenameSuffix()
     {
         $this->assertSame('.dat', $this->format->getFilenameSuffix());
     }

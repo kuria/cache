@@ -36,7 +36,7 @@ class FilesystemCacheDefaultTest extends CacheTest
         $this->assertFalse((new \FilesystemIterator(static::CACHE_PATH))->valid());
     }
 
-    function testListingEntriesWithNoCacheDir()
+    function testShouldListEntriesEvenWithoutCacheDir()
     {
         $this->cache->cleanup();
         rmdir(static::CACHE_PATH);

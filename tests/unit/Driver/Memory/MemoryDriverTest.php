@@ -22,7 +22,7 @@ class MemoryDriverTest extends TestCase
         $this->driver = new MemoryDriver();
     }
 
-    function testExists()
+    function testShouldCheckIfEntryExists()
     {
         $this->callNowAndAfter(
             function () {
@@ -41,7 +41,7 @@ class MemoryDriverTest extends TestCase
         );
     }
 
-    function testRead()
+    function testShouldRead()
     {
         $this->callNowAndAfter(
             function () {
@@ -79,7 +79,7 @@ class MemoryDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWrite(?int $ttl, int $offset, bool $shouldExpire)
+    function testShouldWrite(?int $ttl, int $offset, bool $shouldExpire)
     {
         $this->callNowAndAfter(
             function () use ($ttl) {
@@ -118,7 +118,7 @@ class MemoryDriverTest extends TestCase
         ];
     }
 
-    function testDisabledOverwrite()
+    function testShouldThrowExceptionIfEntryAlreadyExistsAndOverwritingIsDisabled()
     {
         $this->driver->write('foo', 'bar');
 
@@ -128,7 +128,7 @@ class MemoryDriverTest extends TestCase
         $this->driver->write('foo', 'overwritten');
     }
 
-    function testEnabledOverwrite()
+    function testShouldOverwriteEntryIfOverwritingIsEnabled()
     {
         $this->driver->write('foo', 'bar');
         $this->driver->write('foo', 'overwritten', null, true);
@@ -136,7 +136,7 @@ class MemoryDriverTest extends TestCase
         $this->assertSame('overwritten', $this->driver->read('foo'));
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $this->driver->write('foo', 'bar');
 
@@ -149,7 +149,7 @@ class MemoryDriverTest extends TestCase
         $this->assertNull($this->driver->read('foo'));
     }
 
-    function testDeletingNonexistentEntry()
+    function testShouldThrowExceptionWhenDeletingNonexistentEntry()
     {
         $this->expectException(DriverExceptionInterface::class);
         $this->expectExceptionMessage('Failed to delete entry');
@@ -157,7 +157,7 @@ class MemoryDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testDeletingExpiredEntry()
+    function testShouldThrowExceptionWhenDeletingExpiredEntry()
     {
         $this->callNowAndAfter(
             function () {
@@ -172,7 +172,7 @@ class MemoryDriverTest extends TestCase
         );
     }
 
-    function testClear()
+    function testShouldClear()
     {
         $this->driver->write('foo', 'bar');
         $this->driver->write('baz', 'qux');
@@ -186,7 +186,7 @@ class MemoryDriverTest extends TestCase
         $this->assertFalse($this->driver->exists('baz'));
     }
 
-    function testCleanup()
+    function testShouldCleanup()
     {
         $this->callNowAndAfter(
             function () {
@@ -210,7 +210,7 @@ class MemoryDriverTest extends TestCase
         );
     }
 
-    function testFilter()
+    function testShouldFilter()
     {
         $this->driver->write('foo_a', 'bar');
         $this->driver->write('foo_b', 'baz');
@@ -227,7 +227,7 @@ class MemoryDriverTest extends TestCase
         $this->assertTrue($this->driver->exists('qux'));
     }
 
-    function testListKeys()
+    function testShouldListKeys()
     {
         $this->callNowAndAfter(
             function () {
@@ -247,7 +247,7 @@ class MemoryDriverTest extends TestCase
         );
     }
 
-    function testCount()
+    function testShouldCountEntries()
     {
         $this->callNowAndAfter(
             function () {

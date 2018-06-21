@@ -47,7 +47,7 @@ class FilesystemDriverTest extends TestCase
             ->willReturn([]);
     }
 
-    function testExists()
+    function testShouldCheckIfEntryExists()
     {
         $this->prepareEntry('foo', true);
         $this->prepareEntry('bar', false);
@@ -56,7 +56,7 @@ class FilesystemDriverTest extends TestCase
         $this->assertFalse($this->driver->exists('bar'));
     }
 
-    function testRead()
+    function testShouldRead()
     {
         $this->prepareEntry('key', true, serialize('value'));
 
@@ -64,7 +64,7 @@ class FilesystemDriverTest extends TestCase
         $this->assertTrue($exists);
     }
 
-    function testReadInvalid()
+    function testShouldReadInvalid()
     {
         $this->prepareEntry('key', false);
 
@@ -72,7 +72,7 @@ class FilesystemDriverTest extends TestCase
         $this->assertFalse($exists);
     }
 
-    function testWrite()
+    function testShouldWrite()
     {
         $entry = $this->prepareEntry('key', false);
 
@@ -86,7 +86,7 @@ class FilesystemDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWriteWithTtlAndOverwrite(?int $ttl, int $now, int $expectedExpirationTime)
+    function testShouldWriteWithTtlAndOverwrite(?int $ttl, int $now, int $expectedExpirationTime)
     {
         TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedExpirationTime) {
             $entry = $this->prepareEntry('key', false);
@@ -111,7 +111,7 @@ class FilesystemDriverTest extends TestCase
         ];
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $entry = $this->prepareEntry('key', true);
 
@@ -121,7 +121,7 @@ class FilesystemDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testClear()
+    function testShouldClear()
     {
         foreach ($this->listedEntryMocks as $entryMock) {
             $entryMock->expects($this->once())
@@ -131,7 +131,7 @@ class FilesystemDriverTest extends TestCase
         $this->driver->clear();
     }
 
-    function testCleanup()
+    function testShouldCleanup()
     {
         foreach ($this->listedEntryMocks as $entryMock) {
             $entryMock->expects($this->once())
@@ -150,7 +150,7 @@ class FilesystemDriverTest extends TestCase
         $this->driver->cleanup();
     }
 
-    function testFilter()
+    function testShouldFilter()
     {
         foreach ($this->listedEntryMocks as $entryMock) {
             $entryMock->expects($this->once())
@@ -167,7 +167,7 @@ class FilesystemDriverTest extends TestCase
         $this->driver->filter('foo_');
     }
 
-    function testListKeys()
+    function testShouldListKeys()
     {
         $this->assertSameIterable(['foo_valid', 'bar_valid'], $this->driver->listKeys());
         $this->assertSameIterable(['foo_valid'], $this->driver->listKeys('foo_'));

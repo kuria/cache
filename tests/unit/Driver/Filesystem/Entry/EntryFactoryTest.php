@@ -36,7 +36,7 @@ class EntryFactoryTest extends TestCase
         return Entry::class;
     }
 
-    function testFromPath()
+    function testShouldCreateEntryFromPath()
     {
         $path = __DIR__ . '/__DummyCachePath/entry';
 
@@ -46,7 +46,7 @@ class EntryFactoryTest extends TestCase
         $this->assertSame($path, $entry->getPath());
     }
 
-    function testFromKey()
+    function testShouldCreateEntryFromKey()
     {
         $cachePath = __DIR__ . '/__DummyCachePath';
 

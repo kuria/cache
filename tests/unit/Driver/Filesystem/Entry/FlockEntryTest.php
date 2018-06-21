@@ -46,12 +46,12 @@ class FlockEntryTest extends TestCase
             ->willReturnReference($this->handleMock);
     }
 
-    function testGetPath()
+    function testShouldGetPath()
     {
         $this->assertSame(static::DUMMY_ENTRY_PATH, $this->entry->getPath());
     }
 
-    function testValidate()
+    function testShouldValidate()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('validate')
@@ -66,14 +66,14 @@ class FlockEntryTest extends TestCase
         $this->assertTrue($this->entry->validate());
     }
 
-    function testValidateWithUnreadableFile()
+    function testShouldValidateWithUnreadableFile()
     {
         $this->handleMock = null;
 
         $this->assertFalse($this->entry->validate());
     }
 
-    function testValidateWithInvalidFile()
+    function testShouldValidateWithInvalidFile()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('validate')
@@ -86,7 +86,7 @@ class FlockEntryTest extends TestCase
         $this->assertFalse($this->entry->validate());
     }
 
-    function testValidateWithExpiredEntry()
+    function testShouldValidateWithExpiredEntry()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('validate')
@@ -103,7 +103,7 @@ class FlockEntryTest extends TestCase
         });
     }
 
-    function testReadKey()
+    function testShouldReadKey()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('readKey')
@@ -113,7 +113,7 @@ class FlockEntryTest extends TestCase
         $this->assertSame('key', $this->entry->readKey());
     }
 
-    function testReadKeyWithUnreadableFile()
+    function testShouldReadKeyWithUnreadableFile()
     {
         $this->handleMock = null;
 
@@ -123,7 +123,7 @@ class FlockEntryTest extends TestCase
         $this->entry->readKey();
     }
 
-    function testReadData()
+    function testShouldReadData()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('readData')
@@ -133,7 +133,7 @@ class FlockEntryTest extends TestCase
         $this->assertSame('data', $this->entry->readData());
     }
 
-    function testReadDataWithUnreadableFile()
+    function testShouldReadDataWithUnreadableFile()
     {
         $this->handleMock = null;
 
@@ -143,7 +143,7 @@ class FlockEntryTest extends TestCase
         $this->entry->readData();
     }
 
-    function testWrite()
+    function testShouldWrite()
     {
         $this->handleMock->expects($this->once())
             ->method('truncate');

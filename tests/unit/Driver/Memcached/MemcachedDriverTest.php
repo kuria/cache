@@ -29,7 +29,7 @@ class MemcachedDriverTest extends TestCase
     /**
      * @dataProvider provideExistResultCodes
      */
-    function testExists(int $resultCode, bool $expectedResult)
+    function testShouldCheckIfEntryExists(int $resultCode, bool $expectedResult)
     {
         $this->memcachedMock->expects($this->once())
             ->method('get')
@@ -49,7 +49,7 @@ class MemcachedDriverTest extends TestCase
         ];
     }
 
-    function testExistsWithException()
+    function testShouldHandleExistenceCheckFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('get')
@@ -59,7 +59,7 @@ class MemcachedDriverTest extends TestCase
         $this->assertFalse($this->driver->exists('key'));
     }
 
-    function testRead()
+    function testShouldRead()
     {
         $this->memcachedMock->expects($this->once())
             ->method('get')
@@ -72,7 +72,7 @@ class MemcachedDriverTest extends TestCase
         $this->assertTrue($exists);
     }
 
-    function testReadFailure()
+    function testShouldHandleReadFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('get')
@@ -84,7 +84,7 @@ class MemcachedDriverTest extends TestCase
         $this->assertFalse($exists);
     }
 
-    function testReadWithException()
+    function testShouldHandleReadException()
     {
         $this->memcachedMock->expects($this->once())
             ->method('get')
@@ -103,7 +103,7 @@ class MemcachedDriverTest extends TestCase
         }
     }
 
-    function testReadMultiple()
+    function testShouldReadMultiple()
     {
         $this->memcachedMock->expects($this->once())
             ->method('getMulti')
@@ -113,7 +113,7 @@ class MemcachedDriverTest extends TestCase
         $this->assertSame(['foo' => 1, 'bar' => 2], $this->driver->readMultiple(['foo', 'bar']));
     }
 
-    function testReadMultipleFailure()
+    function testShouldHandleReadMultipleFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('getMulti')
@@ -125,7 +125,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->readMultiple(['foo', 'bar']);
     }
 
-    function testReadMultipleWithException()
+    function testShouldHandleReadMultipleException()
     {
         $this->memcachedMock->expects($this->once())
             ->method('getMulti')
@@ -137,7 +137,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->readMultiple(['foo', 'bar']);
     }
 
-    function testWrite()
+    function testShouldWrite()
     {
         $this->memcachedMock->expects($this->once())
             ->method('add')
@@ -150,7 +150,7 @@ class MemcachedDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
+    function testShouldWriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
         TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
@@ -162,7 +162,7 @@ class MemcachedDriverTest extends TestCase
         });
     }
 
-    function testWriteFailure()
+    function testShouldHandleWriteFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('add')
@@ -174,7 +174,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->write('key', 'value');
     }
 
-    function testOverwrite()
+    function testShouldOverwrite()
     {
         $this->memcachedMock->expects($this->once())
             ->method('set')
@@ -187,7 +187,7 @@ class MemcachedDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testOverwriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
+    function testShouldOverwriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
         TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
@@ -199,7 +199,7 @@ class MemcachedDriverTest extends TestCase
         });
     }
 
-    function testOverwriteFailure()
+    function testShouldHandleOverwriteFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('set')
@@ -211,7 +211,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->write('key', 'value', null, true);
     }
 
-    function testWriteMultiple()
+    function testShouldWriteMultiple()
     {
         $this->memcachedMock->expects($this->exactly(2))
             ->method('add')
@@ -227,7 +227,7 @@ class MemcachedDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
+    function testShouldWriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
         TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->exactly(2))
@@ -242,7 +242,7 @@ class MemcachedDriverTest extends TestCase
         });
     }
 
-    function testWriteMultipleFailure()
+    function testShouldHandleWriteMultipleFailure()
     {
         $this->memcachedMock->expects($this->exactly(2))
             ->method('add')
@@ -254,7 +254,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
     }
 
-    function testOverwriteMultiple()
+    function testShouldOverwriteMultiple()
     {
         $this->memcachedMock->expects($this->once())
             ->method('setMulti')
@@ -267,7 +267,7 @@ class MemcachedDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testOverwriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
+    function testShouldOverwriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
         TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
@@ -279,7 +279,7 @@ class MemcachedDriverTest extends TestCase
         });
     }
 
-    function testOverwriteMultipleFailure()
+    function testShouldHandleOverwriteMultipleFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('setMulti')
@@ -303,7 +303,7 @@ class MemcachedDriverTest extends TestCase
         ];
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $this->memcachedMock->expects($this->once())
             ->method('delete')
@@ -313,7 +313,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testDeleteFailure()
+    function testShouldHandleDeleteFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('delete')
@@ -325,7 +325,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testDeleteMultiple()
+    function testShouldDeleteMultiple()
     {
         $this->memcachedMock->expects($this->once())
             ->method('deleteMulti')
@@ -335,7 +335,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->deleteMultiple(['foo', 'bar']);
     }
 
-    function testDeleteMultipleFailure()
+    function testShouldHandleDeleteMultipleFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('deleteMulti')
@@ -347,7 +347,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->deleteMultiple(['foo', 'bar']);
     }
 
-    function testClear()
+    function testShouldClear()
     {
         $this->memcachedMock->expects($this->once())
             ->method('flush')
@@ -356,7 +356,7 @@ class MemcachedDriverTest extends TestCase
         $this->driver->clear();
     }
 
-    function testClearFailure()
+    function testShouldHandleClearFailure()
     {
         $this->memcachedMock->expects($this->once())
             ->method('flush')

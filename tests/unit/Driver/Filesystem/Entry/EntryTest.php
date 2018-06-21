@@ -42,12 +42,12 @@ class EntryTest extends TestCase
             ->willReturnReference($this->readHandleMock);
     }
 
-    function testGetPath()
+    function testShouldGetPath()
     {
         $this->assertSame(static::DUMMY_ENTRY_PATH, $this->entry->getPath());
     }
 
-    function testValidate()
+    function testShouldValidate()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('validate')
@@ -62,14 +62,14 @@ class EntryTest extends TestCase
         $this->assertTrue($this->entry->validate());
     }
 
-    function testValidateWithUnreadableFile()
+    function testShouldValidateWithUnreadableFile()
     {
         $this->readHandleMock = null;
 
         $this->assertFalse($this->entry->validate());
     }
 
-    function testValidateWithInvalidFile()
+    function testShouldValidateWithInvalidFile()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('validate')
@@ -82,7 +82,7 @@ class EntryTest extends TestCase
         $this->assertFalse($this->entry->validate());
     }
 
-    function testValidateWithExpiredEntry()
+    function testShouldValidateWithExpiredEntry()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('validate')
@@ -99,7 +99,7 @@ class EntryTest extends TestCase
         });
     }
 
-    function testReadKey()
+    function testShouldReadKey()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('readKey')
@@ -109,7 +109,7 @@ class EntryTest extends TestCase
         $this->assertSame('key', $this->entry->readKey());
     }
 
-    function testReadKeyWithUnreadableFile()
+    function testShouldReadKeyWithUnreadableFile()
     {
         $this->readHandleMock = null;
 
@@ -119,7 +119,7 @@ class EntryTest extends TestCase
         $this->entry->readKey();
     }
 
-    function testReadData()
+    function testShouldReadData()
     {
         $this->fileFormatMock->expects($this->once())
             ->method('readData')
@@ -129,7 +129,7 @@ class EntryTest extends TestCase
         $this->assertSame('data', $this->entry->readData());
     }
 
-    function testReadDataWithUnreadableFile()
+    function testShouldReadDataWithUnreadableFile()
     {
         $this->readHandleMock = null;
 
@@ -139,7 +139,7 @@ class EntryTest extends TestCase
         $this->entry->readData();
     }
 
-    function testWrite()
+    function testShouldWrite()
     {
         $tmpPath = __DIR__ . '/dummy-tmp-path';
 

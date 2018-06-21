@@ -29,19 +29,19 @@ class CacheTest extends TestCase
         $this->cache = new Cache($this->driverMock, 'prefix_');
     }
 
-    function testGetDriver()
+    function testShouldGetDriver()
     {
         $this->assertSame($this->driverMock, $this->cache->getDriver());
     }
 
-    function testPrefix()
+    function testShouldConfigurePrefix()
     {
         $this->cache->setPrefix('custom_prefix');
 
         $this->assertSame('custom_prefix', $this->cache->getPrefix());
     }
 
-    function testGetNamespace()
+    function testShouldGetNamespace()
     {
         $namespacedCache = $this->cache->getNamespace('foo');
 
@@ -51,7 +51,7 @@ class CacheTest extends TestCase
     /**
      * @dataProvider provideExistenceStates
      */
-    function testHas($exists)
+    function testShouldCheckIfEntryExists($exists)
     {
         $this->driverMock->expects($this->once())
             ->method('exists')
@@ -69,7 +69,7 @@ class CacheTest extends TestCase
         ];
     }
 
-    function testHasFailure()
+    function testShouldHandleHasFailure()
     {
         $driverException = new DriverException();
 
@@ -82,7 +82,7 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->has('key'));
     }
 
-    function testGet()
+    function testShouldGet()
     {
         $this->prepareDriverRead('prefix_key', 'result');
         $this->expectEvent($this->cache, CacheEvents::HIT, 'key', 'result');
@@ -91,7 +91,7 @@ class CacheTest extends TestCase
         $this->assertTrue($exists);
     }
 
-    function testGetNull()
+    function testShouldGetNullValue()
     {
         $this->prepareDriverRead('prefix_key', null, true);
         $this->expectEvent($this->cache, CacheEvents::HIT, 'key', null);
@@ -100,7 +100,7 @@ class CacheTest extends TestCase
         $this->assertTrue($exists);
     }
 
-    function testGetNonexistent()
+    function testShouldGetNonexistent()
     {
         $this->prepareDriverRead('prefix_key', null);
         $this->expectEvent($this->cache, CacheEvents::MISS, 'key');
@@ -109,7 +109,7 @@ class CacheTest extends TestCase
         $this->assertFalse($exists);
     }
 
-    function testGetFailure()
+    function testShouldHandleGetFailure()
     {
         $driverException = new DriverException();
 
@@ -125,7 +125,7 @@ class CacheTest extends TestCase
         $this->assertFalse($exists);
     }
 
-    function testGetMultiple()
+    function testShouldGetMultiple()
     {
         $this->driverMock->expects($this->exactly(3))
             ->method('read')
@@ -175,14 +175,14 @@ class CacheTest extends TestCase
         $this->assertSame(['nonexistent'], $failedKeys);
     }
 
-    function testGetMultipleWithNoKeys()
+    function testShouldGetMultipleWithNoKeys()
     {
         $this->expectNoEvents($this->cache);
 
         $this->assertSameIterable([], $this->cache->getMultiple([]));
     }
 
-    function testUnsupportedListKeys()
+    function testShouldThrowExceptionIfListKeysIsNotSupported()
     {
         $this->assertFalse($this->cache->isFilterable());
 
@@ -194,7 +194,7 @@ class CacheTest extends TestCase
         }
     }
 
-    function testAdd()
+    function testShouldAdd()
     {
         $this->driverMock->expects($this->once())
             ->method('write')
@@ -205,7 +205,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->add('foo', 123));
     }
 
-    function testAddWithTtl()
+    function testShouldAddWithTtl()
     {
         $this->driverMock->expects($this->once())
             ->method('write')
@@ -216,7 +216,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->add('foo', 123, 60));
     }
 
-    function testAddFailure()
+    function testShouldHandleAddFailure()
     {
         $driverException = new DriverException();
 
@@ -230,7 +230,7 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->add('foo', 123));
     }
 
-    function testAddMultiple()
+    function testShouldAddMultiple()
     {
         $this->driverMock->expects($this->exactly(3))
             ->method('write')
@@ -251,7 +251,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->addMultiple(['foo' => 1, 'bar' => 2, 'baz' => 3], 60));
     }
 
-    function testAddMultipleFailure()
+    function testShouldHandleAddMultipleFailure()
     {
         $driverException = new DriverException();
 
@@ -269,14 +269,14 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->addMultiple(['foo' => 1, 'bar' => 2], 60));
     }
 
-    function testAddMultipleWithEmptyIterable()
+    function testShouldAddMultipleWithEmptyIterable()
     {
         $this->expectNoEvents($this->cache);
 
         $this->assertTrue($this->cache->addMultiple([]));
     }
 
-    function testSet()
+    function testShouldSet()
     {
         $this->driverMock->expects($this->once())
             ->method('write')
@@ -287,7 +287,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->set('foo', 123));
     }
 
-    function testSetWithTtl()
+    function testShouldSetWithTtl()
     {
         $this->driverMock->expects($this->once())
             ->method('write')
@@ -298,7 +298,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->set('foo', 123, 60));
     }
 
-    function testSetFailure()
+    function testShouldHandleSetFailure()
     {
         $driverException = new DriverException();
 
@@ -312,7 +312,7 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->set('foo', 123));
     }
 
-    function testSetMultiple()
+    function testShouldSetMultiple()
     {
         $this->driverMock->expects($this->exactly(3))
             ->method('write')
@@ -333,7 +333,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->setMultiple(['foo' => 1, 'bar' => 2, 'baz' => 3], 60));
     }
 
-    function testSetMultipleFailure()
+    function testShouldHandleSetMultipleFailure()
     {
         $driverException = new DriverException();
 
@@ -351,14 +351,14 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->setMultiple(['foo' => 1, 'bar' => 2], 60));
     }
 
-    function testSetMultipleWithEmptyIterable()
+    function testShouldSetMultipleWithEmptyIterable()
     {
         $this->expectNoEvents($this->cache);
 
         $this->assertTrue($this->cache->setMultiple([]));
     }
 
-    function testCachedRead()
+    function testCachedShouldRead()
     {
         $callback = function () {
             return 'fresh_value';
@@ -375,7 +375,7 @@ class CacheTest extends TestCase
         $this->assertSame('cached_value', $this->cache->cached('key', null, $callback));
     }
 
-    function testCachedReadNull()
+    function testCachedShouldReadNull()
     {
         $callback = function () {
             return 'fresh_value';
@@ -392,7 +392,7 @@ class CacheTest extends TestCase
         $this->assertNull($this->cache->cached('key', null, $callback));
     }
 
-    function testCachedWrite()
+    function testCachedShouldWrite()
     {
         $callback = function () {
             return 'value';
@@ -410,7 +410,7 @@ class CacheTest extends TestCase
         $this->assertSame('value', $this->cache->cached('key', null, $callback));
     }
 
-    function testCachedOverwrite()
+    function testCachedShouldOverwrite()
     {
         $callback = function () {
             return 'value';
@@ -446,7 +446,7 @@ class CacheTest extends TestCase
         $this->assertNull($this->cache->cached('key', null, $callback));
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $this->driverMock->expects($this->once())
             ->method('delete')
@@ -455,7 +455,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->delete('foo'));
     }
 
-    function testDeleteFailure()
+    function testShouldHandleDeleteFailure()
     {
         $driverException = new DriverException();
 
@@ -468,7 +468,7 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->delete('foo'));
     }
 
-    function testDeleteMultiple()
+    function testShouldDeleteMultiple()
     {
         $this->driverMock->expects($this->exactly(2))
             ->method('delete')
@@ -480,7 +480,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->deleteMultiple(['foo', 'bar']));
     }
 
-    function testDeleteMultipleFailure()
+    function testShouldHandleDeleteMultipleFailure()
     {
         $driverException = new DriverException();
 
@@ -498,14 +498,14 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->deleteMultiple(['foo', 'bar']));
     }
 
-    function testDeleteMultipleWithNoKeys()
+    function testShouldDeleteMultipleWithNoKeys()
     {
         $this->expectNoEvents($this->cache);
 
         $this->assertTrue($this->cache->deleteMultiple([]));
     }
 
-    function testUnsupportedFilter()
+    function testShouldThrowExceptionIfFilterIsNotSupported()
     {
         $this->assertFalse($this->cache->isFilterable());
 
@@ -515,7 +515,7 @@ class CacheTest extends TestCase
         $this->cache->filter('foo_');
     }
 
-    function testClear()
+    function testShouldClear()
     {
         $this->driverMock->expects($this->once())
             ->method('clear');
@@ -523,7 +523,7 @@ class CacheTest extends TestCase
         $this->assertTrue($this->cache->clear());
     }
 
-    function testClearFailure()
+    function testShouldHandleClearFailure()
     {
         $driverException = new DriverException();
 
@@ -536,7 +536,7 @@ class CacheTest extends TestCase
         $this->assertFalse($this->cache->clear());
     }
 
-    function testUnsupportedCleanup()
+    function testShouldThrowExceptionIfCleanupIsNotSupported()
     {
         $this->assertFalse($this->cache->supportsCleanup());
 
@@ -546,7 +546,7 @@ class CacheTest extends TestCase
         $this->cache->cleanup();
     }
 
-    function testUnsupportedGetIterator()
+    function testShouldThrowExceptionIfIterationIsNotSupported()
     {
         $this->expectException(UnsupportedOperationException::class);
         $this->expectExceptionMessageRegExp('{Cannot list keys - the ".+" driver is not filterable}');

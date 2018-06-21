@@ -24,12 +24,12 @@ class NamespacedCacheTest extends TestCase
         $this->namespacedCache = new NamespacedCache($this->wrappedCacheMock, 'prefix_');
     }
 
-    function testGetWrappedCache()
+    function testShouldGetWrappedCache()
     {
         $this->assertSame($this->wrappedCacheMock, $this->namespacedCache->getWrappedCache());
     }
 
-    function testPrefixConfiguration()
+    function testShouldConfigurePrefix()
     {
         $this->assertSame('prefix_', $this->namespacedCache->getPrefix());
 
@@ -38,7 +38,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertSame('foo_', $this->namespacedCache->getPrefix());
     }
 
-    function testHas()
+    function testShouldCheckIfEntryExists()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('has')
@@ -48,7 +48,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->has('key'));
     }
 
-    function testGet()
+    function testShouldGet()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('get')
@@ -63,7 +63,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($exists);
     }
 
-    function testGetNonexistent()
+    function testShouldGetNonexistent()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('get')
@@ -78,7 +78,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertFalse($exists);
     }
 
-    function testGetMultiple()
+    function testShouldGetMultiple()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('getMultiple')
@@ -97,7 +97,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertSame(['bar'], $failedKeys);
     }
 
-    function testListKeys()
+    function testShouldListKeys()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('listKeys')
@@ -107,7 +107,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertSameIterable(['foo_a', 'foo_b'], $this->namespacedCache->listKeys('foo_'));
     }
 
-    function testAdd()
+    function testShouldAdd()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('add')
@@ -117,7 +117,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->add('key', 123, 60));
     }
 
-    function testAddMultiple()
+    function testShouldAddMultiple()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('addMultiple')
@@ -127,7 +127,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->addMultiple(['foo' => 1, 'bar' => 2], 60));
     }
 
-    function testSet()
+    function testShouldSet()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('set')
@@ -137,7 +137,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->set('key', 123, 60));
     }
 
-    function testSetMultiple()
+    function testShouldSetMultiple()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('setMultiple')
@@ -147,7 +147,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->setMultiple(['lorem' => 5, 'ipsum' => 6], 60));
     }
 
-    function testCached()
+    function testShouldCallCached()
     {
         $callback = function () {};
 
@@ -158,7 +158,7 @@ class NamespacedCacheTest extends TestCase
         $this->namespacedCache->cached('key', 123, $callback);
     }
 
-    function testCachedWithOverwrite()
+    function testShouldCallCachedWithOverwrite()
     {
         $callback = function () {};
 
@@ -169,7 +169,7 @@ class NamespacedCacheTest extends TestCase
         $this->namespacedCache->cached('key', null, $callback, true);
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('delete')
@@ -178,7 +178,7 @@ class NamespacedCacheTest extends TestCase
         $this->namespacedCache->delete('key');
     }
 
-    function testDeleteMultiple()
+    function testShouldDeleteMultiple()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('deleteMultiple')
@@ -188,7 +188,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->deleteMultiple(['foo', 'bar']));
     }
 
-    function testFilter()
+    function testShouldFilter()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('isFilterable')
@@ -203,7 +203,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->filter('foo_'));
     }
 
-    function testClear()
+    function testShouldClear()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('clear')
@@ -245,7 +245,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->clear());
     }
 
-    function testCleanup()
+    function testShouldCleanup()
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('supportsCleanup')
@@ -259,7 +259,7 @@ class NamespacedCacheTest extends TestCase
         $this->assertTrue($this->namespacedCache->cleanup());
     }
 
-    function testGetIterator()
+    function testShouldGetIterator()
     {
         $iterator = new \ArrayIterator();
 

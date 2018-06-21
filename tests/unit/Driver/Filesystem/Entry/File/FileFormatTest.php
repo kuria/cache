@@ -22,12 +22,12 @@ abstract class FileFormatTest extends TestCase
 
     abstract protected function createFormat(): FileFormatInterface;
 
-    function testValidateEmptyHandle()
+    function testShouldValidateEmptyHandle()
     {
         $this->assertFalse($this->format->validate($this->handle));
     }
 
-    function testWriteAndRead()
+    function testShouldWriteAndRead()
     {
         $this->format->write($this->handle, 'key', 'data', 123);
 

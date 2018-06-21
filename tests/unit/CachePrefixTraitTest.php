@@ -27,7 +27,7 @@ class CachePrefixTraitTest extends TestCase
         };
     }
 
-    function testPrefix()
+    function testShouldConfigurePrefix()
     {
         $this->assertSame('', $this->cachePrefix->getPrefix());
 
@@ -36,19 +36,19 @@ class CachePrefixTraitTest extends TestCase
         $this->assertSame('prefix_', $this->cachePrefix->getPrefix());
     }
 
-    function testApplyPrefix()
+    function testShouldApplyPrefix()
     {
         $this->cachePrefix->setPrefix('prefix_');
 
         $this->assertSame('prefix_bar', $this->cachePrefix->applyPrefix('bar'));
     }
 
-    function testApplyPrefixWithNoPrefix()
+    function testShouldApplyPrefixWithNoPrefix()
     {
         $this->assertSame('bar', $this->cachePrefix->applyPrefix('bar'));
     }
 
-    function testApplyPrefixToValues()
+    function testShouldApplyPrefixToValues()
     {
         $this->cachePrefix->setPrefix('prefix_');
 
@@ -58,7 +58,7 @@ class CachePrefixTraitTest extends TestCase
         );
     }
 
-    function testApplyPrefixToValuesWithNoPrefix()
+    function testShouldApplyPrefixToValuesWithNoPrefix()
     {
         $this->assertSameIterable(
             ['foo' => 'bar', 'baz' => 'qux'],
@@ -66,7 +66,7 @@ class CachePrefixTraitTest extends TestCase
         );
     }
 
-    function testApplyPrefixToKeys()
+    function testShouldApplyPrefixToKeys()
     {
         $this->cachePrefix->setPrefix('prefix_');
 
@@ -76,7 +76,7 @@ class CachePrefixTraitTest extends TestCase
         );
     }
 
-    function testApplyPrefixToKeysWithNoPrefix()
+    function testShouldApplyPrefixToKeysWithNoPrefix()
     {
         $this->assertSameIterable(
             ['foo' => 'bar', 'baz' => 'qux'],
@@ -84,14 +84,14 @@ class CachePrefixTraitTest extends TestCase
         );
     }
 
-    function testStripPrefix()
+    function testShouldStripPrefix()
     {
         $this->cachePrefix->setPrefix('prefix_');
 
         $this->assertSame('foo', $this->cachePrefix->stripPrefix('prefix_foo'));
     }
 
-    function testStripPrefixWithNoPrefix()
+    function testShouldStripPrefixWithNoPrefix()
     {
         $this->assertSame('foo', $this->cachePrefix->stripPrefix('foo'));
     }

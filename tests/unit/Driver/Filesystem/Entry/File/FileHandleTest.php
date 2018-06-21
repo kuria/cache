@@ -13,7 +13,7 @@ class FileHandleTest extends TestCase
 {
     use PHPMock;
 
-    function testOperations()
+    function testShouldPerformOperations()
     {
         $memoryHandle = $this->createMemoryHandle();
         $handle = new FileHandle($memoryHandle);
@@ -74,7 +74,7 @@ class FileHandleTest extends TestCase
     /**
      * @dataProvider provideOperations
      */
-    function testOperationFailures(string $method, ...$arguments)
+    function testShouldHandleOperationFailures(string $method, ...$arguments)
     {
         $invalidHandle = fopen('php://memory', 'r+');
         fclose($invalidHandle);
@@ -105,7 +105,7 @@ class FileHandleTest extends TestCase
     /**
      * @dataProvider provideLockModes
      */
-    function testLocking(bool $exclusive, bool $block, int $expectedOperation)
+    function testShouldPerformLockingOperations(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
         $handle = new FileHandle($memoryHandle);
@@ -134,7 +134,7 @@ class FileHandleTest extends TestCase
     /**
      * @dataProvider provideLockModes
      */
-    function testLockFailure(bool $exclusive, bool $block, int $expectedOperation)
+    function testShouldHandleLockFailure(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
         $handle = new FileHandle($memoryHandle);
@@ -154,7 +154,7 @@ class FileHandleTest extends TestCase
     /**
      * @dataProvider provideLockModes
      */
-    function testUnlockFailure(bool $exclusive, bool $block, int $expectedOperation)
+    function testShouldHandleUnlockFailure(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
         $handle = new FileHandle($memoryHandle);
@@ -183,7 +183,7 @@ class FileHandleTest extends TestCase
     /**
      * @dataProvider provideLockModes
      */
-    function testAutomaticUnlockFromDestructor(bool $exclusive, bool $block, int $expectedOperation)
+    function testShouldPerformAutomaticUnlockOnDestruction(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
         $handle = new FileHandle($memoryHandle);
@@ -209,7 +209,7 @@ class FileHandleTest extends TestCase
     /**
      * @dataProvider provideLockModes
      */
-    function testAutomaticUnlockAfterClose(bool $exclusive, bool $block, int $expectedOperation)
+    function testShouldPerformAutomaticUnlockAfterClose(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
         $handle = new FileHandle($memoryHandle);

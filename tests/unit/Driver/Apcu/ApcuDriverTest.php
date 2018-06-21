@@ -37,7 +37,7 @@ class ApcuDriverTest extends TestCase
         new ApcuDriver();
     }
 
-    function testExists()
+    function testShouldCheckIfEntryExists()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_exists')
             ->expects($this->once())
@@ -47,7 +47,7 @@ class ApcuDriverTest extends TestCase
         $this->assertTrue($this->driver->exists('key'));
     }
 
-    function testRead()
+    function testShouldReadEntry()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_fetch')
             ->expects($this->once())
@@ -62,7 +62,7 @@ class ApcuDriverTest extends TestCase
         $this->assertTrue($exists);
     }
 
-    function testReadFailure()
+    function testShouldHandleReadFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_fetch')
             ->expects($this->once())
@@ -77,7 +77,7 @@ class ApcuDriverTest extends TestCase
         $this->assertFalse($exists);
     }
 
-    function testReadWithException()
+    function testShouldHandleReadException()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_fetch')
             ->expects($this->once())
@@ -95,7 +95,7 @@ class ApcuDriverTest extends TestCase
         }
     }
 
-    function testReadMultiple()
+    function testShouldReadMultiple()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_fetch')
             ->expects($this->once())
@@ -109,7 +109,7 @@ class ApcuDriverTest extends TestCase
         $this->assertSame(['foo' => 'bar', 'baz' => 'qux'], $this->driver->readMultiple(['foo', 'baz']));
     }
 
-    function testReadMultipleFailure()
+    function testShouldHandleReadMultipleFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_fetch')
             ->expects($this->once())
@@ -125,7 +125,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->readMultiple(['foo', 'baz']);
     }
 
-    function testReadMultipleWithException()
+    function testShouldHandleReadMultipleException()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_fetch')
             ->expects($this->once())
@@ -137,7 +137,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->readMultiple(['foo', 'baz']);
     }
 
-    function testWrite()
+    function testShouldWrite()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
@@ -150,7 +150,7 @@ class ApcuDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWriteWithTtl(?int $ttl, int $expectedTtlValue)
+    function testShouldWriteWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
@@ -160,7 +160,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->write('key', 'value', $ttl);
     }
 
-    function testWriteFailure()
+    function testShouldHandleWriteFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
@@ -172,7 +172,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->write('key', 'value');
     }
 
-    function testOverwrite()
+    function testShouldOverwrite()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
@@ -185,7 +185,7 @@ class ApcuDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testOverwriteWithTtl(?int $ttl, int $expectedTtlValue)
+    function testShouldOverwriteWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
@@ -195,7 +195,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->write('key', 'value', $ttl, true);
     }
 
-    function testOverwriteFailure()
+    function testShouldHandleOverwriteFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
@@ -207,7 +207,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->write('key', 'value', null, true);
     }
 
-    function testWriteMultiple()
+    function testShouldWriteMultiple()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
@@ -220,7 +220,7 @@ class ApcuDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testWriteMultipleWithTtl(?int $ttl, int $expectedTtlValue)
+    function testShouldWriteMultipleWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
@@ -230,7 +230,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl);
     }
 
-    function testWriteMultipleFailure()
+    function testShouldHandleWriteMultipleFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_add')
             ->expects($this->once())
@@ -242,7 +242,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
     }
 
-    function testOverwriteMultiple()
+    function testShouldOverwriteMultiple()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
@@ -255,7 +255,7 @@ class ApcuDriverTest extends TestCase
     /**
      * @dataProvider provideTtl
      */
-    function testOverwriteMultipleWithTtl(?int $ttl, int $expectedTtlValue)
+    function testShouldOverwriteMultipleWithTtl(?int $ttl, int $expectedTtlValue)
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
@@ -265,7 +265,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], $ttl, true);
     }
 
-    function testOverwriteMultipleFailure()
+    function testShouldHandleOverwriteMultipleFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_store')
             ->expects($this->once())
@@ -289,7 +289,7 @@ class ApcuDriverTest extends TestCase
         ];
     }
 
-    function testDelete()
+    function testShouldDelete()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_delete')
             ->expects($this->once())
@@ -299,7 +299,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testDeleteFailure()
+    function testShouldHandleDeleteFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_delete')
             ->expects($this->once())
@@ -311,7 +311,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->delete('key');
     }
 
-    function testDeleteMultiple()
+    function testShouldDeleteMultiple()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_delete')
             ->expects($this->once())
@@ -321,7 +321,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->deleteMultiple(['foo', 'bar']);
     }
 
-    function testDeleteMultipleFailure()
+    function testShouldHandleDeleteMultipleFailure()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_delete')
             ->expects($this->once())
@@ -333,7 +333,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->deleteMultiple(['foo', 'bar']);
     }
 
-    function testClear()
+    function testShouldClear()
     {
         $this->getFunctionMock(__NAMESPACE__, 'apcu_clear_cache')
             ->expects($this->once())
@@ -342,7 +342,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->clear();
     }
 
-    function testFilter()
+    function testShouldFilter()
     {
         $this->mockApcuIterator('prefix_');
 
@@ -354,7 +354,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->filter('prefix_');
     }
 
-    function testFilterFailure()
+    function testShouldHandleFilterFailure()
     {
         $this->mockApcuIterator('prefix_');
 
@@ -368,7 +368,7 @@ class ApcuDriverTest extends TestCase
         $this->driver->filter('prefix_');
     }
 
-    function testListKeys()
+    function testShouldListKeys()
     {
         $this->mockApcuIterator('prefix_', ['prefix_foo', 'prefix_bar']);
 

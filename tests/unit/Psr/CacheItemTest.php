@@ -28,7 +28,7 @@ class CacheItemTest extends TestCase
         $this->assertFalse($item->isHit());
     }
 
-    function testShouldSetValue()
+    function testShouldSet()
     {
         $item = new CacheItem('key', 'value', false);
         $item->set(456);

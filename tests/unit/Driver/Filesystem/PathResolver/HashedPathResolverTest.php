@@ -41,13 +41,13 @@ class HashedPathResolverTest extends TestCase
         new HashedPathResolver();
     }
 
-    function testDefaultSettings()
+    function testShouldHaveDefaultSettings()
     {
         $this->assertSame('/a9/a93287ddf7050214.suffix', $this->resolver->resolve($this->fileFormatMock, 'foo.bar'));
         $this->assertSame('/00/00392c1913393882.suffix', $this->resolver->resolve($this->fileFormatMock, 'baz'));
     }
 
-    function testCustomSettings()
+    function testShouldSupportCustomSettings()
     {
         $this->resolver->setHashAlgo('md5');
         $this->resolver->setPathSegmentCount(3);
@@ -57,7 +57,7 @@ class HashedPathResolverTest extends TestCase
         $this->assertSame('/73f/eff/a4b/73feffa4b7f6bb68e44cf984c85f6e88.suffix', $this->resolver->resolve($this->fileFormatMock, 'baz'));
     }
 
-    function testNoSegments()
+    function testShouldResolveWithNoSegments()
     {
         $this->resolver->setPathSegmentCount(0);
 
@@ -65,7 +65,7 @@ class HashedPathResolverTest extends TestCase
         $this->assertSame('/00392c1913393882.suffix', $this->resolver->resolve($this->fileFormatMock, 'baz'));
     }
 
-    function testExceptionOnInvalidSettings()
+    function testShouldThrowExceptionOnInvalidSettings()
     {
         $this->resolver->setHashAlgo('md5');
         $this->resolver->setPathSegmentLength(5);

@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
  */
 class IterableHelperTest extends TestCase
 {
-    function testIterableToArray()
+    function testShouldConvertIterableToArray()
     {
         $this->assertSame([1, 2, 3], IterableHelper::toArray([1, 2, 3]));
         $this->assertSame([1, 2, 3], IterableHelper::toArray(new \ArrayIterator([1, 2, 3])));

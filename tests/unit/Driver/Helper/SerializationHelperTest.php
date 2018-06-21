@@ -11,13 +11,13 @@ use PHPUnit\Framework\TestCase;
  */
 class SerializationHelperTest extends TestCase
 {
-    function testSmartUnserialize()
+    function testShouldUnserialize()
     {
         $this->assertSame([1, 2, 3], SerializationHelper::smartUnserialize(serialize([1, 2, 3])));
         $this->assertFalse(SerializationHelper::smartUnserialize(serialize(false)));
     }
 
-    function testSmartUnserializeShouldThrowExceptionOnMalformedData()
+    function testShouldThrowExceptionOnMalformedData()
     {
         $this->expectException(DeserializationFailedException::class);
         $this->expectExceptionMessage('Unserialization failed - data possibly malformed');
@@ -25,7 +25,7 @@ class SerializationHelperTest extends TestCase
         SerializationHelper::smartUnserialize('not_serialized_data');
     }
 
-    function testSmartUnserializeShouldWrapUnserializeExceptions()
+    function testShouldWrapUnserializeExceptions()
     {
         $this->expectException(DeserializationFailedException::class);
         $this->expectExceptionMessage('An exception was thrown during unserialization');

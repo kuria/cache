@@ -22,7 +22,7 @@ class CacheFeatureTest extends TestCase
     use ObservableTestTrait;
     use IterableAssertionTrait;
 
-    function testGetMultiple()
+    function testShouldGetMultiple()
     {
         $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
@@ -65,7 +65,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSame(['nonexistent', 'nonexistent2'], $failedKeys);
     }
 
-    function testGetMultipleWithNokeys()
+    function testShouldGetMultipleWithEmptyKeyList()
     {
         $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
@@ -76,7 +76,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSameIterable([], $cache->getMultiple([]));
     }
 
-    function testGetMultipleFailure()
+    function testShouldHandleGetMultipleFailure()
     {
         $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
@@ -98,7 +98,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSame(['foo', 'bar', 'baz'], $failedKeys);
     }
 
-    function testGetMultiplePartialFailure()
+    function testShouldHandlePartialGetMultipleFailure()
     {
         $driver = $this->createDriverMock([MultiReadInterface::class]);
         $cache = $this->createCache($driver);
@@ -125,7 +125,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSame(['baz'], $failedKeys);
     }
 
-    function testListKeys()
+    function testShouldListKeys()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
@@ -138,7 +138,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSameIterable(['foo_a', 'foo_b', 'foo_c'], $cache->listKeys('foo_'));
     }
 
-    function testListKeysWithNoPrefix()
+    function testShouldListKeysWithNoPrefix()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver, '');
@@ -151,7 +151,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSameIterable(['foo_a', 'foo_b', 'foo_c'], $cache->listKeys('foo_'));
     }
 
-    function testListKeysFailure()
+    function testShouldHandleListKeysFailure()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
@@ -171,7 +171,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSameIterable(['foo_a', 'foo_b'], $cache->listKeys('foo_'));
     }
 
-    function testAddMultiple()
+    function testShouldAddMultiple()
     {
         $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
@@ -190,7 +190,7 @@ class CacheFeatureTest extends TestCase
         $this->assertTrue($cache->addMultiple(['foo' => 'foo-value', 'bar' => 'bar-value'], 60));
     }
 
-    function testAddMultipleFailure()
+    function testShouldHandleAddMultipleFailure()
     {
         $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
@@ -206,7 +206,7 @@ class CacheFeatureTest extends TestCase
         $this->assertFalse($cache->addMultiple(['foo' => 1, 'bar' => 2], 60));
     }
 
-    function testSetMultiple()
+    function testShouldSetMultiple()
     {
         $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
@@ -225,7 +225,7 @@ class CacheFeatureTest extends TestCase
         $this->assertTrue($cache->setMultiple(['foo' => 'foo-value', 'bar' => 'bar-value'], 60));
     }
 
-    function testSetMultipleFailure()
+    function testShouldHandleSetMultipleFailure()
     {
         $driver = $this->createDriverMock([MultiWriteInterface::class]);
         $cache = $this->createCache($driver);
@@ -241,7 +241,7 @@ class CacheFeatureTest extends TestCase
         $this->assertFalse($cache->setMultiple(['foo' => 1, 'bar' => 2], 60));
     }
 
-    function testDeleteMultiple()
+    function testShouldDeleteMultiple()
     {
         $driver = $this->createDriverMock([MultiDeleteInterface::class]);
         $cache = $this->createCache($driver);
@@ -253,7 +253,7 @@ class CacheFeatureTest extends TestCase
         $this->assertTrue($cache->deleteMultiple(['foo', 'bar']));
     }
 
-    function testDeleteMultipleFailure()
+    function testShouldHandleDeleteMultipleFailure()
     {
         $driver = $this->createDriverMock([MultiDeleteInterface::class]);
         $cache = $this->createCache($driver);
@@ -269,7 +269,7 @@ class CacheFeatureTest extends TestCase
         $this->assertFalse($cache->deleteMultiple(['foo', 'bar']));
     }
 
-    function testFilter()
+    function testShouldFilter()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
@@ -281,7 +281,7 @@ class CacheFeatureTest extends TestCase
         $this->assertTrue($cache->filter('foo_'));
     }
 
-    function testFilterFailure()
+    function testShouldHandleFilterFailure()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
@@ -296,7 +296,7 @@ class CacheFeatureTest extends TestCase
         $this->assertFalse($cache->filter('foo_'));
     }
 
-    function testCleanup()
+    function testShouldCleanup()
     {
         $driver = $this->createDriverMock([CleanupInterface::class]);
         $cache = $this->createCache($driver);
@@ -307,7 +307,7 @@ class CacheFeatureTest extends TestCase
         $this->assertTrue($cache->cleanup());
     }
 
-    function testCleanupFailure()
+    function testShouldHandleCleanupFailure()
     {
         $driver = $this->createDriverMock([CleanupInterface::class]);
         $cache = $this->createCache($driver);
@@ -322,7 +322,7 @@ class CacheFeatureTest extends TestCase
         $this->assertFalse($cache->cleanup());
     }
 
-    function testClearShouldUseFilterIfAvailable()
+    function testShouldUseFilterWhenClearingIfAvailable()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
@@ -351,7 +351,7 @@ class CacheFeatureTest extends TestCase
         $this->assertTrue($cache->clear());
     }
 
-    function testGetIterator()
+    function testShouldGetIterator()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
@@ -376,7 +376,7 @@ class CacheFeatureTest extends TestCase
         $this->assertSameIterable(['foo_a' => 'a', 'foo_c' => 'c'], $cache->getIterator());
     }
 
-    function testGetIteratorWithPrefix()
+    function testShouldGetIteratorWithPrefix()
     {
         $driver = $this->createDriverMock([FilterableInterface::class]);
         $cache = $this->createCache($driver);
