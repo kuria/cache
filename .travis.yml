@@ -15,7 +15,7 @@ env:
         - REDIS_TEST_HOST=localhost
     matrix:
         - COMPOSER_COMMAND="composer install"
-        - COMPOSER_COMMAND="composer update --prefer-lowest"
+        - COMPOSER_COMMAND="composer update --prefer-lowest --prefer-stable"
 
 before_install:
     - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
