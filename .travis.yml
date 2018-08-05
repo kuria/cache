@@ -1,28 +1,31 @@
 language: php
 
-php:
-    - '7.1'
-    - '7.2'
-    - nightly
+matrix:
+    include:
+        - name: 7.1 (tests)
+          php: '7.1'
+          env:
+              - INSTALL_COMMAND="composer install"
+              - MAIN_COMMAND="composer tests"
 
-services:
-    - memcached
-    - redis-server
+        - name: 7.2 (all)
+          php: '7.2'
+          env:
+              - INSTALL_COMMAND="composer install"
+              - MAIN_COMMAND="composer all"
 
-env:
-    global:
-        - MEMCACHED_TEST_HOST=localhost
-        - REDIS_TEST_HOST=localhost
-    matrix:
-        - COMPOSER_COMMAND="composer install"
-        - COMPOSER_COMMAND="composer update --prefer-lowest --prefer-stable"
+        - name: 7.2 (tests, lowest deps)
+          php: '7.2'
+          env:
+              - INSTALL_COMMAND="composer update --prefer-lowest --prefer-stable"
+              - MAIN_COMMAND="composer tests"
 
-before_install:
-    - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-    - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-    - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-    - echo "apc.enable_cli = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+        - name: nightly (tests)
+          php: nightly
+          env:
+              - INSTALL_COMMAND="composer install"
+              - MAIN_COMMAND="composer tests"
 
-install: ${COMPOSER_COMMAND}
+install: ${INSTALL_COMMAND}
 
-script: composer all
+script: ${MAIN_COMMAND}
