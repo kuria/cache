@@ -172,29 +172,29 @@ class CacheItemPoolTest extends TestCase
 
         $this->cacheMock->expects($this->once())
             ->method('getMultiple')
-            ->with(['qux', 'mlem', 'boop'])
+            ->with(['qux', 'quux', 'corge'])
             ->willReturnCallback(function ($keys, &$failedKeys) {
-                $failedKeys = ['qux', 'mlem', 'boop'];
+                $failedKeys = ['qux', 'quux', 'corge'];
 
-                return ['qux' => null, 'mlem' => null, 'boop' => null];
+                return ['qux' => null, 'quux' => null, 'corge' => null];
             });
 
         $foo = $this->pool->getItem('foo');
         $bar = $this->pool->getItem('bar');
         $baz = $this->pool->getItem('baz');
-        $multi = $this->pool->getItems(['qux', 'mlem', 'boop']);
+        $multi = $this->pool->getItems(['qux', 'quux', 'corge']);
 
         $this->assertTrue($this->pool->saveDeferred($foo));
         $this->assertTrue($this->pool->saveDeferred($bar));
         $this->assertTrue($this->pool->saveDeferred($baz));
         $this->assertTrue($this->pool->saveDeferred($multi['qux']));
-        $this->assertTrue($this->pool->saveDeferred($multi['mlem']));
-        $this->assertTrue($this->pool->saveDeferred($multi['boop']));
+        $this->assertTrue($this->pool->saveDeferred($multi['quux']));
+        $this->assertTrue($this->pool->saveDeferred($multi['corge']));
 
         $this->assertSame($foo, $this->pool->getItem('foo'));
         $this->assertSame($bar, $this->pool->getItem('bar'));
         $this->assertSame($baz, $this->pool->getItem('baz'));
-        $this->assertSame($multi, $this->pool->getItems(['qux', 'mlem', 'boop']));
+        $this->assertSame($multi, $this->pool->getItems(['qux', 'quux', 'corge']));
     }
 
     /**
@@ -365,8 +365,8 @@ class CacheItemPoolTest extends TestCase
             // key, expectedMessage
             ['foo{bar}', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "foo{bar}"'],
             ['(baz-qux)', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "(baz-qux)"'],
-            ['/mlem', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "/mlem"'],
-            ['\\boop', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "\\boop"'],
+            ['/quux', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "/quux"'],
+            ['\\corge', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "\\corge"'],
             ['lorem@ipsum', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "lorem@ipsum"'],
             ['dolor:sit', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "dolor:sit"'],
             ['{}()/\\@:', 'The key must not contain "{}()/\\@:" (as mandated by PSR-6), got "{}()/\\@:"'],

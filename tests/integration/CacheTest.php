@@ -144,8 +144,8 @@ abstract class CacheTest extends TestCase
 
         $this->assertTrue(
             $this->cache->addMultiple([
-                'mlem' => 'mlem_value',
-                'boop' => 'boop_value',
+                'quux' => 'quux_value',
+                'corge' => 'corge_value',
             ])
         );
 
@@ -155,10 +155,10 @@ abstract class CacheTest extends TestCase
                 'bar' => 'new_bar_value',
                 'baz' => 'baz_value',
                 'qux' => 'qux_value',
-                'mlem' => 'mlem_value',
-                'boop' => 'boop_value',
+                'quux' => 'quux_value',
+                'corge' => 'corge_value',
             ],
-            $this->cache->getMultiple(['foo', 'bar', 'baz', 'qux', 'mlem', 'boop'])
+            $this->cache->getMultiple(['foo', 'bar', 'baz', 'qux', 'quux', 'corge'])
         );
 
         $this->assertTrue($this->cache->deleteMultiple(['foo', 'bar']));
@@ -169,13 +169,13 @@ abstract class CacheTest extends TestCase
                 'bar' => null,
                 'baz' => 'baz_value',
                 'qux' => 'qux_value',
-                'mlem' => 'mlem_value',
-                'boop' => 'boop_value',
+                'quux' => 'quux_value',
+                'corge' => 'corge_value',
             ],
-            $this->cache->getMultiple(['foo', 'bar', 'baz', 'qux', 'mlem', 'boop'])
+            $this->cache->getMultiple(['foo', 'bar', 'baz', 'qux', 'quux', 'corge'])
         );
 
-        $this->assertFalse($this->cache->deleteMultiple(['foo', 'bar', 'baz', 'qux', 'mlem', 'boop']));
+        $this->assertFalse($this->cache->deleteMultiple(['foo', 'bar', 'baz', 'qux', 'quux', 'corge']));
 
         $this->assertEqualIterable(
             [
@@ -183,10 +183,10 @@ abstract class CacheTest extends TestCase
                 'bar' => null,
                 'baz' => null,
                 'qux' => null,
-                'mlem' => null,
-                'boop' => null,
+                'quux' => null,
+                'corge' => null,
             ],
-            $this->cache->getMultiple(['foo', 'bar', 'baz', 'qux', 'mlem', 'boop'])
+            $this->cache->getMultiple(['foo', 'bar', 'baz', 'qux', 'quux', 'corge'])
         );
     }
 

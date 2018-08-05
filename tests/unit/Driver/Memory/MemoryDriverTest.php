@@ -192,20 +192,20 @@ class MemoryDriverTest extends TestCase
             function () {
                 $this->driver->write('foo', 'bar');
                 $this->driver->write('baz', 'qux', 60);
-                $this->driver->write('mlem', 'boop');
+                $this->driver->write('quux', 'corge');
 
                 $this->assertCount(3, $this->driver);
 
                 $this->driver->cleanup();
 
                 $this->assertCount(3, $this->driver);
-                $this->assertSameIterable(['foo', 'baz', 'mlem'], $this->driver->listKeys());
+                $this->assertSameIterable(['foo', 'baz', 'quux'], $this->driver->listKeys());
             },
             function () {
                 $this->driver->cleanup();
 
                 $this->assertCount(2, $this->driver);
-                $this->assertSameIterable(['foo', 'mlem'], $this->driver->listKeys());
+                $this->assertSameIterable(['foo', 'quux'], $this->driver->listKeys());
             }
         );
     }
@@ -214,7 +214,7 @@ class MemoryDriverTest extends TestCase
     {
         $this->driver->write('foo_a', 'bar');
         $this->driver->write('foo_b', 'baz');
-        $this->driver->write('qux', 'mlem');
+        $this->driver->write('qux', 'quux');
 
         $this->assertTrue($this->driver->exists('foo_a'));
         $this->assertTrue($this->driver->exists('foo_b'));
@@ -233,14 +233,14 @@ class MemoryDriverTest extends TestCase
             function () {
                 $this->driver->write('foo', 'bar');
                 $this->driver->write('baz', 'qux', 30);
-                $this->driver->write('mlem', 'boop');
+                $this->driver->write('quux', 'corge');
 
-                $this->assertSameIterable(['foo', 'baz', 'mlem'], $this->driver->listKeys());
+                $this->assertSameIterable(['foo', 'baz', 'quux'], $this->driver->listKeys());
                 $this->assertSameIterable(['foo'], $this->driver->listKeys('f'));
                 $this->assertSameIterable(['baz'], $this->driver->listKeys('b'));
             },
             function () {
-                $this->assertSameIterable(['foo', 'mlem'], $this->driver->listKeys());
+                $this->assertSameIterable(['foo', 'quux'], $this->driver->listKeys());
                 $this->assertSameIterable(['foo'], $this->driver->listKeys('f'));
                 $this->assertSameIterable([], $this->driver->listKeys('b'));
             }
@@ -256,7 +256,7 @@ class MemoryDriverTest extends TestCase
                 $this->assertCount(1, $this->driver);
                 $this->driver->write('baz', 'qux', 20);
                 $this->assertCount(2, $this->driver);
-                $this->driver->write('mlem', 'boop');
+                $this->driver->write('quux', 'corge');
                 $this->assertCount(3, $this->driver);
             },
             function () {
