@@ -115,7 +115,7 @@ class Entry implements EntryInterface
         $targetDirectory = dirname($this->path);
 
         if (!is_dir($targetDirectory)) {
-            @mkdir($targetDirectory, 0777 & ~umask(), true);
+            @mkdir($targetDirectory, 0777, true);
         }
 
         // move the file
@@ -123,7 +123,7 @@ class Entry implements EntryInterface
             throw new EntryException(sprintf('Failed to rename file "%s" to "%s"', $with, $this->path));
         }
 
-        @chmod($this->path, 0666 & ~umask());
+        @chmod($this->path, 0666);
     }
 
     function delete(): void

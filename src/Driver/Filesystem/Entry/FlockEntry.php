@@ -148,7 +148,7 @@ class FlockEntry implements EntryInterface
             $targetDirectory = dirname($this->path);
 
             if (!is_dir($targetDirectory)) {
-                @mkdir($targetDirectory, 0777 & ~umask(), true);
+                @mkdir($targetDirectory, 0777, true);
             }
         }
 
