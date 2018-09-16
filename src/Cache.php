@@ -10,8 +10,8 @@ use Kuria\Cache\Driver\Feature\MultiDeleteInterface;
 use Kuria\Cache\Driver\Feature\MultiReadInterface;
 use Kuria\Cache\Driver\Feature\MultiWriteInterface;
 use Kuria\Cache\Exception\UnsupportedOperationException;
-use Kuria\Cache\Helper\IterableHelper;
 use Kuria\Event\Observable;
+use Kuria\Iterable\IterableHelper;
 
 class Cache extends Observable implements CacheInterface
 {

@@ -2,17 +2,14 @@
 
 namespace Kuria\Cache;
 
-use Kuria\Cache\Test\IterableAssertionTrait;
+use Kuria\DevMeta\Test;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class NamespacedCacheTest extends TestCase
+class NamespacedCacheTest extends Test
 {
-    use IterableAssertionTrait;
-
     /** @var CacheInterface|MockObject */
     private $wrappedCacheMock;
 
@@ -83,7 +80,7 @@ class NamespacedCacheTest extends TestCase
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('getMultiple')
-            ->with($this->isSameIterable(['prefix_foo', 'prefix_bar', 'prefix_baz']))
+            ->with($this->identicalIterable(['prefix_foo', 'prefix_bar', 'prefix_baz']))
             ->willReturnCallback(function ($keys, &$failedKeys) {
                 $failedKeys = ['prefix_bar'];
 
@@ -122,7 +119,7 @@ class NamespacedCacheTest extends TestCase
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('addMultiple')
-            ->with($this->isSameIterable(['prefix_foo' => 1, 'prefix_bar' => 2]), 60)
+            ->with($this->identicalIterable(['prefix_foo' => 1, 'prefix_bar' => 2]), 60)
             ->willReturn(true);
 
         $this->assertTrue($this->namespacedCache->addMultiple(['foo' => 1, 'bar' => 2], 60));
@@ -142,7 +139,7 @@ class NamespacedCacheTest extends TestCase
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('setMultiple')
-            ->with($this->isSameIterable(['prefix_lorem' => 5, 'prefix_ipsum' => 6]), 60)
+            ->with($this->identicalIterable(['prefix_lorem' => 5, 'prefix_ipsum' => 6]), 60)
             ->willReturn(true);
 
         $this->assertTrue($this->namespacedCache->setMultiple(['lorem' => 5, 'ipsum' => 6], 60));
@@ -183,7 +180,7 @@ class NamespacedCacheTest extends TestCase
     {
         $this->wrappedCacheMock->expects($this->once())
             ->method('deleteMultiple')
-            ->with($this->isSameIterable(['prefix_foo', 'prefix_bar']))
+            ->with($this->identicalIterable(['prefix_foo', 'prefix_bar']))
             ->willReturn(true);
 
         $this->assertTrue($this->namespacedCache->deleteMultiple(['foo', 'bar']));

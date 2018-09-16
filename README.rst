@@ -3,8 +3,8 @@ Cache
 
 Caching library with driver abstraction.
 
-.. image:: https://travis-ci.org/kuria/cache.svg?branch=master
-   :target: https://travis-ci.org/kuria/cache
+.. image:: https://travis-ci.com/kuria/cache.svg?branch=master
+   :target: https://travis-ci.com/kuria/cache
 
 .. contents::
 

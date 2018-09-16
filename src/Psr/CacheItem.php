@@ -2,6 +2,7 @@
 
 namespace Kuria\Cache\Psr;
 
+use Kuria\Clock\Clock;
 use Psr\Cache\CacheItemInterface;
 
 class CacheItem implements CacheItemInterface
@@ -79,7 +80,7 @@ class CacheItem implements CacheItemInterface
         }
 
         if ($this->expiration instanceof \DateTimeInterface) {
-            return $this->expiration->getTimestamp() - time();
+            return $this->expiration->getTimestamp() - Clock::time();
         }
 
         if ($this->expiration instanceof \DateInterval) {

@@ -2,12 +2,12 @@
 
 namespace Kuria\Cache\Driver\Filesystem\Entry\File;
 
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
 /**
  * @group unit
  */
-abstract class FileFormatTest extends TestCase
+abstract class FileFormatTest extends Test
 {
     /** @var FileFormatInterface */
     protected $format;

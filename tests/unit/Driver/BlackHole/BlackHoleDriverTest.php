@@ -2,9 +2,9 @@
 
 namespace Kuria\Cache\Driver\BlackHole;
 
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
-class BlackHoleDriverTest extends TestCase
+class BlackHoleDriverTest extends Test
 {
     /** @var BlackHoleDriver */
     private $driver;

@@ -5,15 +5,14 @@ namespace Kuria\Cache\Driver\Filesystem\Entry;
 use Kuria\Cache\Driver\Filesystem\Entry\Exception\EntryException;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileHandle;
-use Kuria\Cache\Test\TimeMachine;
+use Kuria\DevMeta\Test;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class EntryTest extends TestCase
+class EntryTest extends Test
 {
     use PHPMock;
 
@@ -91,11 +90,11 @@ class EntryTest extends TestCase
             ->with($this->identicalTo($this->readHandleMock))
             ->willReturn(true);
 
-        TimeMachine::freezeTime([__NAMESPACE__], function (int $time) {
+        $this->atTime(1000, function () {
             $this->fileFormatMock->expects($this->once())
                 ->method('readExpirationTime')
                 ->with($this->identicalTo($this->readHandleMock))
-                ->willReturn($time - 1);
+                ->willReturn(999);
 
             $this->assertFalse($this->entry->validate());
         });

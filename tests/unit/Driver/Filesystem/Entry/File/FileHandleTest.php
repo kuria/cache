@@ -3,13 +3,13 @@
 namespace Kuria\Cache\Driver\Filesystem\Entry\File;
 
 use Kuria\Cache\Driver\Filesystem\Entry\Exception\FileHandleException;
+use Kuria\DevMeta\Test;
 use phpmock\phpunit\PHPMock;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class FileHandleTest extends TestCase
+class FileHandleTest extends Test
 {
     use PHPMock;
 

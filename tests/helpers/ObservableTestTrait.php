@@ -3,16 +3,34 @@
 namespace Kuria\Cache\Test;
 
 use Kuria\Event\ObservableInterface;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\Matcher\InvokedCount;
+use PHPUnit\Framework\MockObject\MockObject;
 
 trait ObservableTestTrait
 {
+    abstract static function assertEquals(
+        $expected,
+        $actual,
+        string $message = '',
+        float $delta = 0,
+        int $maxDepth = 10,
+        bool $canonicalize = false,
+        bool $ignoreCase = false
+    ): void;
+
+    abstract static function once(): InvokedCount;
+
+    abstract static function exactly(int $count): InvokedCount;
+
+    abstract static function never(): InvokedCount;
+
+    abstract protected function createMock($originalClassName): MockObject;
+
     protected function expectEvent(ObservableInterface $observable, string $event, ...$expectedArguments): void
     {
-        /** @var TestCase $this */
         $listenerMock = $this->createMock(ListenerInterface::class);
 
-        $listenerMock->expects(TestCase::once())
+        $listenerMock->expects($this->once())
             ->method('__invoke')
             ->with(...$expectedArguments);
 
@@ -21,15 +39,14 @@ trait ObservableTestTrait
 
     protected function expectConsecutiveEvents(ObservableInterface $observable, string $event, array ...$expectedArgumentGroups): void
     {
-        /** @var TestCase $this */
         $listenerMock = $this->createMock(ListenerInterface::class);
         $callCounter = 0;
 
-        $listenerMock->expects(TestCase::exactly(count($expectedArgumentGroups)))
+        $listenerMock->expects($this->exactly(count($expectedArgumentGroups)))
             ->method('__invoke')
             // cannot use withConsecutive() because it doesn't work with arguments that are modified after the call
             ->willReturnCallback(function (...$args) use (&$callCounter, $expectedArgumentGroups) {
-                TestCase::assertEquals($expectedArgumentGroups[$callCounter++], $args);
+                $this->assertEquals($expectedArgumentGroups[$callCounter++], $args);
             });
 
         $observable->on($event, $listenerMock);
@@ -37,10 +54,9 @@ trait ObservableTestTrait
 
     protected function expectNoEvent(ObservableInterface $observable, string $event): void
     {
-        /** @var TestCase $this */
         $listenerMock = $this->createMock(ListenerInterface::class);
 
-        $listenerMock->expects(TestCase::never())
+        $listenerMock->expects($this->never())
             ->method('__invoke');
 
         $observable->on($event, $listenerMock);

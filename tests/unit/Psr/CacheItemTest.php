@@ -2,13 +2,12 @@
 
 namespace Kuria\Cache\Psr;
 
-use Kuria\Cache\Test\TimeMachine;
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
 /**
  * @group unit
  */
-class CacheItemTest extends TestCase
+class CacheItemTest extends Test
 {
     function testShouldCreateCacheItem()
     {
@@ -46,7 +45,7 @@ class CacheItemTest extends TestCase
      */
     function testShouldExpireAt($expiration, int $now, ?int $expectedTtl)
     {
-        TimeMachine::setTime([__NAMESPACE__], $now, function () use ($expiration, $expectedTtl) {
+        $this->atTime($now, function () use ($expiration, $expectedTtl) {
             $item = new CacheItem('key', 'value', true);
             $item->expiresAt($expiration);
 

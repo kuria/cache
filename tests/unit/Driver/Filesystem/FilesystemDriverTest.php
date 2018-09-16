@@ -4,18 +4,14 @@ namespace Kuria\Cache\Driver\Filesystem;
 
 use Kuria\Cache\Driver\Filesystem\Entry\EntryFactoryInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\EntryInterface;
-use Kuria\Cache\Test\IterableAssertionTrait;
-use Kuria\Cache\Test\TimeMachine;
+use Kuria\DevMeta\Test;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class FilesystemDriverTest extends TestCase
+class FilesystemDriverTest extends Test
 {
-    use IterableAssertionTrait;
-
     /** @var EntryFactoryInterface|MockObject */
     private $entryFactoryMock;
 
@@ -91,7 +87,7 @@ class FilesystemDriverTest extends TestCase
      */
     function testShouldWriteWithTtlAndOverwrite(?int $ttl, int $now, int $expectedExpirationTime)
     {
-        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedExpirationTime) {
+        $this->atTime($now, function () use ($ttl, $expectedExpirationTime) {
             $entry = $this->prepareEntry('key', false);
 
             $entry->expects($this->once())

@@ -3,13 +3,13 @@
 namespace Kuria\Cache\Psr;
 
 use Kuria\Cache\CacheInterface;
+use Kuria\DevMeta\Test;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class CacheItemPoolTest extends TestCase
+class CacheItemPoolTest extends Test
 {
     /** @var CacheInterface|MockObject */
     private $cacheMock;

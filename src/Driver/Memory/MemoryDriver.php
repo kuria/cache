@@ -7,6 +7,7 @@ use Kuria\Cache\Driver\Exception\DriverException;
 use Kuria\Cache\Driver\Feature\CleanupInterface;
 use Kuria\Cache\Driver\Feature\FilterableInterface;
 use Kuria\Cache\Driver\Helper\TtlHelper;
+use Kuria\Clock\Clock;
 
 class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInterface, \Countable
 {
@@ -94,7 +95,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInter
             return false;
         }
 
-        if ($this->entries[$key]['expires'] !== 0 && $this->entries[$key]['expires'] <= time()) {
+        if ($this->entries[$key]['expires'] !== 0 && $this->entries[$key]['expires'] <= Clock::time()) {
             unset($this->entries[$key]);
 
             return false;

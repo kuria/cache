@@ -3,17 +3,15 @@
 namespace Kuria\Cache\Driver\Apcu;
 
 use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
-use Kuria\Cache\Test\IterableAssertionTrait;
+use Kuria\DevMeta\Test;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class ApcuDriverTest extends TestCase
+class ApcuDriverTest extends Test
 {
-    use IterableAssertionTrait;
     use PHPMock;
 
     /** @var ApcuDriver|MockObject */

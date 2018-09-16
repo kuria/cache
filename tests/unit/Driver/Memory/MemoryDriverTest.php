@@ -3,17 +3,13 @@
 namespace Kuria\Cache\Driver\Memory;
 
 use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
-use Kuria\Cache\Test\IterableAssertionTrait;
-use Kuria\Cache\Test\TimeMachine;
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
 /**
  * @group unit
  */
-class MemoryDriverTest extends TestCase
+class MemoryDriverTest extends Test
 {
-    use IterableAssertionTrait;
-
     /** @var MemoryDriver */
     private $driver;
 
@@ -272,9 +268,8 @@ class MemoryDriverTest extends TestCase
     private function callNowAndAfter(callable $now, callable $after, int $offset = 60): void
     {
         $time = 1000;
-        $timeMockNs = ['Kuria\\Cache\\Driver\\Helper', __NAMESPACE__];
 
-        TimeMachine::setTime($timeMockNs, $time, $now);
-        TimeMachine::setTime($timeMockNs, $time + $offset, $after);
+        $this->atTime($time, $now);
+        $this->atTime($time + $offset, $after);
     }
 }

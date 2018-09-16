@@ -5,6 +5,7 @@ namespace Kuria\Cache\Driver\Filesystem\Entry;
 use Kuria\Cache\Driver\Filesystem\Entry\Exception\EntryException;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileHandle;
+use Kuria\Clock\Clock;
 
 /**
  * Uses flock() to handle concurrency. See warnings in PHP docs.
@@ -41,7 +42,7 @@ class FlockEntry implements EntryInterface
 
         $expirationTime = $this->format->readExpirationTime($handle);
 
-        return $expirationTime === 0 || $expirationTime > time();
+        return $expirationTime === 0 || $expirationTime > Clock::time();
     }
 
     function readKey(): string

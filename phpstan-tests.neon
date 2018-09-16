@@ -1,5 +1,5 @@
 includes:
-    - vendor/kuria/dev-meta/PHPStan/tests.neon
+    - vendor/kuria/dev-meta/conf/phpstan-tests.neon
 
 parameters:
     ignoreErrors:

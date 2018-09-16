@@ -1,6 +1,13 @@
 Changelog
 #########
 
+5.0.0
+*****
+
+- removed ``PhpFileFormat``
+- replaced several helpers with Kuria components
+
+
 4.0.0
 *****
 

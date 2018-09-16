@@ -4,12 +4,12 @@ namespace Kuria\Cache\Driver\Helper;
 
 use Kuria\Cache\Driver\Helper\Exception\DeserializationFailedException;
 use Kuria\Cache\Test\Undeserializable;
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
 /**
  * @group unit
  */
-class SerializationHelperTest extends TestCase
+class SerializationHelperTest extends Test
 {
     function testShouldUnserialize()
     {

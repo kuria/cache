@@ -2,13 +2,12 @@
 
 namespace Kuria\Cache\Driver\Helper;
 
-use Kuria\Cache\Test\TimeMachine;
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
 /**
  * @group unit
  */
-class TtlHelperTest extends TestCase
+class TtlHelperTest extends Test
 {
     /**
      * @dataProvider provideTtlForExpirationCheck
@@ -59,7 +58,7 @@ class TtlHelperTest extends TestCase
      */
     function testShouldConvertToExpirationTime(?int $ttl, int $now, int $expectedResult)
     {
-        TimeMachine::setTime([__NAMESPACE__], $now, function () use ($ttl, $expectedResult) {
+        $this->atTime($now, function () use ($ttl, $expectedResult) {
             $this->assertSame($expectedResult, TtlHelper::toExpirationTime($ttl));
         });
     }

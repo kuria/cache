@@ -5,18 +5,16 @@ namespace Kuria\Cache;
 use Kuria\Cache\Driver\DriverInterface;
 use Kuria\Cache\Driver\Exception\DriverException;
 use Kuria\Cache\Exception\UnsupportedOperationException;
-use Kuria\Cache\Test\IterableAssertionTrait;
 use Kuria\Cache\Test\ObservableTestTrait;
+use Kuria\DevMeta\Test;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class CacheTest extends TestCase
+class CacheTest extends Test
 {
     use ObservableTestTrait;
-    use IterableAssertionTrait;
 
     /** @var Cache */
     private $cache;

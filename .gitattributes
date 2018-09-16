@@ -3,3 +3,5 @@
 /.gitignore export-ignore
 /phpunit.xml.dist export-ignore
 /.travis.yml export-ignore
+/phpstan-src.neon export-ignore
+/phpstan-tests.neon export-ignore

@@ -4,18 +4,16 @@ namespace Kuria\Cache\Test;
 
 use Kuria\Cache\Cache;
 use Kuria\Cache\Driver\DriverInterface;
-use Kuria\Cache\Helper\IterableHelper;
+use Kuria\DevMeta\Test;
+use Kuria\Iterable\IterableHelper;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Constraint\Constraint;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group integration
  */
-abstract class CacheTest extends TestCase
+abstract class CacheTest extends Test
 {
-    use IterableAssertionTrait;
-
     /** @var Cache */
     protected $cache;
 

@@ -3,18 +3,14 @@
 namespace Kuria\Cache\Driver\Memcached;
 
 use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
-use Kuria\Cache\Test\IterableAssertionTrait;
-use Kuria\Cache\Test\TimeMachine;
+use Kuria\DevMeta\Test;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class MemcachedDriverTest extends TestCase
+class MemcachedDriverTest extends Test
 {
-    use IterableAssertionTrait;
-
     /** @var \Memcached|MockObject */
     private $memcachedMock;
 
@@ -153,7 +149,7 @@ class MemcachedDriverTest extends TestCase
      */
     function testShouldWriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
+        $this->atTime($now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
                 ->method('add')
                 ->with('key', 'value', $expectedTtlValue)
@@ -190,7 +186,7 @@ class MemcachedDriverTest extends TestCase
      */
     function testShouldOverwriteWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
+        $this->atTime($now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
                 ->method('set')
                 ->with('key', 'value', $expectedTtlValue)
@@ -230,7 +226,7 @@ class MemcachedDriverTest extends TestCase
      */
     function testShouldWriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
+        $this->atTime($now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->exactly(2))
                 ->method('add')
                 ->withConsecutive(
@@ -270,7 +266,7 @@ class MemcachedDriverTest extends TestCase
      */
     function testShouldOverwriteMultipleWithTtl(?int $ttl, int $now, int $expectedTtlValue)
     {
-        TimeMachine::setTime(['Kuria\\Cache\\Driver\\Helper'], $now, function () use ($ttl, $expectedTtlValue) {
+        $this->atTime($now, function () use ($ttl, $expectedTtlValue) {
             $this->memcachedMock->expects($this->once())
                 ->method('setMulti')
                 ->with(['foo' => 'bar', 'baz' => 'qux'], $expectedTtlValue)

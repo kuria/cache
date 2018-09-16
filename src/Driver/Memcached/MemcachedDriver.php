@@ -8,7 +8,7 @@ use Kuria\Cache\Driver\Feature\MultiDeleteInterface;
 use Kuria\Cache\Driver\Feature\MultiReadInterface;
 use Kuria\Cache\Driver\Feature\MultiWriteInterface;
 use Kuria\Cache\Driver\Helper\TtlHelper;
-use Kuria\Cache\Helper\IterableHelper;
+use Kuria\Iterable\IterableHelper;
 
 /**
  * Memcached driver

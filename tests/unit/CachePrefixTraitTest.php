@@ -2,16 +2,13 @@
 
 namespace Kuria\Cache;
 
-use Kuria\Cache\Test\IterableAssertionTrait;
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
 /**
  * @group unit
  */
-class CachePrefixTraitTest extends TestCase
+class CachePrefixTraitTest extends Test
 {
-    use IterableAssertionTrait;
-
     /** @var CachePrefixTrait|mixed */
     private $cachePrefix;
 

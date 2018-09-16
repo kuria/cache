@@ -2,12 +2,12 @@
 
 namespace Kuria\Cache\Psr;
 
-use PHPUnit\Framework\TestCase;
+use Kuria\DevMeta\Test;
 
 /**
  * @group unit
  */
-class PsrCacheHelperTest extends TestCase
+class PsrCacheHelperTest extends Test
 {
     /**
      * @dataProvider provideIntervals

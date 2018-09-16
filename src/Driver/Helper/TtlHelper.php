@@ -2,6 +2,8 @@
 
 namespace Kuria\Cache\Driver\Helper;
 
+use Kuria\Clock\Clock;
+
 abstract class TtlHelper
 {
     /**
@@ -31,6 +33,6 @@ abstract class TtlHelper
      */
     static function toExpirationTime(?int $ttl): int
     {
-        return static::shouldExpire($ttl) ? time() + $ttl : 0;
+        return static::shouldExpire($ttl) ? Clock::time() + $ttl : 0;
     }
 }

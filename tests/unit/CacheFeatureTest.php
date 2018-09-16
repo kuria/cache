@@ -9,18 +9,16 @@ use Kuria\Cache\Driver\Feature\FilterableInterface;
 use Kuria\Cache\Driver\Feature\MultiDeleteInterface;
 use Kuria\Cache\Driver\Feature\MultiReadInterface;
 use Kuria\Cache\Driver\Feature\MultiWriteInterface;
-use Kuria\Cache\Test\IterableAssertionTrait;
 use Kuria\Cache\Test\ObservableTestTrait;
+use Kuria\DevMeta\Test;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class CacheFeatureTest extends TestCase
+class CacheFeatureTest extends Test
 {
     use ObservableTestTrait;
-    use IterableAssertionTrait;
 
     function testShouldGetMultiple()
     {
@@ -29,7 +27,7 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('readMultiple')
-            ->with($this->isSameIterable([
+            ->with($this->identicalIterable([
                 'prefix_foo',
                 'prefix_bar',
                 'prefix_null',
@@ -178,7 +176,7 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('writeMultiple')
-            ->with($this->isSameIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'bar-value']), 60, false);
+            ->with($this->identicalIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'bar-value']), 60, false);
 
         $this->expectConsecutiveEvents(
             $cache,
@@ -198,7 +196,7 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('writeMultiple')
-            ->with($this->isSameIterable(['prefix_foo' => 1, 'prefix_bar' => 2]), 60, false)
+            ->with($this->identicalIterable(['prefix_foo' => 1, 'prefix_bar' => 2]), 60, false)
             ->willThrowException($driverException);
 
         $this->expectEvent($cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));
@@ -213,7 +211,7 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('writeMultiple')
-            ->with($this->isSameIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'bar-value']), 60, true);
+            ->with($this->identicalIterable(['prefix_foo' => 'foo-value', 'prefix_bar' => 'bar-value']), 60, true);
 
         $this->expectConsecutiveEvents(
             $cache,
@@ -233,7 +231,7 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('writeMultiple')
-            ->with($this->isSameIterable(['prefix_foo' => 1, 'prefix_bar' => 2]), 60, true)
+            ->with($this->identicalIterable(['prefix_foo' => 1, 'prefix_bar' => 2]), 60, true)
             ->willThrowException($driverException);
 
         $this->expectEvent($cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));
@@ -248,7 +246,7 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('deleteMultiple')
-            ->with($this->isSameIterable(['prefix_foo', 'prefix_bar']));
+            ->with($this->identicalIterable(['prefix_foo', 'prefix_bar']));
 
         $this->assertTrue($cache->deleteMultiple(['foo', 'bar']));
     }
@@ -261,7 +259,7 @@ class CacheFeatureTest extends TestCase
 
         $driver->expects($this->once())
             ->method('deleteMultiple')
-            ->with($this->isSameIterable(['prefix_foo', 'prefix_bar']))
+            ->with($this->identicalIterable(['prefix_foo', 'prefix_bar']))
             ->willThrowException($driverException);
 
         $this->expectEvent($cache, CacheEvents::DRIVER_EXCEPTION, $this->identicalTo($driverException));

@@ -4,14 +4,14 @@ namespace Kuria\Cache\Driver\Filesystem\PathResolver;
 
 use Kuria\Cache\Driver\Exception\DriverExceptionInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
+use Kuria\DevMeta\Test;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group unit
  */
-class HashedPathResolverTest extends TestCase
+class HashedPathResolverTest extends Test
 {
     use PHPMock;
 
