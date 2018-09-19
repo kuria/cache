@@ -65,7 +65,7 @@ class CacheItemPoolTest extends Test
                 return ['foo' => 'a', 'bar' => 'b'];
             });
 
-        $this->assertEquals(
+        $this->assertLooselyIdentical(
             [
                 'foo' => new CacheItem('foo', 'a', true),
                 'bar' => new CacheItem('bar', 'b', true),

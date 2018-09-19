@@ -8,15 +8,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 
 trait ObservableTestTrait
 {
-    abstract static function assertEquals(
-        $expected,
-        $actual,
-        string $message = '',
-        float $delta = 0,
-        int $maxDepth = 10,
-        bool $canonicalize = false,
-        bool $ignoreCase = false
-    ): void;
+    abstract static function assertLooselyIdentical($expected, $actual, string $message = ''): void;
 
     abstract static function once(): InvokedCount;
 
@@ -46,7 +38,7 @@ trait ObservableTestTrait
             ->method('__invoke')
             // cannot use withConsecutive() because it doesn't work with arguments that are modified after the call
             ->willReturnCallback(function (...$args) use (&$callCounter, $expectedArgumentGroups) {
-                $this->assertEquals($expectedArgumentGroups[$callCounter++], $args);
+                $this->assertLooselyIdentical($expectedArgumentGroups[$callCounter++], $args);
             });
 
         $observable->on($event, $listenerMock);

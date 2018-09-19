@@ -262,7 +262,7 @@ abstract class CacheTest extends Test
             ['foo'],
             ["foo-\x00\x01\x02\x03-bar"],
             [[1, 2, 3]],
-            [$object, $this->equalTo($object)],
+            [$object, $this->looselyIdenticalTo($object)],
         ];
     }
 

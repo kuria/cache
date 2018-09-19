@@ -14,7 +14,7 @@ class PsrCacheHelperTest extends Test
      */
     function testShouldConvertDateIntervalToTtl(\DateInterval $interval, ?int $expectedTtl)
     {
-        $this->assertEquals($expectedTtl, PsrCacheHelper::convertDateIntervalToTtl($interval));
+        $this->assertSame($expectedTtl, PsrCacheHelper::convertDateIntervalToTtl($interval));
     }
 
     function provideIntervals(): array
