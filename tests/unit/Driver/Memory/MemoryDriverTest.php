@@ -99,7 +99,7 @@ class MemoryDriverTest extends Test
         );
     }
 
-    function provideTtl(): array
+    function provideTtl()
     {
         return [
             // ttl, offset, shouldExpire

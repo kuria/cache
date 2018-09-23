@@ -37,7 +37,7 @@ class MemcachedDriverTest extends Test
         $this->assertSame($expectedResult, $this->driver->exists('key'));
     }
 
-    function provideExistResultCodes(): array
+    function provideExistResultCodes()
     {
         return [
             [\Memcached::RES_SUCCESS, true],
@@ -288,7 +288,7 @@ class MemcachedDriverTest extends Test
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], null, true);
     }
 
-    function provideTtl(): array
+    function provideTtl()
     {
         return [
             // ttl, now, expectedExpirationTime

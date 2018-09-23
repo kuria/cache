@@ -53,7 +53,7 @@ class CacheItemTest extends Test
         });
     }
 
-    function provideExpirationTimes(): array
+    function provideExpirationTimes()
     {
         return [
             // expiration, now, expectedTtl
@@ -74,7 +74,7 @@ class CacheItemTest extends Test
         $this->assertSame($expectedTtl, $item->getTtl());
     }
 
-    function provideExpireAfterTimes(): array
+    function provideExpireAfterTimes()
     {
         $negativeInterval = new \DateInterval('PT60S');
         $negativeInterval->invert = 1;

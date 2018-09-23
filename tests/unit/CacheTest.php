@@ -60,7 +60,7 @@ class CacheTest extends Test
         $this->assertSame($exists, $this->cache->has('key'));
     }
 
-    function provideExistenceStates(): array
+    function provideExistenceStates()
     {
         return [
             [true],

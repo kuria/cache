@@ -242,7 +242,7 @@ abstract class CacheTest extends Test
         $this->assertThat($this->cache->get('key'), $constraint ?? $this->identicalTo($value));
     }
 
-    function provideValueTypes(): array
+    function provideValueTypes()
     {
         $object = new \stdClass();
         $object->property = 'value';

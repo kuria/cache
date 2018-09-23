@@ -44,7 +44,7 @@ class CacheItemPoolTest extends Test
         $this->assertSame($exists, $item->isHit());
     }
 
-    function provideCachedItems(): array
+    function provideCachedItems()
     {
         return [
             // key, value, exists
@@ -149,7 +149,7 @@ class CacheItemPoolTest extends Test
         $this->assertSame($result, $this->pool->save($item));
     }
 
-    function provideItemsToSave(): array
+    function provideItemsToSave()
     {
         return [
             // key, value, ttl, result
@@ -359,7 +359,7 @@ class CacheItemPoolTest extends Test
         }
     }
 
-    function provideInvalidKeys(): array
+    function provideInvalidKeys()
     {
         return [
             // key, expectedMessage
@@ -377,7 +377,7 @@ class CacheItemPoolTest extends Test
         ];
     }
 
-    function provideBooleanResults(): array
+    function provideBooleanResults()
     {
         return [
             [true],

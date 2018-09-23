@@ -212,7 +212,7 @@ class FlockEntryTest extends Test
         $this->entry->{$method}(...$arguments);
     }
 
-    function provideOperations(): array
+    function provideOperations()
     {
         return [
             ['validate'],

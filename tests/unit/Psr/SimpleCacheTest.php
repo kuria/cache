@@ -154,7 +154,7 @@ class SimpleCacheTest extends Test
         $this->assertTrue($this->simpleCache->has('key'));
     }
 
-    function provideTtl(): array
+    function provideTtl()
     {
         $negativeInterval = new \DateInterval('PT60S');
         $negativeInterval->invert = 1;

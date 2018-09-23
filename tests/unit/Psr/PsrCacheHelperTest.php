@@ -17,7 +17,7 @@ class PsrCacheHelperTest extends Test
         $this->assertSame($expectedTtl, PsrCacheHelper::convertDateIntervalToTtl($interval));
     }
 
-    function provideIntervals(): array
+    function provideIntervals()
     {
         $negativeInterval = new \DateInterval('PT60S');
         $negativeInterval->invert = 1;

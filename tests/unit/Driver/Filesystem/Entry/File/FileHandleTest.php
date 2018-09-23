@@ -87,7 +87,7 @@ class FileHandleTest extends Test
         $handle->{$method}(...$arguments);
     }
 
-    function provideOperations(): array
+    function provideOperations()
     {
         return [
             ['getSize'],
@@ -235,7 +235,7 @@ class FileHandleTest extends Test
         $this->assertFalse($handle->hasExclusiveLock());
     }
 
-    function provideLockModes(): array
+    function provideLockModes()
     {
         return [
             // exclusive, block, expectedOperation

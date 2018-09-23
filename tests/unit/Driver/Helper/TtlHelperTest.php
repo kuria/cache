@@ -17,7 +17,7 @@ class TtlHelperTest extends Test
         $this->assertSame($expectedResult, TtlHelper::shouldExpire($ttl));
     }
 
-    function provideTtlForExpirationCheck(): array
+    function provideTtlForExpirationCheck()
     {
         return [
             // ttl, expectedResult
@@ -39,7 +39,7 @@ class TtlHelperTest extends Test
         $this->assertSame($expectedResult, TtlHelper::normalize($ttl));
     }
 
-    function provideTtlForNormalization(): array
+    function provideTtlForNormalization()
     {
         return [
             // ttl, expectedResult
@@ -63,7 +63,7 @@ class TtlHelperTest extends Test
         });
     }
 
-    function provideTtlForExpirationTimeConversion(): array
+    function provideTtlForExpirationTimeConversion()
     {
         return [
             // ttl, now, expectedResult

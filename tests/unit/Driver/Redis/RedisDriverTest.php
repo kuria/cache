@@ -259,7 +259,7 @@ class RedisDriverTest extends Test
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux']);
     }
 
-    function provideTtl(): array
+    function provideTtl()
     {
         return [
             // ttl, expectedTtlOptions

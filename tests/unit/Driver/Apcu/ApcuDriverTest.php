@@ -275,7 +275,7 @@ class ApcuDriverTest extends Test
         $this->driver->writeMultiple(['foo' => 'bar', 'baz' => 'qux'], null, true);
     }
 
-    function provideTtl(): array
+    function provideTtl()
     {
         return [
             // ttl, expectedTtlValue

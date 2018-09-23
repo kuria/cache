@@ -98,7 +98,7 @@ class FilesystemDriverTest extends Test
         });
     }
 
-    function provideTtl(): array
+    function provideTtl()
     {
         return [
             // ttl, now, expectedExpirationTime
