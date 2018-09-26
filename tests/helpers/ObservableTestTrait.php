@@ -8,7 +8,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 
 trait ObservableTestTrait
 {
-    abstract static function assertLooselyIdentical($expected, $actual, string $message = ''): void;
+    abstract static function assertLooselyIdentical($expected, $actual, bool $canonicalizeKeys = false, string $message = ''): void;
 
     abstract static function once(): InvokedCount;
 
