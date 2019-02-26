@@ -50,12 +50,12 @@ class FlockEntry implements EntryInterface
         return $this->format->readKey($this->requireHandle());
     }
 
-    function readData(): string
+    function readData()
     {
         return $this->format->readData($this->requireHandle());
     }
 
-    function write(string $key, string $data, int $expirationTime, bool $overwrite): void
+    function write(string $key, $data, int $expirationTime, bool $overwrite): void
     {
         $handle = $this->requireHandle(true, true);
 
@@ -141,7 +141,9 @@ class FlockEntry implements EntryInterface
         return $readHandle;
     }
 
-    /** @internal */
+    /**
+     * @internal
+     */
     protected function createHandle(bool $createFileIfNotExists): ?FileHandle
     {
         // make sure the target directory exists
@@ -156,7 +158,7 @@ class FlockEntry implements EntryInterface
         // attempt to create handle
         $handle = @fopen($this->path, $createFileIfNotExists ? 'c+' : 'r+');
 
-        return $handle !== false ? new FileHandle($handle) : null;
+        return $handle !== false ? new FileHandle($this->path, $handle) : null;
     }
 
     private function closeHandle(): void

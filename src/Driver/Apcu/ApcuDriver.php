@@ -116,6 +116,9 @@ class ApcuDriver implements DriverInterface, MultiReadInterface, MultiWriteInter
         }
     }
 
+    /**
+     * @internal
+     */
     protected function createApcuIterator(string $prefix): \APCuIterator
     {
         if ($prefix !== '') {

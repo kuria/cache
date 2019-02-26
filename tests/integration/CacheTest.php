@@ -244,9 +244,6 @@ abstract class CacheTest extends Test
 
     function provideValueTypes()
     {
-        $object = new \stdClass();
-        $object->property = 'value';
-
         return [
             [true],
             [false],
@@ -262,7 +259,7 @@ abstract class CacheTest extends Test
             ['foo'],
             ["foo-\x00\x01\x02\x03-bar"],
             [[1, 2, 3]],
-            [$object, $this->looselyIdenticalTo($object)],
+            [$object = new \DateTime(), $this->looselyIdenticalTo($object)],
         ];
     }
 

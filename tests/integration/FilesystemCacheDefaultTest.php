@@ -10,7 +10,7 @@ use Kuria\Cache\Driver\Filesystem\FilesystemDriver;
  */
 class FilesystemCacheDefaultTest extends CacheTest
 {
-    protected const CACHE_PATH = __DIR__ . '/../temp.filesystem.cache';
+    protected const CACHE_PATH = __DIR__ . '/../temp.filesystem/cache';
 
     protected function createDriver(): DriverInterface
     {

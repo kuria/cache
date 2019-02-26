@@ -2,13 +2,14 @@
 
 namespace Kuria\Cache\Driver\Filesystem\Entry\File;
 
+use Kuria\Cache\Driver\Exception\DriverException;
+use Kuria\Cache\Test\Unexportable;
 use Kuria\DevMeta\Test;
 
-/**
- * @group unit
- */
-class BinaryFileFormatTest extends Test
+class PhpFileFormatTest extends Test
 {
+    private const TEST_FILE_PATH = __DIR__ . '/../../../../../temp.filesystem/php_file_format';
+
     /** @var FileFormatInterface */
     private $format;
 
@@ -17,8 +18,12 @@ class BinaryFileFormatTest extends Test
 
     protected function setUp()
     {
-        $this->format = new BinaryFileFormat();
-        $this->handle = new FileHandle('dummy', fopen('php://memory', 'r+'));
+        if (!is_dir($testDir = dirname(self::TEST_FILE_PATH))) {
+            mkdir($testDir, 0777, true);
+        }
+
+        $this->format = new PhpFileFormat();
+        $this->handle = new FileHandle(self::TEST_FILE_PATH, fopen(self::TEST_FILE_PATH, 'w+'));
     }
 
     function testShouldValidateEmptyHandle()
@@ -43,8 +48,19 @@ class BinaryFileFormatTest extends Test
         $this->assertSame(123, $this->format->readExpirationTime($this->handle));
     }
 
+    function testShouldHandleRequireExceptions()
+    {
+        $this->format->write($this->handle, 'key', new Unexportable(), 0);
+        $this->handle->goto(0);
+
+        $this->expectException(DriverException::class);
+        $this->expectExceptionMessage('An exception occured while reading data');
+
+        $this->format->readData($this->handle);
+    }
+
     function testShouldGetFilenameSuffix()
     {
-        $this->assertSame('.dat', $this->format->getFilenameSuffix());
+        $this->assertSame('.php', $this->format->getFilenameSuffix());
     }
 }

@@ -7,6 +7,7 @@ Caching library with driver abstraction.
    :target: https://travis-ci.com/kuria/cache
 
 .. contents::
+   :depth: 3
 
 
 Features
@@ -54,6 +55,11 @@ Usage
 Creating a cache instance
 =========================
 
+Filesystem
+----------
+
+Store cache entries in the given directory as binary files.
+
 .. code:: php
 
    <?php
@@ -61,15 +67,150 @@ Creating a cache instance
    use Kuria\Cache\Cache;
    use Kuria\Cache\Driver\Filesystem\FilesystemDriver;
 
-   // create a driver
-   // (you can use any other implementation)
    $driver = new FilesystemDriver(__DIR__ . '/cache');
+   $cache = new Cache($driver);
+
+.. NOTE::
+
+   If needed, ``$cache->cleanup()`` may to be called to physically remove expired
+   entries from the filesystem. This is best done periodically via CRON or a similar
+   mechanism.
+
+
+Storing cache entries as PHP files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It may be beneficial to store cache entries as actual PHP files (instead of binary ones),
+so that they may be picked up by opcode caches (e.g. `opcache <http://php.net/manual/en/book.opcache.php>`_)
+to increase performance.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Cache;
+   use Kuria\Cache\Driver\Filesystem\Entry\File\PhpFileFormat;
+   use Kuria\Cache\Driver\Filesystem\FilesystemDriver;
+
+   $driver = new FilesystemDriver(
+       __DIR__ . '/cache',
+       FilesystemDriver::createEntryFactory(new PhpFileFormat())
+   );
 
    $cache = new Cache($driver);
 
+.. TIP::
+
+   When caching large amounts of data this way, make sure the opcode cache
+   is configured appropriately.
+
+   For *opcache*, the most relevant settings are ``opcache.memory_consumption``
+   and ``opcache.max_accelerated_files``.
+
+.. WARNING::
+
+   To take full advantage of opcode caching, ``PhpFileFormat`` uses ``var_export()``
+   instead of ``serialize()``. Objects can be stored in the cache only if they
+   implement the `__set_state() <http://php.net/manual/en/language.oop5.magic.php#object.set-state>`_
+   method.
+
+
+APCu
+----
+
+Store cache entries using `APCu <http://php.net/manual/en/book.apcu.php>`_.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Cache;
+   use Kuria\Cache\Driver\Apcu\ApcuDriver;
+
+   $cache = new Cache(new ApcuDriver());
+
+
+Memcached
+---------
+
+Store cache entries using `Memcached <http://php.net/manual/en/book.memcached.php>`_.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Cache;
+   use Kuria\Cache\Driver\Memcached\MemcachedDriver;
+
+   $memcached = new \Memcached();
+   $memcached->addServer('localhost', 11211);
+
+   $cache = new Cache(new MemcachedDriver($memcached));
+
+
+Redis
+-----
+
+Store cache entries using `PhpRedis <https://github.com/phpredis/phpredis>`_.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Cache;
+   use Kuria\Cache\Driver\Redis\RedisDriver;
+
+   $redis = new \Redis();
+   $redis->connect('localhost', 6380); // might return FALSE..
+
+   $cache = new Cache(new RedisDriver($redis));
+
+
+Memory
+------
+
+Store cache entries in memory.
+
+These entries are only available for the duration of the script
+and aren't shared between threads.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Cache;
+   use Kuria\Cache\Driver\Memory\MemoryDriver;
+
+   $cache = new Cache(new MemoryDriver());
+
+.. NOTE::
+
+   Expired entries aren't purged from memory until an attempt to access them
+   is made. ``$cache->cleanup()`` may be called to purge all expired entries
+   immediately.
+
+
+Black hole
+----------
+
+Stored entries are discarded immediately. Useful for testing or debugging.
+
+.. code:: php
+
+   <?php
+
+   use Kuria\Cache\Cache;
+   use Kuria\Cache\Driver\BlackHole\BlackHoleDriver;
+
+   $cache = new Cache(new BlackHoleDriver());
+
+
+Cache methods
+=============
+
 
 ``setPrefix()`` - configure cache prefix
-========================================
+----------------------------------------
 
 The ``setPefix()`` method defines a prefix that will be applied to all keys before
 they are passed to the underlying driver implementation.
@@ -84,7 +225,7 @@ The prefix can be an empty string to disable this functionality.
 
 
 ``getNamespace()`` - get a namespaced cache instance
-====================================================
+----------------------------------------------------
 
 The ``getNamespace()`` method returns a cache instance that applies a prefix to all
 keys before passing them to the original cache.
@@ -102,7 +243,7 @@ keys before passing them to the original cache.
 
 
 ``has()`` - check if an entry exists
-====================================
+------------------------------------
 
 The ``has()`` method returns ``TRUE`` or ``FALSE`` indicating whether the
 entry exists or not.
@@ -126,7 +267,7 @@ entry exists or not.
 
 
 ``get()`` - read a single entry
-===============================
+-------------------------------
 
 The ``get()`` method returns the stored value or ``NULL`` if the entry does not exist.
 
@@ -154,7 +295,7 @@ the ``$exists`` argument:
 
 
 ``getMultiple()`` - read multiple entries
-=========================================
+-----------------------------------------
 
 The ``getMultiple()`` method returns a key-value map. Nonexistent keys will have
 a ``NULL`` value.
@@ -178,7 +319,7 @@ the ``$failedKeys`` argument:
 
 
 ``listKeys()`` - list keys in the cache
-=======================================
+---------------------------------------
 
 The ``listKeys()`` method will return an iterable list of keys in the cache, optionally
 matching a common prefix.
@@ -204,7 +345,7 @@ exception will be thrown. You can check support using the ``isFilterable()`` met
 
 
 ``getIterator()`` - list keys and values in the cache
-=====================================================
+-----------------------------------------------------
 
 The ``getIterator()`` method will return an iterator for all keys and values in the
 cache. This is a part of the ``IteratorAggregate`` interface.
@@ -236,7 +377,7 @@ Listing keys and values matching a prefix:
 
 
 ``add()`` / ``set()`` - create a new entry
-==========================================
+------------------------------------------
 
 The ``add()`` and ``set()`` methods both create an entry in the cache.
 
@@ -266,7 +407,7 @@ If TTL is ``NULL``, ``0`` or negative, the entry will not have an expiration tim
 
 
 ``addMultiple()`` / ``setMultiple()`` - create multiple entries
-===============================================================
+---------------------------------------------------------------
 
 The ``addMultiple()`` and ``setMultiple()`` methods both create multiple entries
 in the cache.
@@ -298,7 +439,7 @@ If TTL is ``NULL``, ``0`` or negative, the entries will not have expiration time
 
 
 ``cached()`` - cache the result of a callback
-=============================================
+---------------------------------------------
 
 The ``cached()`` method tries to read a value from the cache. If it does not exist,
 it invokes the given callback and caches its return value (even if it is ``NULL``).
@@ -316,7 +457,7 @@ it invokes the given callback and caches its return value (even if it is ``NULL`
 
 
 ``delete()`` - delete an entry
-==============================
+------------------------------
 
 The ``delete()`` method deletes a single entry from the cache.
 
@@ -330,7 +471,7 @@ The ``delete()`` method deletes a single entry from the cache.
 
 
 ``deleteMultiple()`` - delete multiple entries
-==============================================
+----------------------------------------------
 
 The ``deleteMultiple()`` method deletes multiple entries from the cache.
 
@@ -346,7 +487,7 @@ The ``deleteMultiple()`` method deletes multiple entries from the cache.
 
 
 ``filter()`` - delete entries using a prefix
-============================================
+--------------------------------------------
 
 The ``filter()`` method deletes all entries that match the given prefix.
 
@@ -363,7 +504,7 @@ exception will be thrown. You can check support using the ``isFilterable()`` met
 
 
 ``clear()`` - delete all entries
-================================
+--------------------------------
 
 The ``clear()`` method deletes all entries.
 
@@ -378,7 +519,7 @@ that prefix will be cleared.
 
 
 ``cleanup()`` - clean-up the cache
-==================================
+----------------------------------
 
 Some cache drivers (e.g. ``FilesystemDriver``) support explicit triggering of the cleanup
 procedures (removal of expired entries etc).
@@ -396,17 +537,18 @@ exception will be thrown. You can check support using the ``supportsCleanup()`` 
 
 
 Allowed value types
-*******************
+===================
 
-All types except for the resource type can be stored in the cache. Most drivers
-use standard `object serialization <http://php.net/manual/en/language.oop5.serialization.php>`_.
+All types except for the resource type can be stored in the cache.
+
+Most drivers use standard `object serialization <http://php.net/manual/en/language.oop5.serialization.php>`_.
 
 
 Cache events
-************
+============
 
 ``CacheEvents::HIT``
-=====================
+--------------------
 
 Emitted when an entry has been read.
 
@@ -428,7 +570,7 @@ The listener is passed the key and value.
 
 
 ``CacheEvents::MISS``
-=====================
+---------------------
 
 Emitted when an entry has not been found.
 
@@ -446,7 +588,7 @@ The listener is passed the key.
 
 
 ``CacheEvents::WRITE``
-======================
+----------------------
 
 Emitted when an entry is about to be written.
 
@@ -470,7 +612,7 @@ The listener is passed the key, value, TTL and overwrite flag.
 
 
 ``CacheEvents::DRIVER_EXCEPTION``
-=================================
+---------------------------------
 
 Emitted when the underlying driver implementation throws an exception.
 
@@ -489,7 +631,7 @@ purposes.
 
 
 PSR-6: Cache adapter
-********************
+====================
 
 The ``CacheItemPool`` class is an adapter implementing the ``Psr\Cache\CacheItemPoolInterface``.
 
@@ -513,7 +655,7 @@ Also see `Creating a cache instance`_.
 
 
 PSR-16: Simple cache wrapper
-****************************
+============================
 
 The ``SimpleCache`` class is a wrapper implementing the ``Psr\SimpleCache\CacheInterface``.
 

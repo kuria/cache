@@ -29,9 +29,9 @@ class FilesystemDriverTest extends Test
         $this->entryFactoryMock = $this->createMock(EntryFactoryInterface::class);
 
         $this->listedEntryMocks = [
-            'foo_valid' => $this->createEntryMock(true, 'foo_valid', serialize(1)),
-            'bar_valid' =>$this->createEntryMock(true, 'bar_valid', serialize(2)),
-            'baz_expired' => $this->createEntryMock(false, 'baz_expired', serialize(3)),
+            'foo_valid' => $this->createEntryMock(true, 'foo_valid', 1),
+            'bar_valid' =>$this->createEntryMock(true, 'bar_valid', 2),
+            'baz_expired' => $this->createEntryMock(false, 'baz_expired', 3),
         ];
 
         $this->driver = $this->getMockBuilder(FilesystemDriver::class)
@@ -57,7 +57,7 @@ class FilesystemDriverTest extends Test
 
     function testShouldRead()
     {
-        $this->prepareEntry('key', true, serialize('value'));
+        $this->prepareEntry('key', true, 'value');
 
         $this->assertSame('value', $this->driver->read('key', $exists));
         $this->assertTrue($exists);
@@ -77,7 +77,7 @@ class FilesystemDriverTest extends Test
 
         $entry->expects($this->once())
             ->method('write')
-            ->with('key', serialize('value'), 0, false);
+            ->with('key', 'value', 0, false);
 
         $this->driver->write('key', 'value');
     }
@@ -92,7 +92,7 @@ class FilesystemDriverTest extends Test
 
             $entry->expects($this->once())
                 ->method('write')
-                ->with('key', serialize('value'), $expectedExpirationTime, true);
+                ->with('key', 'value', $expectedExpirationTime, true);
 
             $this->driver->write('key', 'value', $ttl, true);
         });
@@ -177,7 +177,7 @@ class FilesystemDriverTest extends Test
     /**
      * @return EntryInterface|MockObject
      */
-    private function prepareEntry(string $key, bool $valid, ?string $data = null)
+    private function prepareEntry(string $key, bool $valid, $data = null)
     {
         $entryMock = $this->createEntryMock($valid, $valid ? $key : null, $data);
 
@@ -192,7 +192,7 @@ class FilesystemDriverTest extends Test
     /**
      * @return EntryInterface|MockObject
      */
-    private function createEntryMock(bool $valid, ?string $key = null, ?string $data = null)
+    private function createEntryMock(bool $valid, ?string $key = null, $data = null)
     {
         $entryMock = $this->createMock(EntryInterface::class);
 

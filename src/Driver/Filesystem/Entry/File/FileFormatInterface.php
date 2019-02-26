@@ -10,7 +10,7 @@ interface FileFormatInterface
     function validate(FileHandle $handle): bool;
     function readExpirationTime(FileHandle $handle): int;
     function readKey(FileHandle $handle): string;
-    function readData(FileHandle $handle): string;
-    function write(FileHandle $handle, string $key, string $data, int $expirationTime): void;
+    function readData(FileHandle $handle);
+    function write(FileHandle $handle, string $key, $data, int $expirationTime): void;
     function getFilenameSuffix(): string;
 }

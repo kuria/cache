@@ -194,6 +194,31 @@ class EntryTest extends Test
         $this->entry->write('key', 'data', 123, false);
     }
 
+    function testShouldDeleteTemporaryFileIfReplacementFailes()
+    {
+        $tmpPath = __DIR__ . '/dummy-tmp-path';
+
+        $this->entry->expects($this->once())
+            ->method('writeToTemporaryFile')
+            ->with('key', 'data', 123)
+            ->willReturn($tmpPath);
+
+        $this->entry->expects($this->once())
+            ->method('replaceFile')
+            ->with($tmpPath)
+            ->willThrowException(new EntryException('Test exception'));
+
+        $this->getFunctionMock(__NAMESPACE__, 'unlink')
+            ->expects($this->once())
+            ->with($tmpPath)
+            ->willReturn(true);
+
+        $this->expectException(EntryException::class);
+        $this->expectExceptionMessage('Test exception');
+
+        $this->entry->write('key', 'data', 123, false);
+    }
+
     function testShouldDeleteEntry()
     {
         $this->getFunctionMock(__NAMESPACE__, 'unlink')

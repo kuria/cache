@@ -60,12 +60,12 @@ class Entry implements EntryInterface
         return $this->format->readKey($this->requireReadHandle());
     }
 
-    function readData(): string
+    function readData()
     {
         return $this->format->readData($this->requireReadHandle());
     }
 
-    function write(string $key, string $data, int $expirationTime, bool $overwrite): void
+    function write(string $key, $data, int $expirationTime, bool $overwrite): void
     {
         if (!$overwrite && $this->validate()) {
             throw new EntryException(sprintf('Entry "%s" already exists and is valid', $this->path));
@@ -73,12 +73,21 @@ class Entry implements EntryInterface
 
         $this->closeReadHandle();
 
-        $this->replaceFile(
-            $this->writeToTemporaryFile($key, $data, $expirationTime)
-        );
+        $tmpFile = $this->writeToTemporaryFile($key, $data, $expirationTime);
+
+        try {
+            $this->replaceFile($tmpFile);
+        } catch (\Throwable $e) {
+            @unlink($tmpFile);
+
+            throw $e;
+        }
     }
 
-    protected function writeToTemporaryFile(string $key, string $data, int $expirationTime): string
+    /**
+     * @internal
+     */
+    protected function writeToTemporaryFile(string $key, $data, int $expirationTime): string
     {
         // get a temporary file name
         $tmpPath = @tempnam($this->temporaryDirPath, 'cache');
@@ -95,7 +104,7 @@ class Entry implements EntryInterface
         }
 
         // write
-        $writeHandle = new FileHandle($tmpHandle);
+        $writeHandle = new FileHandle($tmpPath, $tmpHandle);
 
         try {
             $this->format->write($writeHandle, $key, $data, $expirationTime);
@@ -110,6 +119,9 @@ class Entry implements EntryInterface
         return $tmpPath;
     }
 
+    /**
+     * @internal
+     */
     protected function replaceFile(string $with): void
     {
         // make sure the target directory exists
@@ -119,12 +131,13 @@ class Entry implements EntryInterface
             @mkdir($targetDirectory, 0777, true);
         }
 
+        // set permissions
+        @chmod($with, 0666);
+
         // move the file
         if (@rename($with, $this->path) !== true) {
             throw new EntryException(sprintf('Failed to rename file "%s" to "%s"', $with, $this->path));
         }
-
-        @chmod($this->path, 0666);
     }
 
     function delete(): void
@@ -165,12 +178,14 @@ class Entry implements EntryInterface
         return $readHandle;
     }
 
-    /** @internal */
+    /**
+     * @internal
+     */
     protected function createReadHandle(): ?FileHandle
     {
         $handle = @fopen($this->path, 'r');
 
-        return $handle !== false ? new FileHandle($handle) : null;
+        return $handle !== false ? new FileHandle($this->path, $handle) : null;
     }
 
     private function closeReadHandle(): void

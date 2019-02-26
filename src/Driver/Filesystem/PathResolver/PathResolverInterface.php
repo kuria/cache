@@ -9,7 +9,7 @@ interface PathResolverInterface
     /**
      * Get path for the given format and key
      *
-     * The returned path should begin with a forward slash ("/")
+     * The returned path should begin with a forward slash ("/").
      */
     function resolve(FileFormatInterface $format, string $key): string;
 }

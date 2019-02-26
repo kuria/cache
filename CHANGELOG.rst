@@ -1,6 +1,12 @@
 Changelog
 #########
 
+6.0.0
+*****
+
+- reintroduced ``PhpFileFormat`` (generates valid PHP files compatible with opcode caches)
+
+
 5.0.0
 *****
 

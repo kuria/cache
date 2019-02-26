@@ -6,6 +6,9 @@ use Kuria\Cache\Driver\Filesystem\Entry\Exception\FileHandleException;
 
 class FileHandle
 {
+    /** @var string */
+    private $path;
+
     /** @var resource */
     private $handle;
 
@@ -18,8 +21,9 @@ class FileHandle
     /**
      * @param resource $handle
      */
-    function __construct($handle)
+    function __construct(string $path, $handle)
     {
+        $this->path = $path;
         $this->handle = $handle;
     }
 
@@ -30,12 +34,17 @@ class FileHandle
         }
     }
 
+    function getPath(): string
+    {
+        return $this->path;
+    }
+
     function getSize(): int
     {
         $stat = @fstat($this->handle);
 
         if ($stat === false) {
-            throw new FileHandleException(sprintf('Failed to stat "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to stat "%s"', $this->path));
         }
 
         return $stat['size'];
@@ -46,7 +55,7 @@ class FileHandle
         $position = @ftell($this->handle);
 
         if ($position === false) {
-            throw new FileHandleException(sprintf('Failed to get handle position of "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to get handle position of "%s"', $this->path));
         }
 
         return $position;
@@ -60,14 +69,14 @@ class FileHandle
     function goto(int $position): void
     {
         if (@fseek($this->handle, $position) !== 0) {
-            throw new FileHandleException(sprintf('Failed to seek handle of "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to seek handle of "%s"', $this->path));
         }
     }
 
     function move(int $offset): void
     {
         if (@fseek($this->handle, $offset, SEEK_CUR) !== 0) {
-            throw new FileHandleException(sprintf('Failed to seek handle of "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to seek handle of "%s"', $this->path));
         }
     }
 
@@ -81,7 +90,7 @@ class FileHandle
         $data = @unpack($this->getIntPackFormat(), (string) fread($this->handle, $this->getIntSize()));
 
         if (!is_array($data)) {
-            throw new FileHandleException(sprintf('Failed to read integer data from "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to read integer data from "%s"', $this->path));
         }
 
         return $data[1];
@@ -90,7 +99,7 @@ class FileHandle
     function writeInt(int $value): void
     {
         if (@fwrite($this->handle, pack($this->getIntPackFormat(), $value)) !== $this->getIntSize()) {
-            throw new FileHandleException(sprintf('Failed to write integer data to "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to write integer data to "%s"', $this->path));
         }
     }
 
@@ -108,7 +117,7 @@ class FileHandle
         $data = @stream_get_contents($this->handle, $length ?? -1);
 
         if ($data === false || $length !== null && strlen($data) !== $length) {
-            throw new FileHandleException(sprintf('Failed to read string data from "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to read string data from "%s"', $this->path));
         }
 
         return $data;
@@ -117,14 +126,14 @@ class FileHandle
     function writeString(string $value): void
     {
         if (@fwrite($this->handle, $value) !== strlen($value)) {
-            throw new FileHandleException(sprintf('Failed to write string data to "%s"', $this->getHandleUri()));
+            throw new FileHandleException(sprintf('Failed to write string data to "%s"', $this->path));
         }
     }
 
     function truncate(int $size = 0): void
     {
         if (@ftruncate($this->handle, $size) !== true) {
-            throw new FileHandleException(sprintf('Failed to truncate "%s" to %d bytes', $this->getHandleUri(), $size));
+            throw new FileHandleException(sprintf('Failed to truncate "%s" to %d bytes', $this->path, $size));
         }
     }
 
@@ -183,12 +192,5 @@ class FileHandle
     private function getIntPackFormat(): string
     {
         return PHP_INT_SIZE >= 8 ? 'J' : 'M';
-    }
-
-    private function getHandleUri(): string
-    {
-        $meta = @stream_get_meta_data($this->handle);
-
-        return $meta['uri'] ?? 'UNKNOWN';
     }
 }

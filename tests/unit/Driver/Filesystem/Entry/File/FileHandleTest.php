@@ -16,10 +16,11 @@ class FileHandleTest extends Test
     function testShouldPerformOperations()
     {
         $memoryHandle = $this->createMemoryHandle();
-        $handle = new FileHandle($memoryHandle);
+        $handle = new FileHandle('test/foo/bar.dat', $memoryHandle);
 
         // initial state
         $this->assertTrue(is_resource($memoryHandle));
+        $this->assertSame('test/foo/bar.dat', $handle->getPath());
         $this->assertSame(0, $handle->getSize());
         $this->assertSame(0, $handle->getPosition());
         $this->assertSame(0, $handle->getRemaningBytes());
@@ -79,7 +80,7 @@ class FileHandleTest extends Test
         $invalidHandle = fopen('php://memory', 'r+');
         fclose($invalidHandle);
 
-        $handle = new FileHandle($invalidHandle);
+        $handle = new FileHandle('foo', $invalidHandle);
 
         $this->expectException(FileHandleException::class);
         $this->expectExceptionMessage('Failed to');
@@ -108,7 +109,7 @@ class FileHandleTest extends Test
     function testShouldPerformLockingOperations(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
-        $handle = new FileHandle($memoryHandle);
+        $handle = new FileHandle('foo', $memoryHandle);
 
         $flockMock = $this->getFunctionMock(__NAMESPACE__, 'flock');
 
@@ -137,7 +138,7 @@ class FileHandleTest extends Test
     function testShouldHandleLockFailure(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
-        $handle = new FileHandle($memoryHandle);
+        $handle = new FileHandle('foo', $memoryHandle);
 
         $flockMock = $this->getFunctionMock(__NAMESPACE__, 'flock');
 
@@ -157,7 +158,7 @@ class FileHandleTest extends Test
     function testShouldHandleUnlockFailure(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
-        $handle = new FileHandle($memoryHandle);
+        $handle = new FileHandle('foo', $memoryHandle);
 
         $flockMock = $this->getFunctionMock(__NAMESPACE__, 'flock');
 
@@ -186,7 +187,7 @@ class FileHandleTest extends Test
     function testShouldPerformAutomaticUnlockOnDestruction(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
-        $handle = new FileHandle($memoryHandle);
+        $handle = new FileHandle('foo', $memoryHandle);
 
         $flockMock = $this->getFunctionMock(__NAMESPACE__, 'flock');
 
@@ -212,7 +213,7 @@ class FileHandleTest extends Test
     function testShouldPerformAutomaticUnlockAfterClose(bool $exclusive, bool $block, int $expectedOperation)
     {
         $memoryHandle = $this->createMemoryHandle();
-        $handle = new FileHandle($memoryHandle);
+        $handle = new FileHandle('foo', $memoryHandle);
 
         $flockMock = $this->getFunctionMock(__NAMESPACE__, 'flock');
 

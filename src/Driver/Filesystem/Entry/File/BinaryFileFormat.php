@@ -2,10 +2,12 @@
 
 namespace Kuria\Cache\Driver\Filesystem\Entry\File;
 
+use Kuria\Cache\Driver\Helper\SerializationHelper;
+
 /**
  * Binary file format
  *
- * <int:expirationTime><int:dataLength><string:data><string:key>
+ * Structure: <int:expirationTime><int:dataLength><string:data><string:key>
  */
 class BinaryFileFormat implements FileFormatInterface
 {
@@ -29,18 +31,20 @@ class BinaryFileFormat implements FileFormatInterface
         return $handle->readString();
     }
 
-    function readData(FileHandle $handle): string
+    function readData(FileHandle $handle)
     {
         $handle->skipInt(); // skip expiratiom time
 
-        return $handle->readString($handle->readInt());
+        return SerializationHelper::smartUnserialize($handle->readString($handle->readInt()));
     }
 
-    function write(FileHandle $handle, string $key, string $data, int $expirationTime): void
+    function write(FileHandle $handle, string $key, $data, int $expirationTime): void
     {
+        $serializedData = serialize($data);
+
         $handle->writeInt($expirationTime); // expiration time
-        $handle->writeInt(strlen($data)); // data length
-        $handle->writeString($data); // data
+        $handle->writeInt(strlen($serializedData)); // data length
+        $handle->writeString($serializedData); // data
         $handle->writeString($key); // key
     }
 

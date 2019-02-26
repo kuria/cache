@@ -13,13 +13,13 @@ interface EntryInterface
 
     function readKey(): string;
 
-    function readData(): string;
+    function readData();
 
     /**
      * - $expirationTime is an UNIX timestamp
      * - $expirationTime = 0 means no expiration
      */
-    function write(string $key, string $data, int $expirationTime, bool $overwrite): void;
+    function write(string $key, $data, int $expirationTime, bool $overwrite): void;
 
     function delete(): void;
 

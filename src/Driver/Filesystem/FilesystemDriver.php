@@ -8,7 +8,9 @@ use Kuria\Cache\Driver\Feature\FilterableInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\EntryFactory;
 use Kuria\Cache\Driver\Filesystem\Entry\EntryFactoryInterface;
 use Kuria\Cache\Driver\Filesystem\Entry\EntryInterface;
-use Kuria\Cache\Driver\Helper\SerializationHelper;
+use Kuria\Cache\Driver\Filesystem\Entry\File\FileFormatInterface;
+use Kuria\Cache\Driver\Filesystem\Entry\FlockEntryFactory;
+use Kuria\Cache\Driver\Filesystem\PathResolver\PathResolverInterface;
 use Kuria\Cache\Driver\Helper\TtlHelper;
 
 class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableInterface
@@ -22,7 +24,23 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
     function __construct(string $cachePath, ?EntryFactoryInterface $entryFactory = null)
     {
         $this->cachePath = $cachePath;
-        $this->entryFactory = $entryFactory ?? new EntryFactory();
+        $this->entryFactory = $entryFactory ?? static::createEntryFactory();
+    }
+
+    /**
+     * Create an entry factory suitable for the current environment
+     */
+    static function createEntryFactory(
+        ?FileFormatInterface $fileFormat = null,
+        ?PathResolverInterface $pathResolver = null,
+        ?string $temporaryDirPath = null
+    ): EntryFactoryInterface {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            // use file locking on Windows
+            return new FlockEntryFactory($fileFormat, $pathResolver);
+        }
+
+        return new EntryFactory($fileFormat, $pathResolver, $temporaryDirPath);
     }
 
     function exists(string $key): bool
@@ -41,14 +59,14 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
         $data = $entry->readData();
         $entry->close();
 
-        return SerializationHelper::smartUnserialize($data);
+        return $data;
     }
 
     function write(string $key, $value, ?int $ttl = null, bool $overwrite = false): void
     {
         $this->getEntryForKey($key)->write(
             $key,
-            serialize($value),
+            $value,
             TtlHelper::toExpirationTime($ttl),
             $overwrite
         );
@@ -126,6 +144,7 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
     }
 
     /**
+     * @internal
      * @return EntryInterface[]
      */
     protected function listEntries(): iterable
@@ -136,6 +155,7 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
     }
 
     /**
+     * @internal
      * @return string[]
      */
     protected function createCacheIterator(bool $filesOnly = true): iterable
