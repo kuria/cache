@@ -5,6 +5,7 @@ Changelog
 *****
 
 - reintroduced ``PhpFileFormat`` (generates valid PHP files compatible with opcode caches)
+- added ``$umask`` parameter to the filesystem driver (defaults to 002)
 
 
 5.0.0

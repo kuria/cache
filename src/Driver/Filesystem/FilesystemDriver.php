@@ -33,14 +33,15 @@ class FilesystemDriver implements DriverInterface, CleanupInterface, FilterableI
     static function createEntryFactory(
         ?FileFormatInterface $fileFormat = null,
         ?PathResolverInterface $pathResolver = null,
-        ?string $temporaryDirPath = null
+        ?string $temporaryDirPath = null,
+        ?int $umask = null
     ): EntryFactoryInterface {
         if (DIRECTORY_SEPARATOR === '\\') {
             // use file locking on Windows
-            return new FlockEntryFactory($fileFormat, $pathResolver);
+            return new FlockEntryFactory($fileFormat, $pathResolver, $umask);
         }
 
-        return new EntryFactory($fileFormat, $pathResolver, $temporaryDirPath);
+        return new EntryFactory($fileFormat, $pathResolver, $temporaryDirPath, $umask);
     }
 
     function exists(string $key): bool

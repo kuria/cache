@@ -15,15 +15,22 @@ class FlockEntryFactory implements EntryFactoryInterface
     /** @var PathResolverInterface */
     private $pathResolver;
 
-    function __construct(?FileFormatInterface $fileFormat = null, ?PathResolverInterface $pathResolver = null)
-    {
+    /** @var int */
+    private $umask;
+
+    function __construct(
+        ?FileFormatInterface $fileFormat = null,
+        ?PathResolverInterface $pathResolver = null,
+        ?int $umask = null
+    ) {
         $this->fileFormat = $fileFormat ?? new BinaryFileFormat();
         $this->pathResolver = $pathResolver ?? new HashedPathResolver();
+        $this->umask = $umask ?? 002;
     }
 
     function fromPath(string $path): EntryInterface
     {
-        return new FlockEntry($this->fileFormat, $path);
+        return new FlockEntry($this->fileFormat, $path, $this->umask);
     }
 
     function fromKey(string $cachePath, string $key): EntryInterface

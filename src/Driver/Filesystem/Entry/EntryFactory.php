@@ -18,16 +18,24 @@ class EntryFactory implements EntryFactoryInterface
     /** @var string */
     private $temporaryDirPath;
 
-    function __construct(?FileFormatInterface $fileFormat = null, ?PathResolverInterface $pathResolver = null, ?string $temporaryDirPath = null)
-    {
+    /** @var int */
+    private $umask;
+
+    function __construct(
+        ?FileFormatInterface $fileFormat = null,
+        ?PathResolverInterface $pathResolver = null,
+        ?string $temporaryDirPath = null,
+        ?int $umask = null
+    ) {
         $this->fileFormat = $fileFormat ?? new BinaryFileFormat();
         $this->pathResolver = $pathResolver ?? new HashedPathResolver();
         $this->temporaryDirPath = $temporaryDirPath ?? sys_get_temp_dir();
+        $this->umask = $umask ?? 002;
     }
 
     function fromPath(string $path): EntryInterface
     {
-        return new Entry($this->fileFormat, $path, $this->temporaryDirPath);
+        return new Entry($this->fileFormat, $path, $this->temporaryDirPath, $this->umask);
     }
 
     function fromKey(string $cachePath, string $key): EntryInterface

@@ -39,7 +39,7 @@ class FlockEntryTest extends Test
             ->willReturn(true);
 
         $this->entry = $this->getMockBuilder(FlockEntry::class)
-            ->setConstructorArgs([$this->fileFormatMock, static::DUMMY_ENTRY_PATH])
+            ->setConstructorArgs([$this->fileFormatMock, static::DUMMY_ENTRY_PATH, 002])
             ->setMethods(['createHandle'])
             ->getMock();
 

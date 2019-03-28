@@ -21,10 +21,14 @@ class FlockEntry implements EntryInterface
     /** @var FileHandle|null */
     private $handle;
 
-    function __construct(FileFormatInterface $format, string $path)
+    /** @var int */
+    private $umask;
+
+    function __construct(FileFormatInterface $format, string $path, int $umask)
     {
         $this->format = $format;
         $this->path = $path;
+        $this->umask = $umask;
     }
 
     function getPath(): string
@@ -151,14 +155,20 @@ class FlockEntry implements EntryInterface
             $targetDirectory = dirname($this->path);
 
             if (!is_dir($targetDirectory)) {
-                @mkdir($targetDirectory, 0777, true);
+                @mkdir($targetDirectory, 0777 & ~$this->umask, true);
             }
         }
 
         // attempt to create handle
         $handle = @fopen($this->path, $createFileIfNotExists ? 'c+' : 'r+');
 
-        return $handle !== false ? new FileHandle($this->path, $handle) : null;
+        if ($handle !== false) {
+            @chmod($this->path, 0666 & ~$this->umask);
+
+            return new FileHandle($this->path, $handle);
+        }
+
+        return null;
     }
 
     private function closeHandle(): void

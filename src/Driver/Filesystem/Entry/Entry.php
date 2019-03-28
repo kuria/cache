@@ -27,14 +27,18 @@ class Entry implements EntryInterface
     /** @var string */
     private $temporaryDirPath;
 
+    /** @var int */
+    private $umask;
+
     /** @var FileHandle|null */
     private $readHandle;
 
-    function __construct(FileFormatInterface $format, string $path, string $temporaryDirPath)
+    function __construct(FileFormatInterface $format, string $path, string $temporaryDirPath, int $umask)
     {
         $this->format = $format;
         $this->path = $path;
         $this->temporaryDirPath = $temporaryDirPath;
+        $this->umask = $umask;
     }
 
     function getPath(): string
@@ -128,11 +132,11 @@ class Entry implements EntryInterface
         $targetDirectory = dirname($this->path);
 
         if (!is_dir($targetDirectory)) {
-            @mkdir($targetDirectory, 0777, true);
+            @mkdir($targetDirectory, 0777 & ~$this->umask, true);
         }
 
         // set permissions
-        @chmod($with, 0666);
+        @chmod($with, 0666 & ~$this->umask);
 
         // move the file
         if (@rename($with, $this->path) !== true) {

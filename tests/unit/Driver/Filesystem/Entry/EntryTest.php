@@ -35,7 +35,7 @@ class EntryTest extends Test
         $this->readHandleMock = $this->createMock(FileHandle::class);
 
         $this->entry = $this->getMockBuilder(Entry::class)
-            ->setConstructorArgs([$this->fileFormatMock, static::DUMMY_ENTRY_PATH, __DIR__ . '/dummy-tmp-path'])
+            ->setConstructorArgs([$this->fileFormatMock, static::DUMMY_ENTRY_PATH, __DIR__ . '/dummy-tmp-path', 002])
             ->setMethods(['createReadHandle', 'writeToTemporaryFile', 'replaceFile'])
             ->getMock();
 
