@@ -84,6 +84,7 @@ class MemoryDriver implements DriverInterface, FilterableInterface, CleanupInter
     /**
      * Count all entries currently in the cache (including expired ones)
      */
+    #[\ReturnTypeWillChange]
     function count()
     {
         return count($this->entries);
